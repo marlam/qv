@@ -1,0 +1,18 @@
+<!DOCTYPE RCC><RCC version="1.0">
+<qresource>
+    <file>cg-logo.png</file>
+    <file>shader-view-vertex.glsl</file>
+    <file>shader-view-fragment.glsl</file>
+    <file>shader-overlay-vertex.glsl</file>
+    <file>shader-overlay-fragment.glsl</file>
+    <file>colormap-sequential-0.csv</file>
+    <file>colormap-sequential-1.csv</file>
+    <file>colormap-sequential-2.csv</file>
+    <file>colormap-sequential-3.csv</file>
+    <file>colormap-diverging-0.csv</file>
+    <file>colormap-diverging-1.csv</file>
+    <file>colormap-diverging-2.csv</file>
+    <file>colormap-diverging-3.csv</file>
+    <file>colormap-qualitative-0.csv</file>
+</qresource>
+</RCC>

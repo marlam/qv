@@ -43,11 +43,11 @@ void OverlayStatistic::update(int widthInPixels, Set& set, Parameters& /* parame
     Frame* frame = set.currentFile()->currentFrame();
     QString s = " channel=";
     if (frame->channelIndex() == ColorChannelIndex)
-        s += "luminance ";
+        s += "luminance";
     else
-        s += frame->currentChannelName().c_str() + ' ';
+        s += frame->currentChannelName().c_str();
     const Statistic& S = frame->currentStatistic();
-    s += QString("min=%1 max=%2 mean=%3 var=%4 dev=%5").
+    s += QString(" min=%1 max=%2 mean=%3 var=%4 dev=%5").
         arg(S.minVal()).arg(S.maxVal()).arg(S.sampleMean()).arg(S.sampleVariance()).arg(S.sampleDeviation());
     float xOffset = 0.0f;
     float yOffset = 1.25f * painter->fontInfo().pixelSize();

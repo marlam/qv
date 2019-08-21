@@ -44,7 +44,7 @@ private:
     std::vector<Histogram> _histograms;
     /* color: */
     ColorSpace _colorSpace, _linearColorSpace;
-    int _colorChannels[3];
+    int _colorChannels[3], _alphaChannel;
     float _colorMinVal, _colorMaxVal;
     float _colorVisMinVal, _colorVisMaxVal;
     TAD::Array<float> _lumArray;
@@ -71,7 +71,12 @@ public:
     const TAD::Array<float>& data(int channelIndex);
 
     ColorSpace colorSpace() const { return _colorSpace; }
-    int colorChannelIndex(int colorSpaceIndex = 0) { return _colorChannels[colorSpaceIndex]; }
+    bool hasAlpha() const { return _alphaChannel >= 0; }
+    int colorChannelIndex(int colorSpaceIndex = 0) const { return _colorChannels[colorSpaceIndex]; }
+    int alphaChannelIndex() const { return _alphaChannel; }
+
+    std::string channelName(int channelIndex) const;
+    std::string currentChannelName() const { return channelName(channelIndex()); }
 
     float minVal(int channelIndex) const;
     float currentMinVal() const { return minVal(channelIndex()); }

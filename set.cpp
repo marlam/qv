@@ -87,7 +87,7 @@ std::string Set::currentDescription()
             if (currentFile()->currentFrame()->channelIndex() == ColorChannelIndex)
                 desc += "color";
             else
-                desc += "ch. " + std::to_string(currentFile()->currentFrame()->channelIndex())
+                desc += std::string("ch. ") + currentFile()->currentFrame()->currentChannelName()
                     + '/' + std::to_string(currentFile()->currentFrame()->channelCount());
         }
     }

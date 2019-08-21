@@ -177,14 +177,16 @@ void QV::paintGL()
     _viewPrg.setUniformValue("visMinVal", visMinVal);
     _viewPrg.setUniformValue("visMaxVal", visMaxVal);
     _viewPrg.setUniformValue("colorMap", _parameters.colorMap().type() != ColorMapNone);
-    _viewPrg.setUniformValue("colorMapTex", 3);
-    gl->glActiveTexture(GL_TEXTURE3);
+    _viewPrg.setUniformValue("colorMapTex", 4);
+    gl->glActiveTexture(GL_TEXTURE4);
     gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
     if (frame->channelIndex() == ColorChannelIndex) {
         _viewPrg.setUniformValue("tex0", 0);
         _viewPrg.setUniformValue("tex1", 1);
         _viewPrg.setUniformValue("tex2", 2);
+        _viewPrg.setUniformValue("alphaTex", 3);
         _viewPrg.setUniformValue("colorSpace", int(frame->colorSpace()));
+        _viewPrg.setUniformValue("haveAlpha", frame->hasAlpha());
         _viewPrg.setUniformValue("textureColorSpace", int(frame->textureColorSpace()));
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, frame->texture(frame->colorChannelIndex(0)));
@@ -195,11 +197,18 @@ void QV::paintGL()
         gl->glActiveTexture(GL_TEXTURE2);
         gl->glBindTexture(GL_TEXTURE_2D, frame->texture(frame->colorChannelIndex(2)));
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+        if (frame->hasAlpha()) {
+            gl->glActiveTexture(GL_TEXTURE3);
+            gl->glBindTexture(GL_TEXTURE_2D, frame->texture(frame->alphaChannelIndex()));
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+        }
     } else {
         _viewPrg.setUniformValue("tex0", 0);
         _viewPrg.setUniformValue("tex1", 0);
         _viewPrg.setUniformValue("tex2", 0);
+        _viewPrg.setUniformValue("alphaTex", 0);
         _viewPrg.setUniformValue("colorSpace", int(ColorSpaceNone));
+        _viewPrg.setUniformValue("haveAlpha", false);
         _viewPrg.setUniformValue("textureColorSpace", int(ColorSpaceNone));
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, frame->texture(frame->channelIndex()));

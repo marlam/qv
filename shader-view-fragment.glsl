@@ -33,6 +33,8 @@ const int ColorSpaceY           = 5;
 const int ColorSpaceXYZ         = 6;
 uniform int colorSpace;
 uniform int textureColorSpace;
+uniform bool haveAlpha;
+uniform sampler2D alphaTex;
 
 uniform float minVal;
 uniform float maxVal;
@@ -143,7 +145,14 @@ void main(void)
             srgb = texture(colorMapTex, vec2(y, 0.5)).rgb;
         } else {
             xyz = adjust_y(xyz, 100.0 * y);
-            srgb = rgb_to_srgb(xyz_to_rgb(xyz));
+            vec3 rgb = xyz_to_rgb(xyz);
+            if (haveAlpha) {
+                float alpha = normalizeVal(texture(alphaTex, vtexcoord).r);
+                alpha = clamp(alpha, 0.0, 1.0);
+                rgb = clamp(rgb, vec3(0.0), vec3(1.0));
+                rgb = rgb * alpha + vec3(1.0 - alpha);
+            }
+            srgb = rgb_to_srgb(rgb);
         }
     }
 

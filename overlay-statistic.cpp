@@ -42,34 +42,10 @@ void OverlayStatistic::update(int widthInPixels, Set& set, Parameters& /* parame
 
     Frame* frame = set.currentFile()->currentFrame();
     QString s = " channel=";
-    if (frame->channelIndex() == ColorChannelIndex) {
+    if (frame->channelIndex() == ColorChannelIndex)
         s += "luminance ";
-    } else {
-        s += QString("%1").arg(frame->channelIndex());
-        if (frame->colorSpace() == ColorSpaceLinearRGB) {
-            if (frame->channelIndex() == frame->colorChannelIndex(0))
-                s += "(R)";
-            else if (frame->channelIndex() == frame->colorChannelIndex(1))
-                s += "(G)";
-            else if (frame->channelIndex() == frame->colorChannelIndex(2))
-                s += "(B)";
-        } else if (frame->colorSpace() == ColorSpaceSRGB) {
-            if (frame->channelIndex() == frame->colorChannelIndex(0))
-                s += "(sR)";
-            else if (frame->channelIndex() == frame->colorChannelIndex(1))
-                s += "(sG)";
-            else if (frame->channelIndex() == frame->colorChannelIndex(2))
-                s += "(sB)";
-        } else if (frame->colorSpace() == ColorSpaceXYZ) {
-            if (frame->channelIndex() == frame->colorChannelIndex(0))
-                s += "(X)";
-            else if (frame->channelIndex() == frame->colorChannelIndex(1))
-                s += "(Y)";
-            else if (frame->channelIndex() == frame->colorChannelIndex(2))
-                s += "(Z)";
-        }
-        s += ' ';
-    }
+    else
+        s += frame->currentChannelName().c_str() + ' ';
     const Statistic& S = frame->currentStatistic();
     s += QString("min=%1 max=%2 mean=%3 var=%4 dev=%5").
         arg(S.minVal()).arg(S.maxVal()).arg(S.sampleMean()).arg(S.sampleVariance()).arg(S.sampleDeviation());

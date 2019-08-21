@@ -46,7 +46,7 @@ QV::QV(Set& set, Parameters& parameters) :
     _overlayColorMapActive(false)
 {
     setIcon(QIcon(":cg-logo.png"));
-    setMinimumSize(QSize(64, 64));
+    setMinimumSize(QSize(500, 500));
     Frame* frame = _set.currentFile()->currentFrame();
     QSize frameSize = QSize(frame->width(), frame->height());
     QSize screenSize = QGuiApplication::primaryScreen()->availableSize();

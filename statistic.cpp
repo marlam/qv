@@ -42,8 +42,8 @@ void Statistic::init(const TAD::Array<float>& array)
 {
     assert(_finiteValues == -1);
 
-    _minVal = +std::numeric_limits<float>::max();
-    _maxVal = -std::numeric_limits<float>::max();
+    float minVal = +std::numeric_limits<float>::max();
+    float maxVal = -std::numeric_limits<float>::max();
     double sum = 0.0;
     double sumOfSquares = 0.0;
     _finiteValues = 0;
@@ -52,15 +52,17 @@ void Statistic::init(const TAD::Array<float>& array)
         float val = array.get<float>(e, 0);
         if (std::isfinite(val)) {
             _finiteValues++;
-            if (val < _minVal)
-                _minVal = val;
-            else if (val > _maxVal)
-                _maxVal = val;
+            if (val < minVal)
+                minVal = val;
+            else if (val > maxVal)
+                maxVal = val;
             sum += val;
             sumOfSquares += val * val;
         }
     }
     if (_finiteValues > 0) {
+        _minVal = minVal;
+        _maxVal = maxVal;
         _sampleMean = sum / _finiteValues;
         if (_finiteValues > 1) {
             _sampleVariance = (sumOfSquares - sum / array.elementCount() * sum) / (_finiteValues - 1);

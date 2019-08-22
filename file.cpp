@@ -134,9 +134,10 @@ bool File::reload(std::string& errorMessage)
     _importer = newImporter;
     _description = a;
     int index = frameIndex();
+    _frame = Frame();
+    _frame.init(a);
+    _frameIndex = 0;
     if (index == 0) {
-        _frame = Frame();
-        _frame.init(a);
         return true;
     } else {
         if (index >= frameCount())

@@ -42,6 +42,8 @@ multiple images, called frames in qv.
 
 - page up, page down: go 100 frames backward/forward
 
+- r: reload the current file
+
 ### Analysis tools
 
 - i: toggle info overlay

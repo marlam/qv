@@ -330,6 +330,17 @@ void QV::setChannelIndex(int index)
     this->update();
 }
 
+void QV::reload()
+{
+    std::string errMsg;
+    bool ret = _set.currentFile()->reload(errMsg);
+    if (!ret) {
+        fprintf(stderr, "%s\n", errMsg.c_str());
+    } else {
+        this->update();
+    }
+}
+
 void QV::adjustZoom(int steps)
 {
     float adjustmentPerStep = std::max(0.01f, _parameters.zoom * 0.05f);
@@ -466,6 +477,9 @@ void QV::keyReleaseEvent(QKeyEvent* e)
         break;
     case Qt::Key_9:
         setChannelIndex(9);
+        break;
+    case Qt::Key_R:
+        reload();
         break;
     /* Linear interpolation when magnifying */
     case Qt::Key_L:

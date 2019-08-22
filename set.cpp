@@ -77,7 +77,7 @@ std::string Set::currentDescription()
             desc = std::to_string(fileIndex())
                 + '/' + std::to_string(fileCount()) + ' ';
         }
-        std::string fileName = std::filesystem::path(currentFile()->fileName()).filename();
+        std::string fileName = std::filesystem::path(currentFile()->fileName()).filename().string();
         desc += fileName + ' ';
         if (currentFile()->frameCount() > 1) {
             desc += std::to_string(currentFile()->frameIndex())

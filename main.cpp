@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
             if (std::filesystem::is_directory(name)) {
                 std::vector<std::string> paths;
                 for (auto& p: std::filesystem::directory_iterator(name))
-                    paths.push_back(p.path());
+                    paths.push_back(p.path().string());
                 std::sort(paths.begin(), paths.end());
                 for (size_t i = 0; i < paths.size(); i++) {
                     if (!set.add(paths[i], errMsg)) {

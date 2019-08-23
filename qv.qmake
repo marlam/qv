@@ -1,0 +1,17 @@
+HEADERS = color.hpp colormap.hpp file.hpp frame.hpp gl.hpp histogram.hpp \
+	overlay-colormap.hpp overlay-histogram.hpp overlay-info.hpp overlay-statistic.hpp overlay.hpp \
+	parameters.hpp qv.hpp set.hpp statistic.hpp utils.hpp
+SOURCES = color.cpp colormap.cpp file.cpp frame.cpp gl.cpp histogram.cpp \
+	overlay-colormap.cpp overlay-histogram.cpp overlay-info.cpp overlay-statistic.cpp overlay.cpp \
+	parameters.cpp qv.cpp set.cpp statistic.cpp utils.cpp main.cpp
+RESOURCES = resources.qrc
+CONFIG += release
+
+QMAKE_CXXFLAGS += -std=c++17
+
+win32 {
+	# For building a static qv.exe using MXE, we need to explicitly link in
+	# all the libraries required by libtad
+	LIBS += -ltad -lgta -llzma -lbz2 -lnetpbm -lpfs -lpng -lz -ljpeg \
+		-lIlmImf -lImath -lHalf -lIex -lIexMath -lIlmThread
+}

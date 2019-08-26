@@ -1,10 +1,12 @@
-# qv (quick view): a viewer for images and image-like data
+# qv (quick view): a viewer for 2D data (images, renderings, sensor data, ...)
 
 ## Description
 
-qv shows images and image-like data and provides some simple analysis tools.
+qv shows images and image-like data and provides analysis tools such as
+statistics, histogram, range selection, and color maps.
+
 It is useful for all kinds of 2D data from sensors, simulation, or rendering,
-but also images, including high dynamic range images.
+but also for images, including high dynamic range images.
 
 Start it from the command line and give it a list of files or directories to
 open, then use keyboard and mouse to analyze the data. Each file can contain

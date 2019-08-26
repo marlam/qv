@@ -12,6 +12,6 @@ QMAKE_CXXFLAGS += -std=c++17
 win32 {
 	# For building a static qv.exe using MXE, we need to explicitly link in
 	# all the libraries required by libtad
-	LIBS += -ltad -lgta -llzma -lbz2 -lnetpbm -lpfs -lpng -lz -ljpeg \
+	LIBS += -ltad -lgta -lnetpbm -lpfs -lpng -lz -ljpeg \
 		-lIlmImf -lImath -lHalf -lIex -lIexMath -lIlmThread
 }

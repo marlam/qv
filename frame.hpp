@@ -63,6 +63,7 @@ public:
     ~Frame();
 
     void init(const TAD::ArrayContainer& a);
+    void reset();
 
     TAD::Type type() const { return _type; }
     int channelCount() const { return _arrays.size(); }

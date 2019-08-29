@@ -53,7 +53,7 @@ static int componentIndex(const TAD::ArrayContainer& a, const std::string& inter
 
 void Frame::init(const TAD::ArrayContainer& a)
 {
-    assert(_channelIndex == -1);
+    reset();
 
     // Convert to float, extract channel arrays
     _type = a.componentType();
@@ -169,6 +169,12 @@ void Frame::init(const TAD::ArrayContainer& a)
     }
     // Set initial channel
     _channelIndex = (_colorSpace != ColorSpaceNone ? ColorChannelIndex : 0);
+}
+
+void Frame::reset()
+{
+    clearTextures();
+    *this = Frame();
 }
 
 std::string Frame::channelName(int channelIndex) const

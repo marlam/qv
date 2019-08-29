@@ -42,7 +42,7 @@ bool File::init(const std::string& fileName, std::string& errorMessage)
         return false;
     }
     _description = TAD::ArrayDescription();
-    _frame = Frame();
+    _frame.reset();
     _frameIndex = -1;
     return true;
 }
@@ -75,7 +75,7 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
         return true;
     }
     if (index < 0) {
-        _frame = Frame();
+        _frame.reset();
         _frameIndex = -1;
         return true;
     }
@@ -101,7 +101,6 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
         errorMessage = fileName() + ": " + "incompatible arrays";
         return false;
     }
-    _frame = Frame();
     _frame.init(a);
     _frameIndex = index;
     return true;
@@ -139,7 +138,6 @@ bool File::reload(std::string& errorMessage)
     _importer = newImporter;
     _description = a;
     int index = frameIndex();
-    _frame = Frame();
     _frame.init(a);
     _frameIndex = 0;
     if (index == 0) {

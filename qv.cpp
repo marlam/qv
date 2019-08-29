@@ -283,10 +283,8 @@ void QV::adjustFileIndex(int offset)
     else if (ni >= _set.fileCount())
         ni = _set.fileCount() - 1;
     if (ni != i) {
-        Frame* oldFrame = _set.currentFile()->currentFrame();
         std::string errMsg;
         if (_set.setFileIndex(ni, errMsg)) {
-            oldFrame->clearTextures();
             this->updateTitle();
             this->update();
         } else {
@@ -304,10 +302,8 @@ void QV::adjustFrameIndex(int offset)
     else if (ni >= _set.currentFile()->frameCount())
         ni = _set.currentFile()->frameCount() - 1;
     if (ni != i) {
-        Frame* oldFrame = _set.currentFile()->currentFrame();
         std::string errMsg;
         if (_set.currentFile()->setFrameIndex(ni, errMsg)) {
-            oldFrame->clearTextures();
             this->updateTitle();
             this->update();
         } else {

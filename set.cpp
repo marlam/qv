@@ -65,6 +65,8 @@ bool Set::setFileIndex(int index, std::string& errorMessage)
     if (!_files[index].setFrameIndex(frameIndex, errorMessage))
         return false;
 
+    _files[_fileIndex].setFrameIndex(-1, errorMessage);
+
     _fileIndex = index;
     return true;
 }

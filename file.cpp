@@ -41,21 +41,9 @@ bool File::init(const std::string& fileName, std::string& errorMessage)
             errorMessage += TAD::strerror(tadError);
         return false;
     }
-    TAD::ArrayContainer a;
-    a = _importer.readArray(&tadError);
-    if (tadError != TAD::ErrorNone) {
-        errorMessage = fileName + ": " + TAD::strerror(tadError);
-        return false;
-    }
-    if (a.dimensionCount() != 2) {
-        errorMessage = fileName + ": " + "array does not have two dimensions";
-        return false;
-    }
-
-    _description = a;
+    _description = TAD::ArrayDescription();
     _frame = Frame();
-    _frame.init(a);
-    _frameIndex = 0;
+    _frameIndex = -1;
     return true;
 }
 
@@ -83,10 +71,15 @@ static bool isCompatible(const TAD::ArrayDescription& desc0, const TAD::ArrayDes
 
 bool File::setFrameIndex(int index, std::string& errorMessage)
 {
-    if (_frameIndex == index) {
+    if (index == _frameIndex) {
         return true;
     }
-    if (index < 0 || index >= frameCount()) {
+    if (index < 0) {
+        _frame = Frame();
+        _frameIndex = -1;
+        return true;
+    }
+    if (index >= frameCount()) {
         errorMessage = fileName() + ": " + "array " + std::to_string(index) + " does not exist";
         return false;
     }
@@ -97,7 +90,14 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
         errorMessage = fileName() + ": " + TAD::strerror(tadError);
         return false;
     }
-    if (!isCompatible(_description, a)) {
+    if (_description.dimensionCount() == 0) {
+        // first frame to read: initialize description
+        if (a.dimensionCount() != 2) {
+            errorMessage = fileName() + ": " + "array does not have two dimensions";
+            return false;
+        }
+        _description = a;
+    } else if (!isCompatible(_description, a)) {
         errorMessage = fileName() + ": " + "incompatible arrays";
         return false;
     }
@@ -109,6 +109,11 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
 
 bool File::reload(std::string& errorMessage)
 {
+    if (_description.dimensionCount() == 0) {
+        // we did not load anything yet
+        return setFrameIndex(0, errorMessage);
+    }
+
     TAD::ArrayDescription origDescription = _description;
     TAD::Importer newImporter(fileName());
     TAD::Error tadError;

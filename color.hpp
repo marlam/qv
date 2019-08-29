@@ -24,6 +24,7 @@
 #ifndef QV_COLOR_HPP
 #define QV_COLOR_HPP
 
+#include <cmath>
 #include <limits>
 
 typedef enum {
@@ -39,8 +40,14 @@ typedef enum {
 
 const int ColorChannelIndex = std::numeric_limits<int>::max();
 
-float snormToLinear(float x);
+inline float snormToLinear(float x)
+{
+    return (x <= 0.04045f ? (x / 12.92f) : std::pow((x + 0.055f) / 1.055f, 2.4f));
+}
 
-float rgbToY(float r, float g, float b);
+inline float rgbToY(float r, float g, float b)
+{
+    return 100.0f * (0.2126f * r + 0.7152f * g + 0.0722f * b);
+}
 
 #endif

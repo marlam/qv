@@ -22,7 +22,7 @@ add_executable(qv
     main.cpp
     utils.hpp utils.cpp
     gl.hpp gl.cpp
-    color.cpp color.hpp
+    color.hpp
     statistic.hpp statistic.cpp
     histogram.hpp histogram.cpp
     colormap.hpp colormap.cpp

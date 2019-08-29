@@ -58,6 +58,8 @@ private:
     const TAD::Array<float>& linearArray(int channel);
     const TAD::Array<float>& lumArray();
 
+    void clearTextures();
+
 public:
     Frame();
     ~Frame();
@@ -96,7 +98,6 @@ public:
 
     unsigned int texture(int channelIndex);
     ColorSpace textureColorSpace() const { return _linearColorSpace; }
-    void clearTextures();
 
     void setChannelIndex(int index);
     int channelIndex() const { return _channelIndex; }

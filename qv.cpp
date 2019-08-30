@@ -143,7 +143,9 @@ void QV::paintGL()
     gl->glClear(GL_COLOR_BUFFER_BIT);
 
     Frame* frame = _set.currentFile()->currentFrame();
+    gl->glUseProgram(_viewPrg.programId());
 
+    // Aspect ratio
     float windowAR = float(_w) / _h;
     float frameAR = float(frame->width()) / frame->height();
     float arFactorX = 1.0f;
@@ -153,8 +155,7 @@ void QV::paintGL()
     } else if (frameAR > windowAR) {
         arFactorY = windowAR / frameAR;
     }
-
-    gl->glUseProgram(_viewPrg.programId());
+    // Navigation and zoom
     float xFactor = arFactorX / _parameters.zoom;
     float yFactor = arFactorY / _parameters.zoom;
     float xOffset = 2.0f * _parameters.xOffset / _w;
@@ -164,6 +165,7 @@ void QV::paintGL()
     _viewPrg.setUniformValue("xOffset", xOffset);
     _viewPrg.setUniformValue("yOffset", yOffset);
     _viewPrg.setUniformValue("magGrid", _parameters.magGrid);
+    // Min/max values
     _viewPrg.setUniformValue("minVal", frame->minVal(frame->channelIndex()));
     _viewPrg.setUniformValue("maxVal", frame->maxVal(frame->channelIndex()));
     float visMinVal = _parameters.visMinVal(frame->channelIndex());
@@ -176,8 +178,10 @@ void QV::paintGL()
     }
     _viewPrg.setUniformValue("visMinVal", visMinVal);
     _viewPrg.setUniformValue("visMaxVal", visMaxVal);
+    // Color and data information
+    bool showColor = (frame->channelIndex() == ColorChannelIndex);
     _viewPrg.setUniformValue("colorMap", _parameters.colorMap().type() != ColorMapNone);
-    _viewPrg.setUniformValue("colorMapTex", 4);
+    _viewPrg.setUniformValue("showColor", showColor);
     _viewPrg.setUniformValue("colorSpace", int(frame->colorSpace()));
     _viewPrg.setUniformValue("channelCount", frame->channelCount());
     _viewPrg.setUniformValue("dataChannelIndex", frame->channelIndex());
@@ -185,43 +189,31 @@ void QV::paintGL()
     _viewPrg.setUniformValue("colorChannel1Index", frame->colorChannelIndex(1));
     _viewPrg.setUniformValue("colorChannel2Index", frame->colorChannelIndex(2));
     _viewPrg.setUniformValue("alphaChannelIndex", frame->alphaChannelIndex());
+    // Textures
+    _viewPrg.setUniformValue("tex0", 0);
+    _viewPrg.setUniformValue("tex1", 1);
+    _viewPrg.setUniformValue("tex2", 2);
+    _viewPrg.setUniformValue("alphaTex", 3);
+    _viewPrg.setUniformValue("colorMapTex", 4);
+    gl->glActiveTexture(GL_TEXTURE0);
+    gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(0)) : frame->texture(frame->channelIndex()));
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glActiveTexture(GL_TEXTURE1);
+    gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(1)) : 0);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glActiveTexture(GL_TEXTURE2);
+    gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(2)) : 0);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glActiveTexture(GL_TEXTURE3);
+    gl->glBindTexture(GL_TEXTURE_2D, (showColor && frame->hasAlpha()) ? frame->texture(frame->alphaChannelIndex()) : 0);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
     gl->glActiveTexture(GL_TEXTURE4);
     gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
-    if (frame->channelIndex() == ColorChannelIndex) {
-        _viewPrg.setUniformValue("tex0", 0);
-        _viewPrg.setUniformValue("tex1", 1);
-        _viewPrg.setUniformValue("tex2", 2);
-        _viewPrg.setUniformValue("alphaTex", 3);
-        _viewPrg.setUniformValue("showColor", true);
-        gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, frame->texture(frame->colorChannelIndex(0)));
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-        gl->glActiveTexture(GL_TEXTURE1);
-        gl->glBindTexture(GL_TEXTURE_2D, frame->texture(frame->colorChannelIndex(1)));
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-        gl->glActiveTexture(GL_TEXTURE2);
-        gl->glBindTexture(GL_TEXTURE_2D, frame->texture(frame->colorChannelIndex(2)));
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-        if (frame->hasAlpha()) {
-            gl->glActiveTexture(GL_TEXTURE3);
-            gl->glBindTexture(GL_TEXTURE_2D, frame->texture(frame->alphaChannelIndex()));
-            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-        }
-    } else {
-        _viewPrg.setUniformValue("tex0", 0);
-        _viewPrg.setUniformValue("tex1", 0);
-        _viewPrg.setUniformValue("tex2", 0);
-        _viewPrg.setUniformValue("alphaTex", 0);
-        _viewPrg.setUniformValue("showColor", false);
-        gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, frame->texture(frame->channelIndex()));
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-    }
+    // Draw the image
     gl->glBindVertexArray(_vao);
     gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
 
-    gl->glEnable(GL_BLEND);
-    gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // Compute which (x,y) coordinate in the data the mouse points to
     int dataX, dataY;
     {
         float wx = (float(_mousePos.x()) / _w - 0.5f) * 2.0f;
@@ -237,6 +229,10 @@ void QV::paintGL()
         if (dy < 0.0f || dataY >= frame->height())
             dataY = -1;
     }
+
+    // Draw the overlays
+    gl->glEnable(GL_BLEND);
+    gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     int overlayYOffset = 0;
     if (_overlayColorMapActive) {
         _overlayColorMap.update(_w, _parameters);

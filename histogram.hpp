@@ -36,8 +36,8 @@ private:
 
 public:
     Histogram();
-    void init(const TAD::Array<float>& array, size_t componentIndex,
-            TAD::Type originalType, float minVal, float maxVal);
+    void init(const TAD::Array<uint8_t>& array, size_t componentIndex);
+    void init(const TAD::Array<float>& array, size_t componentIndex, float minVal, float maxVal);
     float minVal() const { return _minVal; }
     float maxVal() const { return _maxVal; }
     float maxBinVal() const { return _maxBinVal; }

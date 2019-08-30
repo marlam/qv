@@ -38,6 +38,7 @@ private:
 public:
     Statistic();
 
+    void init(const TAD::Array<uint8_t>& array, size_t componentIndex);
     void init(const TAD::Array<float>& array, size_t componentIndex);
 
     int finiteValues() const { return _finiteValues; }

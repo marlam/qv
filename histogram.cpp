@@ -41,14 +41,26 @@ int Histogram::binIndex(float v) const
     return b;
 }
 
-void Histogram::init(const TAD::Array<float>& array, size_t componentIndex,
-        TAD::Type originalType, float minVal, float maxVal)
+void Histogram::init(const TAD::Array<uint8_t>& array, size_t componentIndex)
 {
     assert(_bins.size() == 0);
-    int binCount = 1024;
-    if (originalType == TAD::int8 || originalType == TAD::uint8)
-        binCount = 256;
-    _bins.resize(binCount, 0);
+    _bins.resize(256);
+    _minVal = 0.0;
+    _maxVal = 255.0f;
+    for (size_t e = 0; e < array.elementCount(); e++) {
+        uint8_t val = array.get<uint8_t>(e, componentIndex);
+        _bins[val]++;
+    }
+    _maxBinVal = 0;
+    for (size_t i = 0; i < _bins.size(); i++)
+        if (_bins[i] > _maxBinVal)
+            _maxBinVal = _bins[i];
+}
+
+void Histogram::init(const TAD::Array<float>& array, size_t componentIndex, float minVal, float maxVal)
+{
+    assert(_bins.size() == 0);
+    _bins.resize(1024);
     _minVal = minVal;
     _maxVal = maxVal;
     for (size_t e = 0; e < array.elementCount(); e++) {
@@ -58,7 +70,7 @@ void Histogram::init(const TAD::Array<float>& array, size_t componentIndex,
         }
     }
     _maxBinVal = 0;
-    for (int i = 0; i < binCount; i++)
+    for (size_t i = 0; i < _bins.size(); i++)
         if (_bins[i] > _maxBinVal)
             _maxBinVal = _bins[i];
 }

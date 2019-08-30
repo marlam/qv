@@ -239,21 +239,18 @@ const TAD::Array<float>& Frame::lumArray(int& lumArrayChannel)
         } else if (colorSpace() == ColorSpaceSLum) {
             _lumArray = TAD::Array<float>(_originalArray.dimensions(), 1);
             for (size_t e = 0; e < _lumArray.elementCount(); e++) {
-                float l = floatArray().get<float>(e, colorChannelIndex(0));
-                l = toLinear(l / 255.0f) * 100.0f;
-                _lumArray.set<float>(e, 0, l);
+                uint8_t lum = _originalArray.get<uint8_t>(e, colorChannelIndex(0));
+                float y = toLinear(lum / 255.0f) * 100.0f;
+                _lumArray.set<float>(e, 0, y);
             }
             _lumArrayChannel = 0;
         } else if (colorSpace() == ColorSpaceSRGB) {
             _lumArray = TAD::Array<float>(_originalArray.dimensions(), 1);
             for (size_t e = 0; e < _lumArray.elementCount(); e++) {
-                const float* elem = floatArray().get<float>(e);
-                float r = elem[colorChannelIndex(0)];
-                float g = elem[colorChannelIndex(1)];
-                float b = elem[colorChannelIndex(1)];
-                r = toLinear(r / 255.0f);
-                g = toLinear(g / 255.0f);
-                b = toLinear(b / 255.0f);
+                const uint8_t* elem = _originalArray.get<uint8_t>(e);
+                float r = toLinear(elem[colorChannelIndex(0)] / 255.0f);
+                float g = toLinear(elem[colorChannelIndex(1)] / 255.0f);
+                float b = toLinear(elem[colorChannelIndex(1)] / 255.0f);
                 float y = rgbToY(r, g, b);
                 _lumArray.set<float>(e, 0, y);
             }
@@ -271,6 +268,8 @@ float Frame::value(int x, int y, int channelIndex)
         int lc;
         const TAD::Array<float>& l = lumArray(lc);
         v = l.get<float>({ size_t(x), size_t(y) }, size_t(lc));
+    } else if (type() == TAD::uint8) {
+        v = _originalArray.get<uint8_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
     } else {
         v = floatArray().get<float>({ size_t(x), size_t(y) }, size_t(channelIndex));
     }
@@ -329,8 +328,13 @@ const Statistic& Frame::statistic(int channelIndex)
         }
         return _colorStatistic;
     } else {
-        if (_statistics[channelIndex].finiteValues() < 0)
-            _statistics[channelIndex].init(floatArray(), channelIndex);
+        if (_statistics[channelIndex].finiteValues() < 0) {
+            if (type() == TAD::uint8) {
+                _statistics[channelIndex].init(TAD::Array<uint8_t>(_originalArray), channelIndex);
+            } else {
+                _statistics[channelIndex].init(floatArray(), channelIndex);
+            }
+        }
         return _statistics[channelIndex];
     }
 }
@@ -341,14 +345,17 @@ const Histogram& Frame::histogram(int channelIndex)
         if (_colorHistogram.binCount() == 0) {
             int lc;
             const TAD::Array<float>& l = lumArray(lc);
-            _colorHistogram.init(l, lc, type(),
-                    visMinVal(ColorChannelIndex), visMaxVal(ColorChannelIndex));
+            _colorHistogram.init(l, lc, visMinVal(ColorChannelIndex), visMaxVal(ColorChannelIndex));
         }
         return _colorHistogram;
     } else {
         if (_histograms[channelIndex].binCount() == 0) {
-            _histograms[channelIndex].init(floatArray(), channelIndex, type(),
-                    minVal(channelIndex), maxVal(channelIndex));
+            if (type() == TAD::uint8) {
+                _histograms[channelIndex].init(TAD::Array<uint8_t>(_originalArray), channelIndex);
+            } else {
+                _histograms[channelIndex].init(floatArray(), channelIndex,
+                        minVal(channelIndex), maxVal(channelIndex));
+            }
         }
         return _histograms[channelIndex];
     }

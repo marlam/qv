@@ -38,6 +38,31 @@ Statistic::Statistic() :
 {
 }
 
+void Statistic::init(const TAD::Array<uint8_t>& array, size_t componentIndex)
+{
+    assert(_finiteValues == -1);
+    _minVal = 255.0f;
+    _maxVal = 0.0f;
+    double sum = 0.0;
+    double sumOfSquares = 0.0f;
+    _finiteValues = array.elementCount();
+
+    for (size_t e = 0; e < array.elementCount(); e++) {
+        uint8_t val = array.get<uint8_t>(e, componentIndex);
+        if (val < _minVal)
+            _minVal = val;
+        else if (val > _maxVal)
+            _maxVal = val;
+        sum += val;
+        sumOfSquares += val * val;
+    }
+    _sampleMean = sum / _finiteValues;
+    if (_finiteValues > 1) {
+        _sampleVariance = (sumOfSquares - sum / array.elementCount() * sum) / (_finiteValues - 1);
+        _sampleDeviation = std::sqrt(_sampleVariance);
+    }
+}
+
 void Statistic::init(const TAD::Array<float>& array, size_t componentIndex)
 {
     assert(_finiteValues == -1);

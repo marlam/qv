@@ -178,6 +178,13 @@ void QV::paintGL()
     _viewPrg.setUniformValue("visMaxVal", visMaxVal);
     _viewPrg.setUniformValue("colorMap", _parameters.colorMap().type() != ColorMapNone);
     _viewPrg.setUniformValue("colorMapTex", 4);
+    _viewPrg.setUniformValue("colorSpace", int(frame->colorSpace()));
+    _viewPrg.setUniformValue("channelCount", frame->channelCount());
+    _viewPrg.setUniformValue("dataChannelIndex", frame->channelIndex());
+    _viewPrg.setUniformValue("colorChannel0Index", frame->colorChannelIndex(0));
+    _viewPrg.setUniformValue("colorChannel1Index", frame->colorChannelIndex(1));
+    _viewPrg.setUniformValue("colorChannel2Index", frame->colorChannelIndex(2));
+    _viewPrg.setUniformValue("alphaChannelIndex", frame->alphaChannelIndex());
     gl->glActiveTexture(GL_TEXTURE4);
     gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
     if (frame->channelIndex() == ColorChannelIndex) {
@@ -185,9 +192,7 @@ void QV::paintGL()
         _viewPrg.setUniformValue("tex1", 1);
         _viewPrg.setUniformValue("tex2", 2);
         _viewPrg.setUniformValue("alphaTex", 3);
-        _viewPrg.setUniformValue("colorSpace", int(frame->colorSpace()));
-        _viewPrg.setUniformValue("haveAlpha", frame->hasAlpha());
-        _viewPrg.setUniformValue("textureColorSpace", int(frame->textureColorSpace()));
+        _viewPrg.setUniformValue("showColor", true);
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, frame->texture(frame->colorChannelIndex(0)));
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
@@ -207,9 +212,7 @@ void QV::paintGL()
         _viewPrg.setUniformValue("tex1", 0);
         _viewPrg.setUniformValue("tex2", 0);
         _viewPrg.setUniformValue("alphaTex", 0);
-        _viewPrg.setUniformValue("colorSpace", int(ColorSpaceNone));
-        _viewPrg.setUniformValue("haveAlpha", false);
-        _viewPrg.setUniformValue("textureColorSpace", int(ColorSpaceNone));
+        _viewPrg.setUniformValue("showColor", false);
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, frame->texture(frame->channelIndex()));
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);

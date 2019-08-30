@@ -38,7 +38,7 @@ private:
 public:
     Statistic();
 
-    void init(const TAD::Array<float>& array);
+    void init(const TAD::Array<float>& array, size_t componentIndex);
 
     int finiteValues() const { return _finiteValues; }
     float minVal() const { return _minVal; }

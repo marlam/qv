@@ -38,7 +38,7 @@ Statistic::Statistic() :
 {
 }
 
-void Statistic::init(const TAD::Array<float>& array)
+void Statistic::init(const TAD::Array<float>& array, size_t componentIndex)
 {
     assert(_finiteValues == -1);
 
@@ -49,7 +49,7 @@ void Statistic::init(const TAD::Array<float>& array)
     _finiteValues = 0;
 
     for (size_t e = 0; e < array.elementCount(); e++) {
-        float val = array.get<float>(e, 0);
+        float val = array.get<float>(e, componentIndex);
         if (std::isfinite(val)) {
             _finiteValues++;
             if (val < minVal)

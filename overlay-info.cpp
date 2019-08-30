@@ -70,11 +70,11 @@ void OverlayInfo::update(int widthInPixels, int x, int y, Set& set, Parameters& 
                 : frame->type() == TAD::uint16 ? 5
                 : 11);
         for (int i = 0; i < frame->channelCount(); i++) {
-            float v = frame->data(i).get<float>({ size_t(x), size_t(y) }, 0);
+            float v = frame->value(x, y, i);
             val += QString("ch%1=%2 ").arg(frame->channelName(i).c_str()).arg(v, fieldWidth, 'g');
         }
         if (frame->colorSpace() != ColorSpaceNone) {
-            float v = frame->data(ColorChannelIndex).get<float>({ size_t(x), size_t(y) }, 0);
+            float v = frame->value(x, y, ColorChannelIndex);
             val += QString("lum=%1").arg(v);
         }
         painter->drawText(xOffset, yOffset, val);

@@ -35,19 +35,20 @@
 
 class Frame {
 private:
-    TAD::Type _type;
+    /* data: */
+    TAD::ArrayContainer _originalArray;
+    TAD::Array<float> _floatArray;
+    TAD::Array<float> _lumArray;
+    int _lumArrayChannel;
     /* per channel: */
-    std::vector<TAD::Array<float>> _arrays;
-    std::vector<TAD::Array<float>> _linearArrays;
     std::vector<float> _minVals, _maxVals;
     std::vector<Statistic> _statistics;
     std::vector<Histogram> _histograms;
     /* color: */
-    ColorSpace _colorSpace, _linearColorSpace;
+    ColorSpace _colorSpace;
     int _colorChannels[3], _alphaChannel;
     float _colorMinVal, _colorMaxVal;
     float _colorVisMinVal, _colorVisMaxVal;
-    TAD::Array<float> _lumArray;
     Statistic _colorStatistic;
     Histogram _colorHistogram;
     /* textures: */
@@ -55,8 +56,8 @@ private:
     /* current channel: */
     int _channelIndex;
 
-    const TAD::Array<float>& linearArray(int channel);
-    const TAD::Array<float>& lumArray();
+    const TAD::Array<float>& floatArray();
+    const TAD::Array<float>& lumArray(int& lumArrayChannel);
 
     void clearTextures();
 
@@ -67,11 +68,11 @@ public:
     void init(const TAD::ArrayContainer& a);
     void reset();
 
-    TAD::Type type() const { return _type; }
-    int channelCount() const { return _arrays.size(); }
-    int width() const { return channelCount() > 0 ? _arrays[0].dimension(0) : 0; } 
-    int height() const { return channelCount() > 0 ? _arrays[0].dimension(1) : 0; }
-    const TAD::Array<float>& data(int channelIndex);
+    TAD::Type type() const { return _originalArray.componentType(); }
+    int channelCount() const { return _originalArray.componentCount(); }
+    int width() const { return _originalArray.elementCount() > 0 ? _originalArray.dimension(0) : 0; }
+    int height() const { return _originalArray.elementCount() > 0 ? _originalArray.dimension(1) : 0; }
+    float value(int x, int y, int channelIndex);
 
     ColorSpace colorSpace() const { return _colorSpace; }
     bool hasAlpha() const { return _alphaChannel >= 0; }
@@ -81,15 +82,15 @@ public:
     std::string channelName(int channelIndex) const;
     std::string currentChannelName() const { return channelName(channelIndex()); }
 
-    float minVal(int channelIndex) const;
-    float currentMinVal() const { return minVal(channelIndex()); }
-    float maxVal(int channelIndex) const;
-    float currentMaxVal() const { return maxVal(channelIndex()); }
+    float minVal(int channelIndex);
+    float currentMinVal() { return minVal(channelIndex()); }
+    float maxVal(int channelIndex);
+    float currentMaxVal() { return maxVal(channelIndex()); }
 
-    float visMinVal(int channelIndex) const;
-    float currentVisMinVal() const { return visMinVal(channelIndex()); }
-    float visMaxVal(int channelIndex) const;
-    float currentVisMaxVal() const { return visMaxVal(channelIndex()); }
+    float visMinVal(int channelIndex);
+    float currentVisMinVal() { return visMinVal(channelIndex()); }
+    float visMaxVal(int channelIndex);
+    float currentVisMaxVal() { return visMaxVal(channelIndex()); }
 
     const Statistic& statistic(int channelIndex);
     const Statistic& currentStatistic() { return statistic(channelIndex()); }
@@ -97,7 +98,6 @@ public:
     const Histogram& currentHistogram() { return histogram(channelIndex()); }
 
     unsigned int texture(int channelIndex);
-    ColorSpace textureColorSpace() const { return _linearColorSpace; }
 
     void setChannelIndex(int index);
     int channelIndex() const { return _channelIndex; }

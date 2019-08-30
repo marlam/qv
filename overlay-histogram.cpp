@@ -89,7 +89,7 @@ void OverlayHistogram::update(int widthInPixels, int x, int y, Set& set, Paramet
 
     // Histogram
     bool outside = (x < 0 || y < 0 || x >= frame->width() || y >= frame->height());
-    float value = (outside ? 0.0f : frame->data(frame->channelIndex()).get<float>({ size_t(x), size_t(y) }, 0));
+    float value = (outside ? 0.0f : frame->value(x, y, frame->channelIndex()));
     int availableWidth = widthInPixels - 2 * borderSize;
     float binWidth = float(availableWidth) / H.binCount();
     int availableHeight = heightInPixels - 2 * borderSize;

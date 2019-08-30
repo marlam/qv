@@ -41,7 +41,8 @@ int Histogram::binIndex(float v) const
     return b;
 }
 
-void Histogram::init(const TAD::Array<float>& array, TAD::Type originalType, float minVal, float maxVal)
+void Histogram::init(const TAD::Array<float>& array, size_t componentIndex,
+        TAD::Type originalType, float minVal, float maxVal)
 {
     assert(_bins.size() == 0);
     int binCount = 1024;
@@ -51,7 +52,7 @@ void Histogram::init(const TAD::Array<float>& array, TAD::Type originalType, flo
     _minVal = minVal;
     _maxVal = maxVal;
     for (size_t e = 0; e < array.elementCount(); e++) {
-        float val = array.get<float>(e, 0);
+        float val = array.get<float>(e, componentIndex);
         if (std::isfinite(val)) {
             _bins[binIndex(val)]++;
         }

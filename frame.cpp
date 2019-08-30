@@ -54,40 +54,20 @@ static int componentIndex(const TAD::ArrayContainer& a, const std::string& inter
 void Frame::init(const TAD::ArrayContainer& a)
 {
     reset();
-
-    // Convert to float, extract channel arrays
-    _type = a.componentType();
-    TAD::Array<float> array = a.convert(TAD::float32);
-    _arrays.resize(array.componentCount());
-    _linearArrays.resize(array.componentCount());
-    _minVals.resize(array.componentCount());
-    _maxVals.resize(array.componentCount());
-    _statistics.resize(array.componentCount());
-    _histograms.resize(array.componentCount());
-    for (size_t i = 0; i < _arrays.size(); i++) {
-        _arrays[i] = TAD::Array<float>({ array.dimension(0), array.dimension(1) }, 1);
-        for (size_t e = 0; e < array.elementCount(); e++)
-            std::memcpy(_arrays[i].get(e), array.get<float>(e) + i, sizeof(float));
-        _minVals[i] = std::numeric_limits<float>::quiet_NaN();
-        _maxVals[i] = std::numeric_limits<float>::quiet_NaN();
-        if (_type == TAD::uint8) {
-            _minVals[i] = 0.0f;
-            _maxVals[i] = 255.0f;
-        }
-        a.componentTagList(i).value("MINVAL", &(_minVals[i]));
-        a.componentTagList(i).value("MAXVAL", &(_maxVals[i]));
-        if (!std::isfinite(_minVals[i]) || !std::isfinite(_maxVals[i])) {
-            _minVals[i] = statistic(i).minVal();
-            _maxVals[i] = statistic(i).maxVal();
-        }
-    }
+    _originalArray = a;
+    // Make room for min/max etc
+    _minVals.resize(channelCount(), std::numeric_limits<float>::quiet_NaN());
+    _maxVals.resize(channelCount(), std::numeric_limits<float>::quiet_NaN());
+    _statistics.resize(channelCount());
+    _histograms.resize(channelCount());
     // Determine color space, if any
     _colorSpace = ColorSpaceNone;
     _colorChannels[0] = -1;
     _colorChannels[1] = -1;
     _colorChannels[2] = -1;
+    _alphaChannel = componentIndex(_originalArray, "ALPHA");
     if (_colorSpace == ColorSpaceNone) {
-        _colorChannels[0] = componentIndex(array, "GRAY");
+        _colorChannels[0] = componentIndex(_originalArray, "GRAY");
         if (_colorChannels[0] >= 0) {
             _colorSpace = ColorSpaceLinearGray;
             _colorChannels[1] = _colorChannels[0];
@@ -95,38 +75,45 @@ void Frame::init(const TAD::ArrayContainer& a)
         }
     }
     if (_colorSpace == ColorSpaceNone) {
-        _colorChannels[0] = componentIndex(array, "RED");
-        _colorChannels[1] = componentIndex(array, "GREEN");
-        _colorChannels[2] = componentIndex(array, "BLUE");
-        if (_colorChannels[0] >= 0 && _colorChannels[1] >= 0 && _colorChannels[2] >= 0)
+        _colorChannels[0] = componentIndex(_originalArray, "RED");
+        _colorChannels[1] = componentIndex(_originalArray, "GREEN");
+        _colorChannels[2] = componentIndex(_originalArray, "BLUE");
+        if (_colorChannels[0] >= 0 && _colorChannels[1] >= 0 && _colorChannels[2] >= 0) {
             _colorSpace = ColorSpaceLinearRGB;
+        }
     }
-    if (_colorSpace == ColorSpaceNone) {
-        _colorChannels[0] = componentIndex(array, "SRGB/LUM");
+    if (_colorSpace == ColorSpaceNone
+            && type() == TAD::uint8 && channelCount() == 1) {
+        _colorChannels[0] = componentIndex(_originalArray, "SRGB/LUM");
         if (_colorChannels[0] >= 0) {
             _colorSpace = ColorSpaceSLum;
             _colorChannels[1] = _colorChannels[0];
             _colorChannels[2] = _colorChannels[0];
         }
     }
-    if (_colorSpace == ColorSpaceNone) {
-        _colorChannels[0] = componentIndex(array, "SRGB/R");
-        _colorChannels[1] = componentIndex(array, "SRGB/G");
-        _colorChannels[2] = componentIndex(array, "SRGB/B");
-        if (_colorChannels[0] >= 0 && _colorChannels[1] >= 0 && _colorChannels[2] >= 0)
+    if (_colorSpace == ColorSpaceNone
+            && type() == TAD::uint8 && (channelCount() == 3 || channelCount() == 4)) {
+        _colorChannels[0] = componentIndex(_originalArray, "SRGB/R");
+        _colorChannels[1] = componentIndex(_originalArray, "SRGB/G");
+        _colorChannels[2] = componentIndex(_originalArray, "SRGB/B");
+        if (_colorChannels[0] >= 0 && _colorChannels[1] >= 0 && _colorChannels[2] >= 0
+                && (_alphaChannel < 0 || _alphaChannel == 3)) {
             _colorSpace = ColorSpaceSRGB;
+        }
+        if (_colorSpace == ColorSpaceNone) {
+            _colorChannels[0] = componentIndex(_originalArray, "SRGB/RED");
+            _colorChannels[1] = componentIndex(_originalArray, "SRGB/GREEN");
+            _colorChannels[2] = componentIndex(_originalArray, "SRGB/BLUE");
+            if (_colorChannels[0] >= 0 && _colorChannels[1] >= 0 && _colorChannels[2] >= 0
+                    && (_alphaChannel < 0 || _alphaChannel == 3)) {
+                _colorSpace = ColorSpaceSRGB;
+            }
+        }
     }
     if (_colorSpace == ColorSpaceNone) {
-        _colorChannels[0] = componentIndex(array, "SRGB/RED");
-        _colorChannels[1] = componentIndex(array, "SRGB/GREEN");
-        _colorChannels[2] = componentIndex(array, "SRGB/BLUE");
-        if (_colorChannels[0] >= 0 && _colorChannels[1] >= 0 && _colorChannels[2] >= 0)
-            _colorSpace = ColorSpaceSRGB;
-    }
-    if (_colorSpace == ColorSpaceNone) {
-        _colorChannels[0] = componentIndex(array, "XYZ/X");
-        _colorChannels[1] = componentIndex(array, "XYZ/Y");
-        _colorChannels[2] = componentIndex(array, "XYZ/Z");
+        _colorChannels[0] = componentIndex(_originalArray, "XYZ/X");
+        _colorChannels[1] = componentIndex(_originalArray, "XYZ/Y");
+        _colorChannels[2] = componentIndex(_originalArray, "XYZ/Z");
         if (_colorChannels[0] >= 0 && _colorChannels[1] >= 0 && _colorChannels[2] >= 0) {
             _colorSpace = ColorSpaceXYZ;
         } else if (_colorChannels[0] >= 0) {
@@ -135,10 +122,9 @@ void Frame::init(const TAD::ArrayContainer& a)
             _colorChannels[2] = _colorChannels[0];
         }
     }
-    if (_colorSpace != ColorSpaceNone) {
-        _alphaChannel = componentIndex(array, "ALPHA");
+    if (_colorSpace == ColorSpaceNone) {
+        _alphaChannel = -1;
     }
-    _linearColorSpace = _colorSpace;
     if (_colorSpace == ColorSpaceLinearGray || _colorSpace == ColorSpaceY) {
         _colorMinVal = minVal(colorChannelIndex(0));
         _colorMaxVal = maxVal(colorChannelIndex(0));
@@ -159,13 +145,11 @@ void Frame::init(const TAD::ArrayContainer& a)
         _colorMaxVal = 255.0f;
         _colorVisMinVal = 0.0f;
         _colorVisMaxVal = 100.0f;
-        _linearColorSpace = ColorSpaceLinearGray;
     } else if (_colorSpace == ColorSpaceSRGB) {
         _colorMinVal = 0.0f;
         _colorMaxVal = 255.0f;
         _colorVisMinVal = 0.0f;
         _colorVisMaxVal = 100.0f;
-        _linearColorSpace = ColorSpaceLinearRGB;
     }
     // Set initial channel
     _channelIndex = (_colorSpace != ColorSpaceNone ? ColorChannelIndex : 0);
@@ -175,6 +159,13 @@ void Frame::reset()
 {
     clearTextures();
     *this = Frame();
+}
+
+const TAD::Array<float>& Frame::floatArray()
+{
+    if (_floatArray.elementCount() == 0)
+        _floatArray = _originalArray.convert(TAD::float32);
+    return _floatArray;
 }
 
 std::string Frame::channelName(int channelIndex) const
@@ -230,87 +221,105 @@ std::string Frame::channelName(int channelIndex) const
     return channelName;
 }
 
-const TAD::Array<float>& Frame::linearArray(int channel)
-{
-    if (_linearArrays[channel].elementCount() == 0) {
-        if ((colorSpace() == ColorSpaceSLum && channel == colorChannelIndex())
-                || (colorSpace() == ColorSpaceSRGB
-                    && (channel == colorChannelIndex(0) || channel == colorChannelIndex(1) || channel == colorChannelIndex(2)))) {
-            _linearArrays[channel] = TAD::Array<float>({ size_t(width()), size_t(height()) }, 1);
-            for (size_t e = 0; e < _linearArrays[channel].elementCount(); e++) {
-                float sv = _arrays[channel].get<float>(e, 0) / 255.0f;
-                float v = snormToLinear(sv);
-                _linearArrays[channel].set<float>(e, 0, v * 255.0f);
-            }
-        } else {
-            _linearArrays[channel] = _arrays[channel];
-        }
-    }
-    return _linearArrays[channel];
-}
-
-const TAD::Array<float>& Frame::lumArray()
+const TAD::Array<float>& Frame::lumArray(int& lumArrayChannel)
 {
     if (_lumArray.elementCount() == 0) {
         if (colorSpace() == ColorSpaceLinearGray || colorSpace() == ColorSpaceY) {
-            _lumArray = _arrays[colorChannelIndex(0)];
+            _lumArray = floatArray();
+            _lumArrayChannel = colorChannelIndex(0);
         } else if (colorSpace() == ColorSpaceXYZ) {
-            _lumArray = _arrays[colorChannelIndex(1)];
+            _lumArray = floatArray();
+            _lumArrayChannel = colorChannelIndex(1);
         } else if (colorSpace() == ColorSpaceLinearRGB) {
-            _lumArray = TAD::Array<float>({ size_t(width()), size_t(height()) }, 1);
+            _lumArray = TAD::Array<float>(_originalArray.dimensions(), 1);
             for (size_t e = 0; e < _lumArray.elementCount(); e++) {
-                _lumArray.set<float>(e, 0, rgbToY(
-                            _arrays[colorChannelIndex(0)].get<float>(e, 0),
-                            _arrays[colorChannelIndex(1)].get<float>(e, 0),
-                            _arrays[colorChannelIndex(2)].get<float>(e, 0)));
+                const float* elem = floatArray().get<float>(e);
+                float r = elem[colorChannelIndex(0)];
+                float g = elem[colorChannelIndex(1)];
+                float b = elem[colorChannelIndex(1)];
+                float y = rgbToY(r, g, b);
+                _lumArray.set<float>(e, 0, y);
             }
+            _lumArrayChannel = 0;
         } else if (colorSpace() == ColorSpaceSLum) {
-            _lumArray = TAD::Array<float>({ size_t(width()), size_t(height()) }, 1);
-            const TAD::Array<float>& linArray = linearArray(colorChannelIndex(0));
+            _lumArray = TAD::Array<float>(_originalArray.dimensions(), 1);
             for (size_t e = 0; e < _lumArray.elementCount(); e++) {
-                _lumArray.set<float>(e, 0, linArray.get<float>(e, 0) / 255.0f * 100.0f);
+                float l = floatArray().get<float>(e, colorChannelIndex(0));
+                l = toLinear(l / 255.0f) * 100.0f;
+                _lumArray.set<float>(e, 0, l);
             }
+            _lumArrayChannel = 0;
         } else if (colorSpace() == ColorSpaceSRGB) {
-            _lumArray = TAD::Array<float>({ size_t(width()), size_t(height()) }, 1);
-            const TAD::Array<float>& linArray0 = linearArray(colorChannelIndex(0));
-            const TAD::Array<float>& linArray1 = linearArray(colorChannelIndex(1));
-            const TAD::Array<float>& linArray2 = linearArray(colorChannelIndex(2));
+            _lumArray = TAD::Array<float>(_originalArray.dimensions(), 1);
             for (size_t e = 0; e < _lumArray.elementCount(); e++) {
-                _lumArray.set<float>(e, 0, rgbToY(
-                            linArray0.get<float>(e, 0) / 255.0f,
-                            linArray1.get<float>(e, 0) / 255.0f,
-                            linArray2.get<float>(e, 0) / 255.0f));
+                const float* elem = floatArray().get<float>(e);
+                float r = elem[colorChannelIndex(0)];
+                float g = elem[colorChannelIndex(1)];
+                float b = elem[colorChannelIndex(1)];
+                r = toLinear(r / 255.0f);
+                g = toLinear(g / 255.0f);
+                b = toLinear(b / 255.0f);
+                float y = rgbToY(r, g, b);
+                _lumArray.set<float>(e, 0, y);
             }
+            _lumArrayChannel = 0;
         }
     }
+    lumArrayChannel = _lumArrayChannel;
     return _lumArray;
 }
 
-const TAD::Array<float>& Frame::data(int channelIndex)
+float Frame::value(int x, int y, int channelIndex)
+{
+    float v;
+    if (channelIndex == ColorChannelIndex) {
+        int lc;
+        const TAD::Array<float>& l = lumArray(lc);
+        v = l.get<float>({ size_t(x), size_t(y) }, size_t(lc));
+    } else {
+        v = floatArray().get<float>({ size_t(x), size_t(y) }, size_t(channelIndex));
+    }
+    return v;
+}
+
+float Frame::minVal(int channelIndex)
 {
     if (channelIndex == ColorChannelIndex) {
-        return lumArray();
+        return _colorMinVal;
     } else {
-        return _arrays[channelIndex];
+        if (!std::isfinite(_minVals[channelIndex])) {
+            if (type() == TAD::uint8)
+                _minVals[channelIndex] = 0.0f;
+            _originalArray.componentTagList(channelIndex).value("MINVAL", &(_minVals[channelIndex]));
+            if (!std::isfinite(_minVals[channelIndex]))
+                _minVals[channelIndex] = statistic(channelIndex).minVal();
+        }
+        return _minVals[channelIndex];
     }
 }
 
-float Frame::minVal(int channelIndex) const
+float Frame::maxVal(int channelIndex)
 {
-    return channelIndex == ColorChannelIndex ? _colorMinVal : _minVals[channelIndex];
+    if (channelIndex == ColorChannelIndex) {
+        return _colorMaxVal;
+    } else {
+        if (!std::isfinite(_maxVals[channelIndex])) {
+            if (type() == TAD::uint8)
+                _maxVals[channelIndex] = 255.0f;
+            _originalArray.componentTagList(channelIndex).value("MAXVAL", &(_maxVals[channelIndex]));
+            if (!std::isfinite(_maxVals[channelIndex]))
+                _maxVals[channelIndex] = statistic(channelIndex).maxVal();
+        }
+        return _maxVals[channelIndex];
+    }
 }
 
-float Frame::maxVal(int channelIndex) const
-{
-    return channelIndex == ColorChannelIndex ? _colorMaxVal : _maxVals[channelIndex];
-}
-
-float Frame::visMinVal(int channelIndex) const
+float Frame::visMinVal(int channelIndex)
 {
     return channelIndex == ColorChannelIndex ? _colorVisMinVal : minVal(channelIndex);
 }
 
-float Frame::visMaxVal(int channelIndex) const
+float Frame::visMaxVal(int channelIndex)
 {
     return channelIndex == ColorChannelIndex ? _colorVisMaxVal : maxVal(channelIndex);
 }
@@ -318,12 +327,15 @@ float Frame::visMaxVal(int channelIndex) const
 const Statistic& Frame::statistic(int channelIndex)
 {
     if (channelIndex == ColorChannelIndex) {
-        if (_colorStatistic.finiteValues() < 0)
-            _colorStatistic.init(lumArray());
+        if (_colorStatistic.finiteValues() < 0) {
+            int lc;
+            const TAD::Array<float>& l = lumArray(lc);
+            _colorStatistic.init(l, lc);
+        }
         return _colorStatistic;
     } else {
         if (_statistics[channelIndex].finiteValues() < 0)
-            _statistics[channelIndex].init(_arrays[channelIndex]);
+            _statistics[channelIndex].init(floatArray(), channelIndex);
         return _statistics[channelIndex];
     }
 }
@@ -332,40 +344,82 @@ const Histogram& Frame::histogram(int channelIndex)
 {
     if (channelIndex == ColorChannelIndex) {
         if (_colorHistogram.binCount() == 0) {
-            _colorHistogram.init(lumArray(), _type, _colorVisMinVal, _colorVisMaxVal);
+            int lc;
+            const TAD::Array<float>& l = lumArray(lc);
+            _colorHistogram.init(l, lc, type(),
+                    visMinVal(ColorChannelIndex), visMaxVal(ColorChannelIndex));
         }
         return _colorHistogram;
     } else {
         if (_histograms[channelIndex].binCount() == 0) {
-            _histograms[channelIndex].init(_arrays[channelIndex], _type,
+            _histograms[channelIndex].init(floatArray(), channelIndex, type(),
                     minVal(channelIndex), maxVal(channelIndex));
         }
         return _histograms[channelIndex];
     }
 }
 
+static void uploadArrayToTexture(const TAD::ArrayContainer& array,
+        unsigned int texture,
+        GLint internalFormat, GLenum format, GLenum type)
+{
+    auto gl = getGlFunctionsFromCurrentContext();
+    gl->glBindTexture(GL_TEXTURE_2D, texture);
+    gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glGetGlobalPBO());
+    gl->glBufferData(GL_PIXEL_UNPACK_BUFFER, array.dataSize(), nullptr, GL_STREAM_DRAW);
+    void* ptr = gl->glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, array.dataSize(),
+            GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
+    std::memcpy(ptr, array.data(), array.dataSize());
+    gl->glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, internalFormat,
+            array.dimension(0), array.dimension(1), 0,
+            format, type, nullptr);
+    gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    gl->glGenerateMipmap(GL_TEXTURE_2D);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+}
+
 unsigned int Frame::texture(int channelIndex)
 {
     auto gl = getGlFunctionsFromCurrentContext();
-    if (_textures.size() != size_t(channelCount()))
-        _textures.resize(channelCount(), 0);
-    if (_textures[channelIndex] == 0) {
-        gl->glGenTextures(1, &(_textures[channelIndex]));
-        gl->glBindTexture(GL_TEXTURE_2D, _textures[channelIndex]);
-        gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glGetGlobalPBO());
-        gl->glBufferData(GL_PIXEL_UNPACK_BUFFER, linearArray(channelIndex).dataSize(), nullptr, GL_STREAM_DRAW);
-        void* ptr = gl->glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, linearArray(channelIndex).dataSize(),
-                GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-        std::memcpy(ptr, linearArray(channelIndex).data(), linearArray(channelIndex).dataSize());
-        gl->glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-        gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width(), height(), 0, GL_RED, GL_FLOAT, nullptr);
-        gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        gl->glGenerateMipmap(GL_TEXTURE_2D);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    unsigned int tex = 0;
+    if (channelCount() <= 4) {
+        // single texture
+        if (_textures.size() != 1) {
+            _textures.resize(1);
+            gl->glGenTextures(1, _textures.data());
+            GLenum formats[4] = { GL_RED, GL_RG, GL_RGB, GL_RGBA };
+            GLenum format = formats[channelCount() - 1];
+            if (colorSpace() == ColorSpaceSLum || colorSpace() == ColorSpaceSRGB) {
+                GLint internalFormat = (colorSpace() == ColorSpaceSLum ? GL_SRGB8
+                        : colorSpace() == ColorSpaceSRGB && !hasAlpha() ? GL_SRGB8
+                        : GL_SRGB8_ALPHA8);
+                GLenum type = GL_UNSIGNED_BYTE;
+                uploadArrayToTexture(_originalArray, _textures[0], internalFormat, format, type);
+            } else {
+                GLint internalFormats[4] = { GL_R32F, GL_RG32F, GL_RGB32F, GL_RGBA32F };
+                GLint internalFormat = internalFormats[channelCount() - 1];
+                GLenum type = GL_FLOAT;
+                uploadArrayToTexture(floatArray(), _textures[0], internalFormat, format, type);
+            }
+        }
+        tex = _textures[0];
+    } else {
+        // one texture per channel
+        if (_textures.size() != size_t(channelCount()))
+            _textures.resize(channelCount(), 0);
+        if (_textures[channelIndex] == 0) {
+            gl->glGenTextures(1, &(_textures[channelIndex]));
+            TAD::Array<float> dataArray(_originalArray.dimensions(), 1);
+            for (size_t e = 0; e < dataArray.elementCount(); e++)
+                dataArray.set<float>(e, 0, floatArray().get<float>(e, channelIndex));
+            uploadArrayToTexture(dataArray, _textures[channelIndex], GL_R32F, GL_RED, GL_FLOAT);
+        }
+        tex = _textures[channelIndex];
     }
-    return _textures[channelIndex];
+    return tex;
 }
 
 void Frame::clearTextures()

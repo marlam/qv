@@ -21,7 +21,7 @@
  * SOFTWARE.
  */
 
-uniform sampler2D tex0, tex1, tex2;
+uniform sampler2D tex0, tex1, tex2, alphaTex;
 
 // these values are shared with frame.hpp!
 const int ColorSpaceNone        = 0;
@@ -31,10 +31,14 @@ const int ColorSpaceSLum        = 3;
 const int ColorSpaceSRGB        = 4;
 const int ColorSpaceY           = 5;
 const int ColorSpaceXYZ         = 6;
+uniform bool showColor;
 uniform int colorSpace;
-uniform int textureColorSpace;
-uniform bool haveAlpha;
-uniform sampler2D alphaTex;
+uniform int channelCount;
+uniform int dataChannelIndex;
+uniform int colorChannel0Index;
+uniform int colorChannel1Index;
+uniform int colorChannel2Index;
+uniform int alphaChannelIndex;
 
 uniform float minVal;
 uniform float maxVal;
@@ -84,23 +88,25 @@ vec3 xyz_to_rgb(vec3 xyz)
             (+0.0557101 * xyz.x - 0.2040211 * xyz.y + 1.0569959 * xyz.z));
 }
 
-float linear_to_snorm(float x)
+float linear_to_s(float x)
 {
     return (x <= 0.0031308 ? (x * 12.92) : (1.055 * pow(x, 1.0 / 2.4) - 0.055));
 }
 
 vec3 rgb_to_srgb(vec3 rgb)
 {
-    return vec3(linear_to_snorm(rgb.r), linear_to_snorm(rgb.g), linear_to_snorm(rgb.b));
+    return vec3(linear_to_s(rgb.r), linear_to_s(rgb.g), linear_to_s(rgb.b));
 }
 
 void main(void)
 {
     vec3 srgb;
 
-    if (textureColorSpace == ColorSpaceNone) {
+    if (!showColor) {
         // Get value
-        float v = texture(tex0, vtexcoord).r;
+        float v = texture(tex0, vtexcoord)[dataChannelIndex];
+        if (colorSpace == ColorSpaceSLum || colorSpace == ColorSpaceSRGB)
+            v *= 255.0f;
         // Apply range selection
         v = (v - visMinVal) / (visMaxVal - visMinVal);
         v = clamp(v, 0.0, 1.0);
@@ -112,29 +118,38 @@ void main(void)
             srgb = rgb_to_srgb(xyz_to_rgb(xyz));
         }
     } else {
+        // Read data into canonical form
+        vec4 data = vec4(0.0, 0.0, 0.0, 1.0);
+        if (channelCount <= 4) {
+            vec4 tmpData = texture(tex0, vtexcoord);
+            data[0] = tmpData[colorChannel0Index];
+            data[1] = tmpData[colorChannel1Index];
+            data[2] = tmpData[colorChannel2Index];
+            if (alphaChannelIndex >= 0) {
+                data[3] = tmpData[alphaChannelIndex];
+            }
+        } else {
+            data[0] = texture(tex0, vtexcoord).r;
+            data[1] = texture(tex1, vtexcoord).r;
+            data[2] = texture(tex2, vtexcoord).r;
+            if (alphaChannelIndex >= 0) {
+                data[3] = texture(alphaTex, vtexcoord).r;
+            }
+        }
         // Get color
         vec3 xyz;
-        if (textureColorSpace == ColorSpaceLinearGray) {
-            float y = 100.0 * normalizeVal(texture(tex0, vtexcoord).r);
-            xyz = adjust_y(d65_xyz, y);
-        } else if (textureColorSpace == ColorSpaceLinearRGB) {
-            float r = texture(tex0, vtexcoord).r;
-            float g = texture(tex1, vtexcoord).r;
-            float b = texture(tex2, vtexcoord).r;
-            if (colorSpace == ColorSpaceSRGB) {
-                r = normalizeVal(r);
-                g = normalizeVal(g);
-                b = normalizeVal(b);
-            }
-            xyz = rgb_to_xyz(vec3(r, g, b));
-        } else if (textureColorSpace == ColorSpaceY) {
-            float y = texture(tex0, vtexcoord).r;
-            xyz = adjust_y(d65_xyz, y);
-        } else if (textureColorSpace == ColorSpaceXYZ) {
-            float x = texture(tex0, vtexcoord).r;
-            float y = texture(tex1, vtexcoord).r;
-            float z = texture(tex2, vtexcoord).r;
-            xyz = vec3(x, y, z);
+        if (colorSpace == ColorSpaceLinearGray) {
+            xyz = adjust_y(d65_xyz, 100.0 * normalizeVal(data[0]));
+        } else if (colorSpace == ColorSpaceLinearRGB) {
+            xyz = rgb_to_xyz(vec3(data[0], data[1], data[2]));
+        } else if (colorSpace == ColorSpaceSLum) {
+            xyz = adjust_y(d65_xyz, 100.0 * data[0]);
+        } else if (colorSpace == ColorSpaceSRGB) {
+            xyz = rgb_to_xyz(vec3(data[0], data[1], data[2]));
+        } else if (colorSpace == ColorSpaceY) {
+            xyz = adjust_y(d65_xyz, data[0]);
+        } else if (colorSpace == ColorSpaceXYZ) {
+            xyz = vec3(data[0], data[1], data[2]);
         }
         // Apply range selection
         float y = xyz.y;
@@ -146,9 +161,8 @@ void main(void)
         } else {
             xyz = adjust_y(xyz, 100.0 * y);
             vec3 rgb = xyz_to_rgb(xyz);
-            if (haveAlpha) {
-                float alpha = normalizeVal(texture(alphaTex, vtexcoord).r);
-                alpha = clamp(alpha, 0.0, 1.0);
+            if (alphaChannelIndex >= 0) {
+                float alpha = clamp(data[3], 0.0, 1.0);
                 rgb = clamp(rgb, vec3(0.0), vec3(1.0));
                 rgb = rgb * alpha + vec3(1.0 - alpha);
             }

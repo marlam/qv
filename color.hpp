@@ -28,19 +28,19 @@
 #include <limits>
 
 typedef enum {
-    // these values are shared with fs.glsl!
+    // these values are shared with shader-view-fragment.glsl
     ColorSpaceNone        = 0,
     ColorSpaceLinearGray  = 1,
     ColorSpaceLinearRGB   = 2,
-    ColorSpaceSLum        = 3,
-    ColorSpaceSRGB        = 4,
+    ColorSpaceSLum        = 3, // only uint8, 1 channel
+    ColorSpaceSRGB        = 4, // only uint8, 3 or 4 channels, alpha must be in channel 3
     ColorSpaceY           = 5,
     ColorSpaceXYZ         = 6
 } ColorSpace;
 
 const int ColorChannelIndex = std::numeric_limits<int>::max();
 
-inline float snormToLinear(float x)
+inline float toLinear(float x)
 {
     return (x <= 0.04045f ? (x / 12.92f) : std::pow((x + 0.055f) / 1.055f, 2.4f));
 }

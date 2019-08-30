@@ -14,7 +14,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 find_package(libtad)
-find_package(Qt5 5.11.0 COMPONENTS Gui)
+find_package(Qt5 5.11.0 COMPONENTS Widgets)
 
 include_directories(${TAD_INCLUDE_DIRS})
 link_directories(${TAD_LIBRARY_DIRS})
@@ -39,5 +39,5 @@ add_executable(qv
     overlay-colormap.hpp overlay-colormap.cpp
     qv.hpp qv.cpp
     ${RESOURCES})
-target_link_libraries(qv -lstdc++fs ${TAD_LIBRARIES} Qt5::Gui)
+target_link_libraries(qv -lstdc++fs ${TAD_LIBRARIES} Qt5::Widgets)
 install(TARGETS qv RUNTIME DESTINATION bin)

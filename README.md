@@ -24,7 +24,27 @@ multiple images, called frames in qv.
 
 - ESC: end fullscreen or quit
 
+### Manage files
+
+- o: open file
+
+- w: close current file
+
 - r: reload the current file
+
+- <,>: go 1 file backward/forward
+
+### Switch frames and channels
+
+- ←,→: 1 frame backward/forward
+
+- ↑,↓: 10 frames backward/forward
+
+- ⇞,⇟: 100 frames backward/forward
+
+- c: color channel
+
+- 0-9: channel with this index
 
 ### View, zoom, move
 
@@ -36,21 +56,15 @@ multiple images, called frames in qv.
 
 - mouse,␣: move/reset
 
-### Switch files and frames
+### Adjust displayed interval (e.g. for HDR)
 
-- <,>: previous/next file
+- (,): shift left/right
 
-- ←,→: 1 frame backward/forward
+- {,}: decrease/increase lower bound
 
-- ↑,↓: 10 frames backward/forward
+- [,]: decrease/increase upper bound
 
-- ⇞,⇟: 100 frames backward/forward
-
-### Switch channels
-
-- c: color channel
-
-- 0-9: this channel
+- \: reset value range
 
 ### Analysis tools
 
@@ -61,16 +75,6 @@ multiple images, called frames in qv.
 - h: toggle histogram overlay
 
 - m: toggle color map overlay
-
-### Adjust displayed interval (e.g. for HDR)
-
-- (,): shift left/right
-
-- {,}: decrease/increase lower bound
-
-- [,]: decrease/increase upper bound
-
-- \: reset value range
 
 ### Choose color map
 

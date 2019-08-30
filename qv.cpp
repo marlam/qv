@@ -31,6 +31,8 @@
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QWheelEvent>
+#include <QFileDialog>
+#include <QMessageBox>
 
 #include "utils.hpp"
 #include "qv.hpp"
@@ -48,8 +50,9 @@ QV::QV(Set& set, Parameters& parameters) :
 {
     setIcon(QIcon(":cg-logo.png"));
     setMinimumSize(QSize(500, 500));
-    Frame* frame = _set.currentFile()->currentFrame();
-    QSize frameSize = QSize(frame->width(), frame->height());
+    File* file = _set.currentFile();
+    Frame* frame = (file ? file->currentFrame() : nullptr);
+    QSize frameSize = (frame ? QSize(frame->width(), frame->height()) : QSize(0, 0));
     QSize screenSize = QGuiApplication::primaryScreen()->availableSize();
     QSize maxSize = 0.9f * screenSize;
     resize(frameSize.boundedTo(maxSize));
@@ -58,7 +61,12 @@ QV::QV(Set& set, Parameters& parameters) :
 
 void QV::updateTitle()
 {
-    setTitle((_set.currentDescription() + " - qv").c_str());
+    std::string s = _set.currentDescription();
+    if (s.size() == 0)
+        s = "qv";
+    else
+        s += " - qv";
+    setTitle(s.c_str());
 }
 
 void QV::initializeGL()
@@ -143,78 +151,32 @@ void QV::paintGL()
     gl->glViewport(0, 0, _w, _h);
     gl->glClear(GL_COLOR_BUFFER_BIT);
 
-    Frame* frame = _set.currentFile()->currentFrame();
-    gl->glUseProgram(_viewPrg.programId());
-
-    // Aspect ratio
-    float windowAR = float(_w) / _h;
-    float frameAR = float(frame->width()) / frame->height();
-    float arFactorX = 1.0f;
-    float arFactorY = 1.0f;
-    if (windowAR > frameAR) {
-        arFactorX = frameAR / windowAR;
-    } else if (frameAR > windowAR) {
-        arFactorY = windowAR / frameAR;
-    }
-    // Navigation and zoom
-    float xFactor = arFactorX / _parameters.zoom;
-    float yFactor = arFactorY / _parameters.zoom;
-    float xOffset = 2.0f * _parameters.xOffset / _w;
-    float yOffset = 2.0f * _parameters.yOffset / _h;
-    _viewPrg.setUniformValue("xFactor", xFactor);
-    _viewPrg.setUniformValue("yFactor", yFactor);
-    _viewPrg.setUniformValue("xOffset", xOffset);
-    _viewPrg.setUniformValue("yOffset", yOffset);
-    _viewPrg.setUniformValue("magGrid", _parameters.magGrid);
-    // Min/max values
-    float visMinVal = _parameters.visMinVal(frame->channelIndex());
-    float visMaxVal = _parameters.visMaxVal(frame->channelIndex());
-    if (!std::isfinite(visMinVal) || !std::isfinite(visMaxVal)) {
-        visMinVal = frame->visMinVal(frame->channelIndex());
-        visMaxVal = frame->visMaxVal(frame->channelIndex());
-        _parameters.setVisMinVal(frame->channelIndex(), visMinVal);
-        _parameters.setVisMaxVal(frame->channelIndex(), visMaxVal);
-    }
-    _viewPrg.setUniformValue("visMinVal", visMinVal);
-    _viewPrg.setUniformValue("visMaxVal", visMaxVal);
-    // Color and data information
-    bool showColor = (frame->channelIndex() == ColorChannelIndex);
-    _viewPrg.setUniformValue("colorMap", _parameters.colorMap().type() != ColorMapNone);
-    _viewPrg.setUniformValue("showColor", showColor);
-    _viewPrg.setUniformValue("colorSpace", int(frame->colorSpace()));
-    _viewPrg.setUniformValue("channelCount", frame->channelCount());
-    _viewPrg.setUniformValue("dataChannelIndex", frame->channelIndex());
-    _viewPrg.setUniformValue("colorChannel0Index", frame->colorChannelIndex(0));
-    _viewPrg.setUniformValue("colorChannel1Index", frame->colorChannelIndex(1));
-    _viewPrg.setUniformValue("colorChannel2Index", frame->colorChannelIndex(2));
-    _viewPrg.setUniformValue("alphaChannelIndex", frame->alphaChannelIndex());
-    // Textures
-    _viewPrg.setUniformValue("tex0", 0);
-    _viewPrg.setUniformValue("tex1", 1);
-    _viewPrg.setUniformValue("tex2", 2);
-    _viewPrg.setUniformValue("alphaTex", 3);
-    _viewPrg.setUniformValue("colorMapTex", 4);
-    gl->glActiveTexture(GL_TEXTURE0);
-    gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(0)) : frame->texture(frame->channelIndex()));
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-    gl->glActiveTexture(GL_TEXTURE1);
-    gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(1)) : 0);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-    gl->glActiveTexture(GL_TEXTURE2);
-    gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(2)) : 0);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-    gl->glActiveTexture(GL_TEXTURE3);
-    gl->glBindTexture(GL_TEXTURE_2D, (showColor && frame->hasAlpha()) ? frame->texture(frame->alphaChannelIndex()) : 0);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-    gl->glActiveTexture(GL_TEXTURE4);
-    gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
-    // Draw the image
-    gl->glBindVertexArray(_vao);
-    gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-
-    // Compute which (x,y) coordinate in the data the mouse points to
-    int dataX, dataY;
-    {
+    File* file = _set.currentFile();
+    Frame* frame = (file ? file->currentFrame() : nullptr);
+    int dataX = -1, dataY = -1;
+    if (frame) {
+        gl->glUseProgram(_viewPrg.programId());
+        // Aspect ratio
+        float windowAR = float(_w) / _h;
+        float frameAR = float(frame->width()) / frame->height();
+        float arFactorX = 1.0f;
+        float arFactorY = 1.0f;
+        if (windowAR > frameAR) {
+            arFactorX = frameAR / windowAR;
+        } else if (frameAR > windowAR) {
+            arFactorY = windowAR / frameAR;
+        }
+        // Navigation and zoom
+        float xFactor = arFactorX / _parameters.zoom;
+        float yFactor = arFactorY / _parameters.zoom;
+        float xOffset = 2.0f * _parameters.xOffset / _w;
+        float yOffset = 2.0f * _parameters.yOffset / _h;
+        _viewPrg.setUniformValue("xFactor", xFactor);
+        _viewPrg.setUniformValue("yFactor", yFactor);
+        _viewPrg.setUniformValue("xOffset", xOffset);
+        _viewPrg.setUniformValue("yOffset", yOffset);
+        _viewPrg.setUniformValue("magGrid", _parameters.magGrid);
+        // Data coordinates
         float wx = (float(_mousePos.x()) / _w - 0.5f) * 2.0f;
         float wy = (float(_h - 1 - _mousePos.y()) / _h - 0.5f) * 2.0f;
         float px = (wx - xOffset) / xFactor;
@@ -227,13 +189,70 @@ void QV::paintGL()
             dataX = -1;
         if (dy < 0.0f || dataY >= frame->height())
             dataY = -1;
+        // Min/max values
+        float visMinVal = _parameters.visMinVal(frame->channelIndex());
+        float visMaxVal = _parameters.visMaxVal(frame->channelIndex());
+        if (!std::isfinite(visMinVal) || !std::isfinite(visMaxVal)) {
+            visMinVal = frame->visMinVal(frame->channelIndex());
+            visMaxVal = frame->visMaxVal(frame->channelIndex());
+            _parameters.setVisMinVal(frame->channelIndex(), visMinVal);
+            _parameters.setVisMaxVal(frame->channelIndex(), visMaxVal);
+        }
+        _viewPrg.setUniformValue("visMinVal", visMinVal);
+        _viewPrg.setUniformValue("visMaxVal", visMaxVal);
+        // Color and data information
+        bool showColor = (frame->channelIndex() == ColorChannelIndex);
+        _viewPrg.setUniformValue("colorMap", _parameters.colorMap().type() != ColorMapNone);
+        _viewPrg.setUniformValue("showColor", showColor);
+        _viewPrg.setUniformValue("colorSpace", int(frame->colorSpace()));
+        _viewPrg.setUniformValue("channelCount", frame->channelCount());
+        _viewPrg.setUniformValue("dataChannelIndex", frame->channelIndex());
+        _viewPrg.setUniformValue("colorChannel0Index", frame->colorChannelIndex(0));
+        _viewPrg.setUniformValue("colorChannel1Index", frame->colorChannelIndex(1));
+        _viewPrg.setUniformValue("colorChannel2Index", frame->colorChannelIndex(2));
+        _viewPrg.setUniformValue("alphaChannelIndex", frame->alphaChannelIndex());
+        // Textures
+        _viewPrg.setUniformValue("tex0", 0);
+        _viewPrg.setUniformValue("tex1", 1);
+        _viewPrg.setUniformValue("tex2", 2);
+        _viewPrg.setUniformValue("alphaTex", 3);
+        _viewPrg.setUniformValue("colorMapTex", 4);
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(0)) : frame->texture(frame->channelIndex()));
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+        gl->glActiveTexture(GL_TEXTURE1);
+        gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(1)) : 0);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+        gl->glActiveTexture(GL_TEXTURE2);
+        gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(2)) : 0);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+        gl->glActiveTexture(GL_TEXTURE3);
+        gl->glBindTexture(GL_TEXTURE_2D, (showColor && frame->hasAlpha()) ? frame->texture(frame->alphaChannelIndex()) : 0);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+        gl->glActiveTexture(GL_TEXTURE4);
+        gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
+        // Draw the image
+        gl->glBindVertexArray(_vao);
+        gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     }
 
     // Draw the overlays
+    bool overlayHelpActive = _overlayHelpActive;
+    bool overlayInfoActive = _overlayInfoActive;
+    bool overlayStatisticActive = _overlayStatisticActive;
+    bool overlayHistogramActive = _overlayHistogramActive;
+    bool overlayColorMapActive = _overlayColorMapActive;
+    if (!frame) {
+        overlayHelpActive = true;
+        overlayInfoActive = false;
+        overlayStatisticActive = false;
+        overlayHistogramActive = false;
+        overlayColorMapActive = false;
+    }
     gl->glEnable(GL_BLEND);
     gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     int overlayYOffset = 0;
-    if (_overlayColorMapActive) {
+    if (overlayColorMapActive) {
         _overlayColorMap.update(_w, _parameters);
         gl->glViewport(0, overlayYOffset, _w, _overlayColorMap.heightInPixels);
         gl->glUseProgram(_overlayPrg.programId());
@@ -242,7 +261,7 @@ void QV::paintGL()
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
         overlayYOffset += _overlayColorMap.heightInPixels;
     }
-    if (_overlayHistogramActive) {
+    if (overlayHistogramActive) {
         _overlayHistogram.update(_w, dataX, dataY,_set, _parameters);
         gl->glViewport(0, overlayYOffset, _w, _overlayHistogram.heightInPixels);
         gl->glUseProgram(_overlayPrg.programId());
@@ -251,7 +270,7 @@ void QV::paintGL()
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
         overlayYOffset += _overlayHistogram.heightInPixels;
     }
-    if (_overlayStatisticActive) {
+    if (overlayStatisticActive) {
         _overlayStatistic.update(_w, _set, _parameters);
         gl->glViewport(0, overlayYOffset, _w, _overlayStatistic.heightInPixels);
         gl->glUseProgram(_overlayPrg.programId());
@@ -260,7 +279,7 @@ void QV::paintGL()
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
         overlayYOffset += _overlayStatistic.heightInPixels;
     }
-    if (_overlayInfoActive) {
+    if (overlayInfoActive) {
         _overlayInfo.update(_w, dataX, dataY, _set, _parameters);
         gl->glViewport(0, overlayYOffset, _w, _overlayInfo.heightInPixels);
         gl->glUseProgram(_overlayPrg.programId());
@@ -269,7 +288,7 @@ void QV::paintGL()
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
         overlayYOffset += _overlayInfo.heightInPixels;
     }
-    if (_overlayHelpActive) {
+    if (overlayHelpActive) {
         _overlayHelp.update(_w);
         gl->glViewport(0, overlayYOffset, _w, _overlayHelp.heightInPixels);
         gl->glUseProgram(_overlayPrg.programId());
@@ -279,6 +298,44 @@ void QV::paintGL()
         overlayYOffset += _overlayHelp.heightInPixels;
     }
     gl->glDisable(GL_BLEND);
+}
+
+void QV::openFile()
+{
+    QString name = QFileDialog::getOpenFileName();
+    if (!name.isEmpty()) {
+        std::string errMsg;
+        if (!_set.addFile(qPrintable(name), errMsg)
+                || !_set.setFileIndex(_set.fileCount() - 1, errMsg)) {
+            QMessageBox::critical(nullptr, "Error", errMsg.c_str());
+        }
+        if (_set.fileCount() == 1) {
+            _parameters = Parameters();
+            _parameters.magInterpolation = (_set.currentFile()->currentFrame()->channelIndex() == ColorChannelIndex);
+        }
+        this->updateTitle();
+        this->update();
+    }
+}
+
+void QV::closeFile()
+{
+    if (_set.fileIndex() >= 0) {
+        _set.removeFile(_set.fileIndex());
+        this->updateTitle();
+        this->update();
+    }
+}
+
+void QV::reloadFile()
+{
+    std::string errMsg;
+    bool ret = _set.currentFile()->reload(errMsg);
+    if (!ret) {
+        QMessageBox::critical(nullptr, "Error", errMsg.c_str());
+    }
+    this->updateTitle();
+    this->update();
 }
 
 void QV::adjustFileIndex(int offset)
@@ -295,7 +352,7 @@ void QV::adjustFileIndex(int offset)
             this->updateTitle();
             this->update();
         } else {
-            fprintf(stderr, "%s\n", errMsg.c_str());
+            QMessageBox::critical(nullptr, "Error", errMsg.c_str());
         }
     }
 }
@@ -314,7 +371,7 @@ void QV::adjustFrameIndex(int offset)
             this->updateTitle();
             this->update();
         } else {
-            fprintf(stderr, "%s\n", errMsg.c_str());
+            QMessageBox::critical(nullptr, "Error", errMsg.c_str());
         }
     }
 }
@@ -331,17 +388,6 @@ void QV::setChannelIndex(int index)
     }
     this->updateTitle();
     this->update();
-}
-
-void QV::reload()
-{
-    std::string errMsg;
-    bool ret = _set.currentFile()->reload(errMsg);
-    if (!ret) {
-        fprintf(stderr, "%s\n", errMsg.c_str());
-    } else {
-        this->update();
-    }
 }
 
 void QV::adjustZoom(int steps)
@@ -403,178 +449,120 @@ void QV::changeColorMap(ColorMapType type)
 
 void QV::keyReleaseEvent(QKeyEvent* e)
 {
-    switch (e->key()) {
-    /* Quit and/or leave fullscreen */
-    case Qt::Key_Q:
+    if (e->key() == Qt::Key_Q || e->matches(QKeySequence::Quit)) {
         this->close();
-        break;
-    case Qt::Key_Escape:
+    } else if (e->key() == Qt::Key_Escape) {
         if (this->windowStates() & Qt::WindowFullScreen)
             this->showNormal();
         else
             this->close();
-        break;
-    /* Toggle fullscreen */
-    case Qt::Key_F11:
+    } else if (e->key() == Qt::Key_F11 || e->matches(QKeySequence::FullScreen)) {
         if (this->windowStates() & Qt::WindowFullScreen)
             this->showNormal();
         else
             this->showFullScreen();
-        break;
-    /* Set file in set */
-    case Qt::Key_Less:
+    } else if (e->key() == Qt::Key_O || e->matches(QKeySequence::Open)) {
+        openFile();
+    } else if (e->key() == Qt::Key_W || e->matches(QKeySequence::Close)) {
+        closeFile();
+    } else if (e->key() == Qt::Key_R || e->matches(QKeySequence::Refresh)) {
+        reloadFile();
+    } else if (e->key() == Qt::Key_Less || e->matches(QKeySequence::PreviousChild)) {
         adjustFileIndex(-1);
-        break;
-    case Qt::Key_Greater:
+    } else if (e->key() == Qt::Key_Greater || e->matches(QKeySequence::NextChild)) {
         adjustFileIndex(+1);
-        break;
-    /* Set frame in file */
-    case Qt::Key_Left:
+    } else if (e->key() == Qt::Key_Left) {
         adjustFrameIndex(-1);
-        break;
-    case Qt::Key_Right:
+    } else if (e->key() == Qt::Key_Right) {
         adjustFrameIndex(+1);
-        break;
-    case Qt::Key_Down:
+    } else if (e->key() == Qt::Key_Down) {
         adjustFrameIndex(+10);
-        break;
-    case Qt::Key_Up:
+    } else if (e->key() == Qt::Key_Up) {
         adjustFrameIndex(-10);
-        break;
-    case Qt::Key_PageDown:
+    } else if (e->key() == Qt::Key_PageDown) {
         adjustFrameIndex(+100);
-        break;
-    case Qt::Key_PageUp:
+    } else if (e->key() == Qt::Key_PageUp) {
         adjustFrameIndex(-100);
-        break;
-    /* Set channel in frame */
-    case Qt::Key_C:
+    } else if (e->key() == Qt::Key_C) {
         setChannelIndex(ColorChannelIndex);
-        break;
-    case Qt::Key_0:
+    } else if (e->key() == Qt::Key_0) {
         setChannelIndex(0);
-        break;
-    case Qt::Key_1:
+    } else if (e->key() == Qt::Key_1) {
         setChannelIndex(1);
-        break;
-    case Qt::Key_2:
+    } else if (e->key() == Qt::Key_2) {
         setChannelIndex(2);
-        break;
-    case Qt::Key_3:
+    } else if (e->key() == Qt::Key_3) {
         setChannelIndex(3);
-        break;
-    case Qt::Key_4:
+    } else if (e->key() == Qt::Key_4) {
         setChannelIndex(4);
-        break;
-    case Qt::Key_5:
+    } else if (e->key() == Qt::Key_5) {
         setChannelIndex(5);
-        break;
-    case Qt::Key_6:
+    } else if (e->key() == Qt::Key_6) {
         setChannelIndex(6);
-        break;
-    case Qt::Key_7:
+    } else if (e->key() == Qt::Key_7) {
         setChannelIndex(7);
-        break;
-    case Qt::Key_8:
+    } else if (e->key() == Qt::Key_8) {
         setChannelIndex(8);
-        break;
-    case Qt::Key_9:
+    } else if (e->key() == Qt::Key_9) {
         setChannelIndex(9);
-        break;
-    case Qt::Key_R:
-        reload();
-        break;
-    /* Linear interpolation when magnifying */
-    case Qt::Key_L:
+    } else if (e->key() == Qt::Key_L) {
         _parameters.magInterpolation = !_parameters.magInterpolation;
         this->update();
-        break;
-    /* Grid when magnifying */
-    case Qt::Key_G:
+    } else if (e->key() == Qt::Key_G) {
         _parameters.magGrid = !_parameters.magGrid;
         this->update();
-        break;
-    /* Zoom */
-    case Qt::Key_Equal:
+    } else if (e->key() == Qt::Key_Equal) {
         _parameters.zoom = 1.0f;
         this->update();
-        break;
-    case Qt::Key_ZoomOut:
-    case Qt::Key_Minus:
+    } else if (e->key() == Qt::Key_Minus || e->matches(QKeySequence::ZoomOut)) {
         adjustZoom(-1);
-        break;
-    case Qt::Key_ZoomIn:
-    case Qt::Key_Plus:
+    } else if (e->key() == Qt::Key_Plus || e->matches(QKeySequence::ZoomIn)) {
         adjustZoom(+1);
-        break;
-    /* Translation */
-    case Qt::Key_Space:
+    } else if (e->key() == Qt::Key_Space) {
         _parameters.xOffset = 0.0f;
         _parameters.yOffset = 0.0f;
         this->update();
-        break;
-    /* Range Selection */
-    case Qt::Key_BraceLeft:
+    } else if (e->key() == Qt::Key_BraceLeft) {
         adjustVisInterval(-1, 0);
-        break;
-    case Qt::Key_BraceRight:
+    } else if (e->key() == Qt::Key_BraceRight) {
         adjustVisInterval(+1, 0);
-        break;
-    case Qt::Key_BracketLeft:
+    } else if (e->key() == Qt::Key_BracketLeft) {
         adjustVisInterval(0, -1);
-        break;
-    case Qt::Key_BracketRight:
+    } else if (e->key() == Qt::Key_BracketRight) {
         adjustVisInterval(0, +1);
-        break;
-    case Qt::Key_ParenLeft:
+    } else if (e->key() == Qt::Key_ParenLeft) {
         adjustVisInterval(-1, -1);
-        break;
-    case Qt::Key_ParenRight:
+    } else if (e->key() == Qt::Key_ParenRight) {
         adjustVisInterval(+1, +1);
-        break;
-    case Qt::Key_Backslash:
+    } else if (e->key() == Qt::Key_Backslash) {
         resetVisInterval();
-        break;
-    /* Color map */
-    case Qt::Key_F4:
+    } else if (e->key() == Qt::Key_F4) {
         changeColorMap(ColorMapNone);
-        break;
-    case Qt::Key_F5:
+    } else if (e->key() == Qt::Key_F5) {
         changeColorMap(ColorMapSequential);
-        break;
-    case Qt::Key_F6:
+    } else if (e->key() == Qt::Key_F6) {
         changeColorMap(ColorMapDiverging);
-        break;
-    case Qt::Key_F7:
+    } else if (e->key() == Qt::Key_F7) {
         changeColorMap(ColorMapQualitative);
-        break;
-    case Qt::Key_F8:
+    } else if (e->key() == Qt::Key_F8) {
         changeColorMap(ColorMapCustom);
-        break;
-    /* Overlays */
-    case Qt::Key_F1:
+    } else if (e->key() == Qt::Key_F1 || e->matches(QKeySequence::HelpContents)) {
         _overlayHelpActive = !_overlayHelpActive;
         this->update();
-        break;
-    case Qt::Key_I:
+    } else if (e->key() == Qt::Key_I) {
         _overlayInfoActive = !_overlayInfoActive;
         this->update();
-        break;
-    case Qt::Key_S:
+    } else if (e->key() == Qt::Key_S) {
         _overlayStatisticActive = !_overlayStatisticActive;
         this->update();
-        break;
-    case Qt::Key_H:
+    } else if (e->key() == Qt::Key_H) {
         _overlayHistogramActive = !_overlayHistogramActive;
         this->update();
-        break;
-    case Qt::Key_M:
+    } else if (e->key() == Qt::Key_M) {
         _overlayColorMapActive = !_overlayColorMapActive;
         this->update();
-        break;
-    default:
+    } else {
         QOpenGLWindow::keyPressEvent(e);
-        break;
     }
 }
 

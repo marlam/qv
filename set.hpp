@@ -34,7 +34,8 @@ private:
 public:
     Set();
 
-    bool add(const std::string& fileName, std::string& errorMessage);
+    bool addFile(const std::string& fileName, std::string& errorMessage);
+    void removeFile(int fileIndex);
     int fileCount() const { return _files.size(); }
 
     bool setFileIndex(int index, std::string& errorMessage);

@@ -27,7 +27,7 @@
 #include <filesystem>
 #include <algorithm>
 
-#include <QGuiApplication>
+#include <QApplication>
 #include <QSurfaceFormat>
 
 #include "set.hpp"
@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     std::string errMsg;
 
     // Initialize Qt
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
 
     // Build the set of files to view
     Set set;
@@ -53,12 +53,12 @@ int main(int argc, char* argv[])
                     paths.push_back(p.path().string());
                 std::sort(paths.begin(), paths.end());
                 for (size_t i = 0; i < paths.size(); i++) {
-                    if (!set.add(paths[i], errMsg)) {
+                    if (!set.addFile(paths[i], errMsg)) {
                         fprintf(stderr, "Ignoring %s\n", errMsg.c_str());
                     }
                 }
             } else {
-                if (!set.add(name, errMsg)) {
+                if (!set.addFile(name, errMsg)) {
                     fprintf(stderr, "%s\n", errMsg.c_str());
                     err = true;
                 }
@@ -71,20 +71,18 @@ int main(int argc, char* argv[])
     if (err) {
         return 1;
     }
-    if (set.fileCount() == 0) {
-        fprintf(stderr, "Usage: %s <directory|file...>\n", argv[0]);
-        return 1;
-    }
 
     // Initialize set
-    if (!set.setFileIndex(0, errMsg)) {
+    if (set.fileCount() > 0 && !set.setFileIndex(0, errMsg)) {
         fprintf(stderr, "%s\n", errMsg.c_str());
         return 1;
     }
 
     // Initialize parameters
     Parameters parameters;
-    parameters.magInterpolation = (set.currentFile()->currentFrame()->channelIndex() == ColorChannelIndex);
+    if (set.fileCount() > 0) {
+        parameters.magInterpolation = (set.currentFile()->currentFrame()->channelIndex() == ColorChannelIndex);
+    }
 
     // Set the OpenGL context parameters
     QSurfaceFormat format;

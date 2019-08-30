@@ -36,7 +36,7 @@ typedef enum {
 
 class ColorMap {
 private:
-    const int _count[5];
+    int _count[5];
     ColorMapType _type;
     int _index[5];
     std::vector<unsigned char> _sRgbData;

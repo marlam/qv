@@ -29,18 +29,18 @@
 
 OverlayHelp::OverlayHelp()
 {
-    _helpText << " General:                  View, zoom, move:";
-    _helpText << " F1: toggle help           l: toggle lin. interpolation";
-    _helpText << " Q: quit                   g: toggle magnification grid";
-    _helpText << " F11: toggle fullscreen    -,+,=: zoom out/in/reset";
-    _helpText << " ESC: end fullscr./quit    mouse,␣: move/reset";
-    _helpText << " r: reload current file";
+    _helpText << " General:                  Manage files:";
+    _helpText << " F1: toggle help           o: open file"; 
+    _helpText << " Q: quit                   w: close current file";
+    _helpText << " F11: toggle fullscreen    r: reload current file";
+    _helpText << " ESC: end fullscr./quit    <,>: go 1 file back/fwd";
     _helpText << "";
-    _helpText << " Switch files and frames:  Switch channels:";
-    _helpText << " <,>: previous/next file   c: color channel";
-    _helpText << " ←,→: 1 frame back/fwd     0-9: this channel";
-    _helpText << " ↑,↓: 10 frames back/fwd";
-    _helpText << " ⇞,⇟: 100 frames back/fwd";
+    _helpText << " Switch frames, channels:  View, zoom, move:";
+    _helpText << " ←,→: 1 frame back/fwd     l: toggle lin. interpolation";
+    _helpText << " ↑,↓: 10 frames back/fwd   g: toggle magnification grid";
+    _helpText << " ⇞,⇟: 100 frames back/fwd  -,+,=: zoom out/in/reset";
+    _helpText << " c: color channel          mouse,␣: move/reset";
+    _helpText << " 0-9: this channel";
     _helpText << "";
     _helpText << " Analysis tools:           Adjust displayed interval:";
     _helpText << " i: toggle info            (,): shift left/right";

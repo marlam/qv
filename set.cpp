@@ -30,7 +30,7 @@ Set::Set() : _fileIndex(-1)
 {
 }
 
-bool Set::add(const std::string& fileName, std::string& errorMessage)
+bool Set::addFile(const std::string& fileName, std::string& errorMessage)
 {
     File file;
     if (file.init(fileName, errorMessage)) {
@@ -41,13 +41,50 @@ bool Set::add(const std::string& fileName, std::string& errorMessage)
     }
 }
 
+void Set::removeFile(int removeIndex)
+{
+    if (removeIndex < 0 || removeIndex >= fileCount())
+        return;
+
+    if (removeIndex == fileIndex()) {
+        std::string tmpErrMsg;
+        bool ret;
+        if (removeIndex == fileCount() - 1) {
+            ret = setFileIndex(fileCount() - 2, tmpErrMsg);
+            _files.erase(_files.begin() + removeIndex);
+            if (!ret)
+                setFileIndex(-1, tmpErrMsg);
+        } else {
+            std::string tmpErrMsg;
+            ret = setFileIndex(fileIndex() + 1, tmpErrMsg);
+            _files.erase(_files.begin() + removeIndex);
+            if (!ret)
+                setFileIndex(-1, tmpErrMsg);
+            else
+                _fileIndex--;
+        }
+    } else if (removeIndex < fileIndex()) {
+        _files.erase(_files.begin() + removeIndex);
+        _fileIndex--;
+    } else { // fileIndex() < removeIndex
+        _files.erase(_files.begin() + removeIndex);
+    }
+}
+
 bool Set::setFileIndex(int index, std::string& errorMessage)
 {
     if (_fileIndex == index) {
         return true;
     }
 
-    if (index < 0 || index >= fileCount()) {
+    if (index < 0) {
+        if (currentFile())
+            currentFile()->setFrameIndex(-1, errorMessage); // cannot fail
+        _fileIndex = -1;
+        return true;
+    }
+
+    if (index >= fileCount()) {
         errorMessage = "file " + std::to_string(index) + " does not exist";
         return false;
     }

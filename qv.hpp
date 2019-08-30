@@ -63,10 +63,12 @@ private:
 
     void updateTitle();
 
+    void openFile();
+    void closeFile();
+    void reloadFile();
     void adjustFileIndex(int offset);
     void adjustFrameIndex(int offset);
     void setChannelIndex(int index);
-    void reload();
     void adjustZoom(int steps);
     void adjustVisInterval(int minSteps, int maxSteps);
     void resetVisInterval();

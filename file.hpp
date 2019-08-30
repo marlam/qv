@@ -45,7 +45,7 @@ public:
     const std::string& fileName() const { return _importer.fileName(); }
     int frameCount();
 
-    bool setFrameIndex(int index, std::string& errorMessage); // index=-1 is allowed and frees resources
+    bool setFrameIndex(int index, std::string& errorMessage); // index=-1 is allowed and frees resources; this cannot fail
     int frameIndex() const { return _frameIndex; }
     Frame* currentFrame() { return frameIndex() >= 0 ? &_frame : nullptr; }
 

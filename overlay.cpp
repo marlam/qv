@@ -22,6 +22,7 @@
  */
 
 #include <cstring>
+#include <cmath>
 
 #include <QImage>
 #include <QPainter>
@@ -61,7 +62,9 @@ void Overlay::prepare(int widthInPixels)
         font.setStyleHint(QFont::Monospace, QFont::PreferAntialias);
         font.setWeight(QFont::DemiBold);
         painter->setFont(font);
-        painter->setRenderHints(painter->renderHints() | QPainter::TextAntialiasing);
+        painter->setRenderHint(QPainter::Antialiasing);
+        painter->setRenderHint(QPainter::TextAntialiasing);
+        painter->setRenderHint(QPainter::HighQualityAntialiasing);
         QPen pen;
         pen.setColor(QColor(Qt::white));
         pen.setStyle(Qt::SolidLine);
@@ -72,14 +75,27 @@ void Overlay::prepare(int widthInPixels)
         brush.setStyle(Qt::SolidPattern);
         painter->setBrush(brush);
     }
-    image->fill(QColor(Qt::black));
+    const unsigned char bgColor = 3 * 255 / 6;
+    image->fill(QColor(bgColor, bgColor, bgColor, 255));
 }
 
-void Overlay::setAlpha(int x, int y, int w, int h, int alpha)
+void Overlay::correctAlpha(int opaqueBlockX, int opaqueBlockY, int opaqueBlockW, int opaqueBlockH)
 {
-    for (int l = y; l < y + h; l++) {
+    const unsigned char transparencyAlpha = 5 * 255 / 6;
+    for (int l = 0; l < image->height(); l++) {
         unsigned char* lineData = image->scanLine(l);
-        for (int c = x; c < x + w; c++) {
+        for (int c = 0; c < image->width(); c++) {
+            float preAlpha = lineData[4 * c + 3] / 255.0f;
+            for (int channel = 0; channel < 3; channel++) {
+                float v = lineData[4 * c + channel];
+                v = v / preAlpha;
+                lineData[4 * c + channel] = std::round(v);
+            }
+            unsigned char alpha = transparencyAlpha;
+            if (l >= opaqueBlockY && l < opaqueBlockY + opaqueBlockH
+                    && c >= opaqueBlockX && c < opaqueBlockX + opaqueBlockW) {
+                alpha = 255;
+            }
             lineData[4 * c + 3] = alpha;
         }
     }

@@ -63,7 +63,7 @@ void OverlayHistogram::update(int widthInPixels, int x, int y, Set& set, Paramet
 
     // Border
     const int borderSize = 5;
-    const QColor borderColor = QColor(Qt::darkGray);
+    const QColor borderColor = QColor(QColor(64, 64, 64));
     int borderX0 = borderSize - 1;
     int borderY0 = borderSize - 1;
     int borderX1 = widthInPixels - 1 - borderX0;
@@ -108,13 +108,13 @@ void OverlayHistogram::update(int widthInPixels, int x, int y, Set& set, Paramet
         }
         int binHeight = std::round(normalizedBinHeight * availableHeight);
         if (!outside && H.binIndex(value) == bin) {
-            painter->fillRect(binX, borderSize, thisBinWidth, availableHeight, QColor(Qt::darkGreen));
+            painter->fillRect(binX, borderSize, thisBinWidth, availableHeight, QColor(Qt::green));
             painter->fillRect(binX, binY, thisBinWidth, -binHeight, QColor(Qt::green));
         } else {
             painter->fillRect(binX, binY, thisBinWidth, -binHeight, QColor(Qt::white));
         }
     }
 
-    setAlpha(0, 0, image->width(), image->height(), 2 * 255 / 3);
+    correctAlpha();
     Overlay::uploadImageToTexture();
 }

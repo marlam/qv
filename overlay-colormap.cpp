@@ -44,7 +44,7 @@ void OverlayColorMap::update(int widthInPixels, Parameters& parameters)
 
     // Border
     const int borderSize = 5;
-    const QColor borderColor = QColor(Qt::darkGray);
+    const QColor borderColor = QColor(QColor(64, 64, 64));
     int borderX0 = borderSize - 1;
     int borderY0 = borderSize - 1;
     int borderX1 = widthInPixels - 1 - borderX0;
@@ -55,7 +55,6 @@ void OverlayColorMap::update(int widthInPixels, Parameters& parameters)
     painter->fillRect(borderX0, borderY1, borderWidth, 1, borderColor);
     painter->fillRect(borderX0, borderY0, 1, borderHeight, borderColor);
     painter->fillRect(borderX1, borderY0, 1, borderHeight + 1 /* Huh?? */, borderColor);
-    setAlpha(0, 0, image->width(), image->height(), 2 * 255 / 3);
 
     // Color map
     if (parameters.colorMap().type() != ColorMapNone) {
@@ -74,7 +73,9 @@ void OverlayColorMap::update(int widthInPixels, Parameters& parameters)
                     255);
             painter->fillRect(borderSize + i, borderSize, 1, heightInPixels - 2 * borderSize, color);
         }
-        setAlpha(borderSize, borderSize, image->width() - 2 * borderSize, image->height() - 2 * borderSize, 255);
+        correctAlpha(borderSize, borderSize, image->width() - 2 * borderSize, image->height() - 2 * borderSize);
+    } else {
+        correctAlpha();
     }
 
     Overlay::uploadImageToTexture();

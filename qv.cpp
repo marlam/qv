@@ -465,7 +465,7 @@ void QV::keyReleaseEvent(QKeyEvent* e)
         openFile();
     } else if (e->key() == Qt::Key_W || e->matches(QKeySequence::Close)) {
         closeFile();
-    } else if (e->key() == Qt::Key_R || e->matches(QKeySequence::Refresh)) {
+    } else if (e->key() == Qt::Key_R) {
         reloadFile();
     } else if (e->key() == Qt::Key_Less || e->matches(QKeySequence::PreviousChild)) {
         adjustFileIndex(-1);

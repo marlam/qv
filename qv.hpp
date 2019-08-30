@@ -29,6 +29,7 @@
 
 #include "set.hpp"
 #include "parameters.hpp"
+#include "overlay-help.hpp"
 #include "overlay-info.hpp"
 #include "overlay-statistic.hpp"
 #include "overlay-histogram.hpp"
@@ -49,6 +50,8 @@ private:
     bool _dragMode;
     QPoint _dragStart;
     QPoint _mousePos;
+    bool _overlayHelpActive;
+    OverlayHelp _overlayHelp;
     bool _overlayInfoActive;
     OverlayInfo _overlayInfo;
     bool _overlayStatisticActive;

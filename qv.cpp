@@ -40,6 +40,7 @@
 QV::QV(Set& set, Parameters& parameters) :
     _set(set), _parameters(parameters),
     _dragMode(false),
+    _overlayHelpActive(false),
     _overlayInfoActive(false),
     _overlayStatisticActive(false),
     _overlayHistogramActive(false),
@@ -267,6 +268,15 @@ void QV::paintGL()
         gl->glBindTexture(GL_TEXTURE_2D, _overlayInfo.texture);
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
         overlayYOffset += _overlayInfo.heightInPixels;
+    }
+    if (_overlayHelpActive) {
+        _overlayHelp.update(_w);
+        gl->glViewport(0, overlayYOffset, _w, _overlayHelp.heightInPixels);
+        gl->glUseProgram(_overlayPrg.programId());
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, _overlayHelp.texture);
+        gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+        overlayYOffset += _overlayHelp.heightInPixels;
     }
     gl->glDisable(GL_BLEND);
 }
@@ -542,6 +552,10 @@ void QV::keyReleaseEvent(QKeyEvent* e)
         changeColorMap(ColorMapCustom);
         break;
     /* Overlays */
+    case Qt::Key_F1:
+        _overlayHelpActive = !_overlayHelpActive;
+        this->update();
+        break;
     case Qt::Key_I:
         _overlayInfoActive = !_overlayInfoActive;
         this->update();

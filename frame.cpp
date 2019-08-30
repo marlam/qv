@@ -67,14 +67,6 @@ void Frame::init(const TAD::ArrayContainer& a)
     _colorChannels[2] = -1;
     _alphaChannel = componentIndex(_originalArray, "ALPHA");
     if (_colorSpace == ColorSpaceNone) {
-        _colorChannels[0] = componentIndex(_originalArray, "GRAY");
-        if (_colorChannels[0] >= 0) {
-            _colorSpace = ColorSpaceLinearGray;
-            _colorChannels[1] = _colorChannels[0];
-            _colorChannels[2] = _colorChannels[0];
-        }
-    }
-    if (_colorSpace == ColorSpaceNone) {
         _colorChannels[0] = componentIndex(_originalArray, "RED");
         _colorChannels[1] = componentIndex(_originalArray, "GREEN");
         _colorChannels[2] = componentIndex(_originalArray, "BLUE");
@@ -116,16 +108,23 @@ void Frame::init(const TAD::ArrayContainer& a)
         _colorChannels[2] = componentIndex(_originalArray, "XYZ/Z");
         if (_colorChannels[0] >= 0 && _colorChannels[1] >= 0 && _colorChannels[2] >= 0) {
             _colorSpace = ColorSpaceXYZ;
-        } else if (_colorChannels[0] >= 0) {
+        } else if (_colorChannels[1] >= 0) {
             _colorSpace = ColorSpaceY;
-            _colorChannels[1] = _colorChannels[0];
-            _colorChannels[2] = _colorChannels[0];
+            _colorChannels[0] = _colorChannels[1];
+            _colorChannels[2] = _colorChannels[1];
+        } else {
+            _colorChannels[0] = componentIndex(_originalArray, "GRAY");
+            if (_colorChannels[0] >= 0) {
+                _colorSpace = ColorSpaceY;
+                _colorChannels[1] = _colorChannels[0];
+                _colorChannels[2] = _colorChannels[0];
+            }
         }
     }
     if (_colorSpace == ColorSpaceNone) {
         _alphaChannel = -1;
     }
-    if (_colorSpace == ColorSpaceLinearGray || _colorSpace == ColorSpaceY) {
+    if (_colorSpace == ColorSpaceY) {
         _colorMinVal = minVal(colorChannelIndex(0));
         _colorMaxVal = maxVal(colorChannelIndex(0));
         _colorVisMinVal = _colorMinVal;
@@ -178,10 +177,6 @@ std::string Frame::channelName(int channelIndex) const
         switch (colorSpace()) {
         case ColorSpaceNone:
             break;
-        case ColorSpaceLinearGray:
-            if (channelIndex == colorChannelIndex(0))
-                channelName += "(gray)";
-            break;
         case ColorSpaceLinearRGB:
             if (channelIndex == colorChannelIndex(0))
                 channelName += "(R)";
@@ -224,7 +219,7 @@ std::string Frame::channelName(int channelIndex) const
 const TAD::Array<float>& Frame::lumArray(int& lumArrayChannel)
 {
     if (_lumArray.elementCount() == 0) {
-        if (colorSpace() == ColorSpaceLinearGray || colorSpace() == ColorSpaceY) {
+        if (colorSpace() == ColorSpaceY) {
             _lumArray = floatArray();
             _lumArrayChannel = colorChannelIndex(0);
         } else if (colorSpace() == ColorSpaceXYZ) {

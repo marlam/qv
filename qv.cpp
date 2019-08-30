@@ -166,8 +166,6 @@ void QV::paintGL()
     _viewPrg.setUniformValue("yOffset", yOffset);
     _viewPrg.setUniformValue("magGrid", _parameters.magGrid);
     // Min/max values
-    _viewPrg.setUniformValue("minVal", frame->minVal(frame->channelIndex()));
-    _viewPrg.setUniformValue("maxVal", frame->maxVal(frame->channelIndex()));
     float visMinVal = _parameters.visMinVal(frame->channelIndex());
     float visMaxVal = _parameters.visMaxVal(frame->channelIndex());
     if (!std::isfinite(visMinVal) || !std::isfinite(visMaxVal)) {

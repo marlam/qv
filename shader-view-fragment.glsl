@@ -25,12 +25,11 @@ uniform sampler2D tex0, tex1, tex2, alphaTex;
 
 // these values are shared with frame.hpp!
 const int ColorSpaceNone        = 0;
-const int ColorSpaceLinearGray  = 1;
-const int ColorSpaceLinearRGB   = 2;
-const int ColorSpaceSLum        = 3;
-const int ColorSpaceSRGB        = 4;
-const int ColorSpaceY           = 5;
-const int ColorSpaceXYZ         = 6;
+const int ColorSpaceLinearRGB   = 1;
+const int ColorSpaceSLum        = 2;
+const int ColorSpaceSRGB        = 3;
+const int ColorSpaceY           = 4;
+const int ColorSpaceXYZ         = 5;
 uniform bool showColor;
 uniform int colorSpace;
 uniform int channelCount;
@@ -40,8 +39,6 @@ uniform int colorChannel1Index;
 uniform int colorChannel2Index;
 uniform int alphaChannelIndex;
 
-uniform float minVal;
-uniform float maxVal;
 uniform float visMinVal;
 uniform float visMaxVal;
 
@@ -53,11 +50,6 @@ uniform bool magGrid;
 smooth in vec2 vtexcoord;
 
 layout(location = 0) out vec4 fcolor;
-
-float normalizeVal(float x)
-{
-    return (x - minVal) / (maxVal - minVal);
-}
 
 const vec3 d65_xyz = vec3(95.047, 100.000, 108.883);
 
@@ -138,9 +130,7 @@ void main(void)
         }
         // Get color
         vec3 xyz;
-        if (colorSpace == ColorSpaceLinearGray) {
-            xyz = adjust_y(d65_xyz, 100.0 * normalizeVal(data[0]));
-        } else if (colorSpace == ColorSpaceLinearRGB) {
+        if (colorSpace == ColorSpaceLinearRGB) {
             xyz = rgb_to_xyz(vec3(data[0], data[1], data[2]));
         } else if (colorSpace == ColorSpaceSLum) {
             xyz = adjust_y(d65_xyz, 100.0 * data[0]);

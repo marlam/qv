@@ -26,7 +26,7 @@ multiple images, called frames in qv.
 
 ### Manage files
 
-- o: open file
+- o: open file(s)
 
 - w: close current file
 

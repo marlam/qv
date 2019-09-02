@@ -30,7 +30,7 @@
 OverlayHelp::OverlayHelp()
 {
     _helpText << " General:                  Manage files:";
-    _helpText << " F1: toggle help           o: open file"; 
+    _helpText << " F1: toggle help           o: open file(s)";
     _helpText << " Q: quit                   w: close current file";
     _helpText << " F11: toggle fullscreen    r: reload current file";
     _helpText << " ESC: end fullscr./quit    <,>: go 1 file back/fwd";

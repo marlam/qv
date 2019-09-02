@@ -302,20 +302,24 @@ void QV::paintGL()
 
 void QV::openFile()
 {
-    QString name = QFileDialog::getOpenFileName();
-    if (!name.isEmpty()) {
-        std::string errMsg;
-        if (!_set.addFile(qPrintable(name), errMsg)
-                || !_set.setFileIndex(_set.fileCount() - 1, errMsg)) {
+    int previousFileCount = _set.fileCount();
+    std::string errMsg;
+    QStringList names = QFileDialog::getOpenFileNames();
+    for (int i = 0; i < names.size(); i++) {
+        if (!_set.addFile(qPrintable(names[i]), errMsg)) {
             QMessageBox::critical(nullptr, "Error", errMsg.c_str());
         }
-        if (_set.fileCount() == 1) {
+    }
+    if (_set.fileCount() > previousFileCount) {
+        if (!_set.setFileIndex(previousFileCount, errMsg)) {
+            QMessageBox::critical(nullptr, "Error", errMsg.c_str());
+        } else if (previousFileCount == 0) {
             _parameters = Parameters();
             _parameters.magInterpolation = (_set.currentFile()->currentFrame()->channelIndex() == ColorChannelIndex);
         }
-        this->updateTitle();
-        this->update();
     }
+    this->updateTitle();
+    this->update();
 }
 
 void QV::closeFile()

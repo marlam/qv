@@ -25,6 +25,7 @@
 
 #include <cerrno>
 #include <cstdio>
+#include <cstring>
 #include <string>
 #include <vector>
 #include <filesystem>
@@ -40,6 +41,17 @@
 
 int main(int argc, char* argv[])
 {
+    // Default options
+    if (argc == 2 && std::strcmp(argv[1], "--help") == 0) {
+        printf("Usage: %s [<directory|file...>]\n", argv[0]);
+        printf("See https://marlam.de/qv\n");
+        return 0;
+    } else if (argc == 2 && std::strcmp(argv[1], "--version") == 0) {
+        printf("qv version %s\n", QV_VERSION);
+        printf("See https://marlam.de/qv\n");
+        return 0;
+    }
+
     // Initialize Qt
     QApplication app(argc, argv);
 

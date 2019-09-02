@@ -21,13 +21,17 @@
  * SOFTWARE.
  */
 
+#include <unistd.h> // for isatty()
+
 #include <cerrno>
+#include <cstdio>
 #include <string>
 #include <vector>
 #include <filesystem>
 #include <algorithm>
 
 #include <QApplication>
+#include <QMessageBox>
 #include <QSurfaceFormat>
 
 #include "set.hpp"
@@ -36,14 +40,14 @@
 
 int main(int argc, char* argv[])
 {
-    std::string errMsg;
-
     // Initialize Qt
     QApplication app(argc, argv);
 
     // Build the set of files to view
     Set set;
+    Parameters parameters;
     bool err = false;
+    std::string errMsg;
     for (int i = 1; i < argc; i++) {
         std::string name = argv[i];
         if (std::filesystem::exists(name)) {
@@ -54,32 +58,32 @@ int main(int argc, char* argv[])
                 std::sort(paths.begin(), paths.end());
                 for (size_t i = 0; i < paths.size(); i++) {
                     if (!set.addFile(paths[i], errMsg)) {
-                        fprintf(stderr, "Ignoring %s\n", errMsg.c_str());
+                        fprintf(stderr, "ignoring %s\n", errMsg.c_str());
                     }
                 }
             } else {
                 if (!set.addFile(name, errMsg)) {
-                    fprintf(stderr, "%s\n", errMsg.c_str());
                     err = true;
+                    break;
                 }
             }
         } else {
-            fprintf(stderr, "%s: %s\n", name.c_str(), std::strerror(ENOENT));
+            errMsg = name + ": " + std::strerror(ENOENT);
             err = true;
         }
     }
+    if (!err && set.fileCount() > 0 && !set.setFileIndex(0, errMsg)) {
+        err = true;
+    }
     if (err) {
+        // if we started from a terminal, print error to stderr, otherwise to GUI
+        if (isatty(fileno(stderr))) {
+            fprintf(stderr, "%s\n", errMsg.c_str());
+        } else {
+            QMessageBox::critical(nullptr, "Error", errMsg.c_str());
+        }
         return 1;
     }
-
-    // Initialize set
-    if (set.fileCount() > 0 && !set.setFileIndex(0, errMsg)) {
-        fprintf(stderr, "%s\n", errMsg.c_str());
-        return 1;
-    }
-
-    // Initialize parameters
-    Parameters parameters;
     if (set.fileCount() > 0) {
         parameters.magInterpolation = (set.currentFile()->currentFrame()->channelIndex() == ColorChannelIndex);
     }

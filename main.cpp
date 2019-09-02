@@ -35,6 +35,7 @@
 #include <QMessageBox>
 #include <QSurfaceFormat>
 
+#include "version.hpp"
 #include "set.hpp"
 #include "qv.hpp"
 
@@ -47,7 +48,7 @@ int main(int argc, char* argv[])
         printf("See https://marlam.de/qv\n");
         return 0;
     } else if (argc == 2 && std::strcmp(argv[1], "--version") == 0) {
-        printf("qv version %s\n", QV_VERSION);
+        printf("qv version " QV_VERSION "\n");
         printf("See https://marlam.de/qv\n");
         return 0;
     }

@@ -8,8 +8,6 @@ cmake_minimum_required(VERSION 3.12)
 set(CMAKE_AUTOMOC ON)
 
 project(qv)
-set(QV_VERSION 0.0)
-add_definitions(-DQV_VERSION="${QV_VERSION}")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
@@ -23,6 +21,7 @@ link_directories(${TAD_LIBRARY_DIRS})
 qt5_add_resources(RESOURCES resources.qrc)
 add_executable(qv
     main.cpp
+    version.hpp
     utils.hpp utils.cpp
     gl.hpp gl.cpp
     color.hpp

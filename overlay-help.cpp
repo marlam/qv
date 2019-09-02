@@ -24,6 +24,7 @@
 #include <QImage>
 #include <QPainter>
 
+#include "version.hpp"
 #include "overlay-help.hpp"
 
 

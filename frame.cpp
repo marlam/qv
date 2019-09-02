@@ -366,6 +366,13 @@ static void uploadArrayToTexture(const TAD::ArrayContainer& array,
         GLint internalFormat, GLenum format, GLenum type)
 {
     auto gl = getGlFunctionsFromCurrentContext();
+    size_t lineSize = array.dimension(0) * array.elementSize();
+    if (lineSize % 4 == 0)
+        gl->glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+    else if (lineSize % 2 == 0)
+        gl->glPixelStorei(GL_UNPACK_ALIGNMENT, 2);
+    else
+        gl->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     gl->glBindTexture(GL_TEXTURE_2D, texture);
     gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glGetGlobalPBO());
     gl->glBufferData(GL_PIXEL_UNPACK_BUFFER, array.dataSize(), nullptr, GL_STREAM_DRAW);

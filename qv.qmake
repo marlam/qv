@@ -1,11 +1,12 @@
 HEADERS = color.hpp colormap.hpp file.hpp frame.hpp gl.hpp histogram.hpp \
-	overlay-colormap.hpp overlay-histogram.hpp overlay-info.hpp overlay-statistic.hpp overlay.hpp \
+	overlay-help.hpp overlay-info.hpp overlay-statistic.hpp overlay-histogram.hpp overlay-colormap.hpp overlay.hpp \
 	parameters.hpp qv.hpp set.hpp statistic.hpp utils.hpp
-SOURCES = color.cpp colormap.cpp file.cpp frame.cpp gl.cpp histogram.cpp \
-	overlay-colormap.cpp overlay-histogram.cpp overlay-info.cpp overlay-statistic.cpp overlay.cpp \
+SOURCES = colormap.cpp file.cpp frame.cpp gl.cpp histogram.cpp \
+	overlay-help.cpp overlay-info.cpp overlay-statistic.cpp overlay-histogram.cpp overlay-colormap.cpp overlay.cpp \
 	parameters.cpp qv.cpp set.cpp statistic.cpp utils.cpp main.cpp
 RESOURCES = resources.qrc
 CONFIG += release
+QT += widgets
 
 QMAKE_CXXFLAGS += -std=c++17
 

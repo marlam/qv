@@ -333,9 +333,11 @@ void QV::closeFile()
 
 void QV::reloadFile()
 {
+    File* file = _set.currentFile();
+    if (!file)
+        return;
     std::string errMsg;
-    bool ret = _set.currentFile()->reload(errMsg);
-    if (!ret) {
+    if (!file->reload(errMsg)) {
         QMessageBox::critical(nullptr, "Error", errMsg.c_str());
     }
     this->updateTitle();
@@ -345,6 +347,8 @@ void QV::reloadFile()
 void QV::adjustFileIndex(int offset)
 {
     int i = _set.fileIndex();
+    if (i < 0)
+        return;
     int ni = i + offset;
     if (ni < 0)
         ni = 0;
@@ -363,15 +367,18 @@ void QV::adjustFileIndex(int offset)
 
 void QV::adjustFrameIndex(int offset)
 {
-    int i = _set.currentFile()->frameIndex();
+    File* file = _set.currentFile();
+    if (!file)
+        return;
+    int i = file->frameIndex();
     int ni = i + offset;
     if (ni < 0)
         ni = 0;
-    else if (ni >= _set.currentFile()->frameCount())
-        ni = _set.currentFile()->frameCount() - 1;
+    else if (ni >= file->frameCount())
+        ni = file->frameCount() - 1;
     if (ni != i) {
         std::string errMsg;
-        if (_set.currentFile()->setFrameIndex(ni, errMsg)) {
+        if (file->setFrameIndex(ni, errMsg)) {
             this->updateTitle();
             this->update();
         } else {
@@ -382,7 +389,10 @@ void QV::adjustFrameIndex(int offset)
 
 void QV::setChannelIndex(int index)
 {
-    Frame* frame = _set.currentFile()->currentFrame();
+    File* file = _set.currentFile();
+    Frame* frame = (file ? file->currentFrame() : nullptr);
+    if (!frame)
+        return;
     if (index == ColorChannelIndex) {
         if (frame->colorSpace() != ColorSpaceNone)
             frame->setChannelIndex(index);
@@ -407,7 +417,10 @@ void QV::adjustZoom(int steps)
 
 void QV::adjustVisInterval(int minSteps, int maxSteps)
 {
-    Frame* frame = _set.currentFile()->currentFrame();
+    File* file = _set.currentFile();
+    Frame* frame = (file ? file->currentFrame() : nullptr);
+    if (!frame)
+        return;
     float defaultVisMin = frame->currentVisMinVal();
     float defaultVisMax = frame->currentVisMaxVal();
     float adjustment = (defaultVisMax - defaultVisMin) / 100.0f;
@@ -434,7 +447,10 @@ void QV::adjustVisInterval(int minSteps, int maxSteps)
 
 void QV::resetVisInterval()
 {
-    Frame* frame = _set.currentFile()->currentFrame();
+    File* file = _set.currentFile();
+    Frame* frame = (file ? file->currentFrame() : nullptr);
+    if (!frame)
+        return;
     _parameters.setVisMinVal(frame->channelIndex(), std::numeric_limits<float>::quiet_NaN());
     _parameters.setVisMaxVal(frame->channelIndex(), std::numeric_limits<float>::quiet_NaN());
     this->update();

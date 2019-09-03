@@ -71,6 +71,8 @@ void QV::updateTitle()
 
 void QV::initializeGL()
 {
+    ASSERT_GLCHECK();
+
     auto gl = getGlFunctionsFromCurrentContext();
     if (!gl) {
         qFatal("No valid OpenGL context.");
@@ -110,10 +112,13 @@ void QV::initializeGL()
     gl->glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadIndexBuf);
     gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
 
+    ASSERT_GLCHECK();
+
     QString viewVsSource = readFile(":shader-view-vertex.glsl");
     QString viewFsSource  = readFile(":shader-view-fragment.glsl");
-    if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
+    if (isOpenGLES()) {
         viewVsSource.prepend("#version 300 es\n");
+        viewFsSource.prepend("precision highp float;\n");
         viewFsSource.prepend("#version 300 es\n");
     } else {
         viewVsSource.prepend("#version 330\n");
@@ -125,8 +130,9 @@ void QV::initializeGL()
 
     QString overlayVsSource = readFile(":shader-overlay-vertex.glsl");
     QString overlayFsSource  = readFile(":shader-overlay-fragment.glsl");
-    if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
+    if (isOpenGLES()) {
         overlayVsSource.prepend("#version 300 es\n");
+        overlayFsSource.prepend("precision highp float;\n");
         overlayFsSource.prepend("#version 300 es\n");
     } else {
         overlayVsSource.prepend("#version 330\n");
@@ -135,6 +141,8 @@ void QV::initializeGL()
     _overlayPrg.addShaderFromSourceCode(QOpenGLShader::Vertex, overlayVsSource);
     _overlayPrg.addShaderFromSourceCode(QOpenGLShader::Fragment, overlayFsSource);
     _overlayPrg.link();
+
+    ASSERT_GLCHECK();
 
     gl->glDisable(GL_DEPTH_TEST);
 }
@@ -147,6 +155,8 @@ void QV::resizeGL(int w, int h)
 
 void QV::paintGL()
 {
+    ASSERT_GLCHECK();
+
     auto gl = getGlFunctionsFromCurrentContext();
     gl->glViewport(0, 0, _w, _h);
     gl->glClear(GL_COLOR_BUFFER_BIT);
@@ -235,6 +245,7 @@ void QV::paintGL()
         gl->glBindVertexArray(_vao);
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     }
+    ASSERT_GLCHECK();
 
     // Draw the overlays
     bool overlayHelpActive = _overlayHelpActive;
@@ -298,6 +309,7 @@ void QV::paintGL()
         overlayYOffset += _overlayHelp.heightInPixels;
     }
     gl->glDisable(GL_BLEND);
+    ASSERT_GLCHECK();
 }
 
 void QV::openFile()

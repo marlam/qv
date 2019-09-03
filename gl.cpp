@@ -29,6 +29,13 @@
 
 #include "gl.hpp"
 
+
+bool isOpenGLES()
+{
+    QOpenGLContext* ctx = QOpenGLContext::currentContext();
+    return (ctx && ctx->isOpenGLES());
+}
+
 QOpenGLExtraFunctions* getGlFunctionsFromCurrentContext()
 {
     QOpenGLContext* ctx = QOpenGLContext::currentContext();

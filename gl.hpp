@@ -29,6 +29,8 @@
 
 QOpenGLExtraFunctions* getGlFunctionsFromCurrentContext();
 
+bool isOpenGLES();
+
 void glCheck(const char* callingFunction, const char* file, int line);
 
 #ifdef QT_NO_DEBUG

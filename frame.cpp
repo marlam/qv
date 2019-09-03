@@ -365,6 +365,7 @@ static void uploadArrayToTexture(const TAD::ArrayContainer& array,
         unsigned int texture,
         GLint internalFormat, GLenum format, GLenum type)
 {
+    ASSERT_GLCHECK();
     auto gl = getGlFunctionsFromCurrentContext();
     size_t lineSize = array.dimension(0) * array.elementSize();
     if (lineSize % 4 == 0)
@@ -386,8 +387,15 @@ static void uploadArrayToTexture(const TAD::ArrayContainer& array,
     gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    gl->glGenerateMipmap(GL_TEXTURE_2D);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    if (isOpenGLES() && array.componentType() != TAD::uint8) {
+        // mipmap generation fails for floating point textures,
+        // at least on my desktop GL test system
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    } else {
+        gl->glGenerateMipmap(GL_TEXTURE_2D);
+        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    }
+    ASSERT_GLCHECK();
 }
 
 unsigned int Frame::texture(int channelIndex)

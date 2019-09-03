@@ -33,7 +33,7 @@ protected:
     QPainter* painter;
 
     void prepare(int widthInPixels);
-    void correctAlpha(int opaqueBlockX = -1, int opaqueBlockY = -1,
+    void fixFormat(int opaqueBlockX = -1, int opaqueBlockY = -1,
             int opaqueBlockW = -1, int opaqueBlockH = -1);
     void uploadImageToTexture();
 

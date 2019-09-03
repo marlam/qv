@@ -81,6 +81,6 @@ void OverlayInfo::update(int widthInPixels, int x, int y, Set& set, Parameters& 
         xOffset += fontMetrics.horizontalAdvance(val);
     }
 
-    correctAlpha();
+    fixFormat();
     Overlay::uploadImageToTexture();
 }

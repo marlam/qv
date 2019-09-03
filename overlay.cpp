@@ -79,18 +79,19 @@ void Overlay::prepare(int widthInPixels)
     image->fill(QColor(bgColor, bgColor, bgColor, 255));
 }
 
-void Overlay::correctAlpha(int opaqueBlockX, int opaqueBlockY, int opaqueBlockW, int opaqueBlockH)
+void Overlay::fixFormat(int opaqueBlockX, int opaqueBlockY, int opaqueBlockW, int opaqueBlockH)
 {
     const unsigned char transparencyAlpha = 5 * 255 / 6;
     for (int l = 0; l < image->height(); l++) {
         unsigned char* lineData = image->scanLine(l);
         for (int c = 0; c < image->width(); c++) {
             float preAlpha = lineData[4 * c + 3] / 255.0f;
-            for (int channel = 0; channel < 3; channel++) {
-                float v = lineData[4 * c + channel];
-                v = v / preAlpha;
-                lineData[4 * c + channel] = std::round(v);
-            }
+            float v0 = lineData[4 * c + 0] / preAlpha;
+            float v1 = lineData[4 * c + 1] / preAlpha;
+            float v2 = lineData[4 * c + 2] / preAlpha;
+            lineData[4 * c + 0] = std::round(v2);
+            lineData[4 * c + 1] = std::round(v1);
+            lineData[4 * c + 2] = std::round(v0);
             unsigned char alpha = transparencyAlpha;
             if (l >= opaqueBlockY && l < opaqueBlockY + opaqueBlockH
                     && c >= opaqueBlockX && c < opaqueBlockX + opaqueBlockW) {
@@ -103,6 +104,7 @@ void Overlay::correctAlpha(int opaqueBlockX, int opaqueBlockY, int opaqueBlockW,
 
 void Overlay::uploadImageToTexture()
 {
+    ASSERT_GLCHECK();
     auto gl = getGlFunctionsFromCurrentContext();
     if (texture == 0) {
         gl->glGenTextures(1, &texture);
@@ -122,6 +124,7 @@ void Overlay::uploadImageToTexture()
     gl->glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8,
             image->width(), image->height(), 0,
-            GL_BGRA, GL_UNSIGNED_BYTE, nullptr);
+            GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+    ASSERT_GLCHECK();
 }

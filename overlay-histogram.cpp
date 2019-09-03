@@ -115,6 +115,6 @@ void OverlayHistogram::update(int widthInPixels, int x, int y, Set& set, Paramet
         }
     }
 
-    correctAlpha();
+    fixFormat();
     Overlay::uploadImageToTexture();
 }

@@ -76,6 +76,6 @@ void OverlayHelp::update(int widthInPixels)
         painter->drawText(xOffset, yOffset, _helpText[line]);
     }
 
-    correctAlpha();
+    fixFormat();
     Overlay::uploadImageToTexture();
 }

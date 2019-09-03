@@ -53,6 +53,6 @@ void OverlayStatistic::update(int widthInPixels, Set& set, Parameters& /* parame
     float yOffset = 1.25f * painter->fontInfo().pixelSize();
     painter->drawText(xOffset, yOffset, s);
 
-    correctAlpha();
+    fixFormat();
     Overlay::uploadImageToTexture();
 }

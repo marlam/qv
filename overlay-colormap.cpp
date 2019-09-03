@@ -73,9 +73,9 @@ void OverlayColorMap::update(int widthInPixels, Parameters& parameters)
                     255);
             painter->fillRect(borderSize + i, borderSize, 1, heightInPixels - 2 * borderSize, color);
         }
-        correctAlpha(borderSize, borderSize, image->width() - 2 * borderSize, image->height() - 2 * borderSize);
+        fixFormat(borderSize, borderSize, image->width() - 2 * borderSize, image->height() - 2 * borderSize);
     } else {
-        correctAlpha();
+        fixFormat();
     }
 
     Overlay::uploadImageToTexture();

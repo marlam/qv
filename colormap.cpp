@@ -110,6 +110,7 @@ void ColorMap::cycle()
 
 unsigned int ColorMap::texture()
 {
+    ASSERT_GLCHECK();
     auto gl = getGlFunctionsFromCurrentContext();
     if (_texture == 0 && type() != ColorMapNone) {
         gl->glGenTextures(1, &_texture);
@@ -120,13 +121,19 @@ unsigned int ColorMap::texture()
                 GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
         std::memcpy(ptr, _sRgbData.data(), _sRgbData.size());
         gl->glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-        gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB, _sRgbData.size() / 3, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+        gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, _sRgbData.size() / 3, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
         gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        gl->glGenerateMipmap(GL_TEXTURE_2D);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        if (isOpenGLES()) {
+            // mipmap generation does not seem to work reliably!?
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        } else {
+            gl->glGenerateMipmap(GL_TEXTURE_2D);
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        }
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        ASSERT_GLCHECK();
     }
     return _texture;
 }

@@ -387,9 +387,8 @@ static void uploadArrayToTexture(const TAD::ArrayContainer& array,
     gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    if (isOpenGLES() && array.componentType() != TAD::uint8) {
-        // mipmap generation fails for floating point textures,
-        // at least on my desktop GL test system
+    if (isOpenGLES()) {
+        // mipmap generation does not seem to work reliably!?
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     } else {
         gl->glGenerateMipmap(GL_TEXTURE_2D);

@@ -32,13 +32,9 @@ bool File::init(const std::string& fileName, std::string& errorMessage)
     assert(_importer.fileName().size() == 0);
 
     _importer.initialize(fileName);
-    TAD::Error tadError;
-    if (!_importer.hasMore(&tadError)) {
-        errorMessage = fileName + ": ";
-        if (tadError == TAD::ErrorNone)
-            errorMessage += "no arrays";
-        else
-            errorMessage += TAD::strerror(tadError);
+    TAD::Error tadError = _importer.checkAccess();
+    if (tadError != TAD::ErrorNone) {
+        errorMessage = fileName + ": " + TAD::strerror(tadError);
         return false;
     }
     _description = TAD::ArrayDescription();
@@ -115,13 +111,9 @@ bool File::reload(std::string& errorMessage)
 
     TAD::ArrayDescription origDescription = _description;
     TAD::Importer newImporter(fileName());
-    TAD::Error tadError;
-    if (!newImporter.hasMore(&tadError)) {
-        errorMessage = fileName() + ": ";
-        if (tadError == TAD::ErrorNone)
-            errorMessage += "no arrays";
-        else
-            errorMessage += TAD::strerror(tadError);
+    TAD::Error tadError = newImporter.checkAccess();
+    if (tadError != TAD::ErrorNone) {
+        errorMessage = fileName() + ": " + TAD::strerror(tadError);
         return false;
     }
     TAD::ArrayContainer a;

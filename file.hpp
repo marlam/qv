@@ -32,17 +32,20 @@
 
 class File {
 private:
+    std::string _fileName;
     TAD::Importer _importer;
     TAD::ArrayDescription _description;
     Frame _frame;
     int _frameIndex;
+
+    TAD::Importer importer();
 
 public:
     File();
 
     bool init(const std::string& fileName, std::string& errorMessage);
 
-    const std::string& fileName() const { return _importer.fileName(); }
+    const std::string& fileName() const { return _fileName; }
     int frameCount();
 
     bool setFrameIndex(int index, std::string& errorMessage); // index=-1 is allowed and frees resources; this cannot fail

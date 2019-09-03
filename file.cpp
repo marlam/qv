@@ -27,12 +27,18 @@ File::File() : _frameIndex(-1)
 {
 }
 
+TAD::Importer File::importer()
+{
+    if (_importer.fileName().size() == 0) {
+        _importer.initialize(fileName());
+    }
+    return _importer;
+}
+
 bool File::init(const std::string& fileName, std::string& errorMessage)
 {
-    assert(_importer.fileName().size() == 0);
-
-    _importer.initialize(fileName);
-    TAD::Error tadError = _importer.checkAccess();
+    _fileName = fileName;
+    TAD::Error tadError = importer().checkAccess();
     if (tadError != TAD::ErrorNone) {
         errorMessage = fileName + ": " + TAD::strerror(tadError);
         return false;
@@ -45,7 +51,7 @@ bool File::init(const std::string& fileName, std::string& errorMessage)
 
 int File::frameCount()
 {
-    int arrayCount = _importer.arrayCount();
+    int arrayCount = importer().arrayCount();
     if (arrayCount <= 0)
         arrayCount = 1;
     return arrayCount;
@@ -71,6 +77,7 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
         return true;
     }
     if (index < 0) {
+        _importer = TAD::Importer();
         _frame.reset();
         _frameIndex = -1;
         return true;
@@ -81,7 +88,7 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
     }
     TAD::Error tadError;
     TAD::ArrayContainer a;
-    a = _importer.readArray(&tadError, index);
+    a = importer().readArray(&tadError, index);
     if (tadError != TAD::ErrorNone) {
         errorMessage = fileName() + ": " + TAD::strerror(tadError);
         return false;

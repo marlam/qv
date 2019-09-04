@@ -75,7 +75,7 @@ void Frame::init(const TAD::ArrayContainer& a)
         }
     }
     if (_colorSpace == ColorSpaceNone
-            && type() == TAD::uint8 && channelCount() == 1) {
+            && type() == TAD::uint8 && (channelCount() == 1 || channelCount() == 2)) {
         _colorChannels[0] = componentIndex(_originalArray, "SRGB/LUM");
         if (_colorChannels[0] >= 0) {
             _colorSpace = ColorSpaceSLum;

@@ -15,6 +15,6 @@ LIBS += -ltad
 win32 {
 	# For building a static qv.exe using MXE, we need to explicitly link in
 	# all the libraries required by libtad
-	LIBS += -lgta -lnetpbm -lpfs -lpng -lz -ljpeg -lhdf5_cpp -lhdf5 \
+	LIBS += -lgta -lpfs -lpng -lz -ljpeg -lhdf5_cpp -lhdf5 \
 		-lIlmImf -lImath -lHalf -lIex -lIexMath -lIlmThread
 }

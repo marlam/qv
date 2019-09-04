@@ -59,6 +59,8 @@ void Statistic::init(const TAD::Array<uint8_t>& array, size_t componentIndex)
     _sampleMean = sum / _finiteValues;
     if (_finiteValues > 1) {
         _sampleVariance = (sumOfSquares - sum / array.elementCount() * sum) / (_finiteValues - 1);
+        if (_sampleVariance < 0.0f)
+            _sampleVariance = 0.0f;
         _sampleDeviation = std::sqrt(_sampleVariance);
     }
 }
@@ -91,6 +93,8 @@ void Statistic::init(const TAD::Array<float>& array, size_t componentIndex)
         _sampleMean = sum / _finiteValues;
         if (_finiteValues > 1) {
             _sampleVariance = (sumOfSquares - sum / array.elementCount() * sum) / (_finiteValues - 1);
+            if (_sampleVariance < 0.0f)
+                _sampleVariance = 0.0f;
             _sampleDeviation = std::sqrt(_sampleVariance);
         }
     }

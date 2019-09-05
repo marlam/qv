@@ -65,6 +65,10 @@ public:
     Frame();
     ~Frame();
 
+    // Copy constructor and operator= are necessary for GL resource handling
+    Frame(const Frame& f);
+    Frame& operator=(const Frame& f);
+
     void init(const TAD::ArrayContainer& a);
     void reset();
 

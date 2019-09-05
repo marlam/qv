@@ -39,6 +39,37 @@ Frame::~Frame()
     clearTextures();
 }
 
+Frame::Frame(const Frame& f)
+{
+    *this = f;
+}
+
+Frame& Frame::operator=(const Frame& f)
+{
+    _originalArray = f._originalArray;
+    _floatArray = f._floatArray;
+    _lumArray = f._lumArray;
+    _lumArrayChannel = f._lumArrayChannel;
+    _minVals = f._minVals;
+    _maxVals = f._maxVals;
+    _statistics = f._statistics;
+    _histograms = f._histograms;
+    _colorSpace = f._colorSpace;
+    _colorChannels[0] = f._colorChannels[0];
+    _colorChannels[1] = f._colorChannels[1];
+    _colorChannels[2] = f._colorChannels[2];
+    _alphaChannel = f._alphaChannel;
+    _colorMinVal = f._colorMinVal;
+    _colorMaxVal = f._colorMaxVal;
+    _colorVisMinVal = f._colorVisMinVal;
+    _colorVisMaxVal = f._colorVisMaxVal;
+    _colorStatistic = f._colorStatistic;
+    _colorHistogram = f._colorHistogram;
+    _channelIndex = f._channelIndex;
+    _textures.clear(); // We need to regenerate them; the destructor of the old frame will delete them
+    return *this;
+}
+
 static int componentIndex(const TAD::ArrayContainer& a, const std::string& interpretationValue)
 {
     int ret = -1;

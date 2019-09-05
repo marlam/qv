@@ -322,13 +322,14 @@ void QV::openFile()
             QMessageBox::critical(nullptr, "Error", errMsg.c_str());
         }
     }
-    if (_set.fileCount() > previousFileCount) {
-        if (!_set.setFileIndex(previousFileCount, errMsg)) {
-            QMessageBox::critical(nullptr, "Error", errMsg.c_str());
-        } else if (previousFileCount == 0) {
-            _parameters = Parameters();
-            _parameters.magInterpolation = (_set.currentFile()->currentFrame()->channelIndex() == ColorChannelIndex);
-        }
+    while (_set.fileCount() > previousFileCount && !_set.setFileIndex(previousFileCount, errMsg)) {
+        QMessageBox::critical(nullptr, "Error", (errMsg
+                    + ".\n\nRemoving file from set.").c_str());
+        _set.removeFile(previousFileCount);
+    }
+    if (previousFileCount == 0 && _set.fileCount() > 0) {
+        _parameters = Parameters();
+        _parameters.magInterpolation = (_set.currentFile()->currentFrame()->channelIndex() == ColorChannelIndex);
     }
     this->updateTitle();
     this->update();
@@ -368,12 +369,13 @@ void QV::adjustFileIndex(int offset)
         ni = _set.fileCount() - 1;
     if (ni != i) {
         std::string errMsg;
-        if (_set.setFileIndex(ni, errMsg)) {
-            this->updateTitle();
-            this->update();
-        } else {
-            QMessageBox::critical(nullptr, "Error", errMsg.c_str());
+        if (!_set.setFileIndex(ni, errMsg)) {
+            QMessageBox::critical(nullptr, "Error", (errMsg
+                        + ".\n\nRemoving file from set.").c_str());
+            _set.removeFile(ni);
         }
+        this->updateTitle();
+        this->update();
     }
 }
 

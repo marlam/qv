@@ -24,10 +24,18 @@
 #ifndef QV_OVERLAY_HPP
 #define QV_OVERLAY_HPP
 
+#include <memory>
+
+#include "textureholder.hpp"
+
+
 class QImage;
 class QPainter;
 
 class Overlay {
+private:
+    std::shared_ptr<TextureHolder> _textureHolder;
+
 protected:
     QImage* image;
     QPainter* painter;
@@ -39,10 +47,11 @@ protected:
 
 public:
     int heightInPixels;
-    unsigned int texture;
 
     Overlay();
     virtual ~Overlay();
+
+    unsigned int texture() const { return _textureHolder->texture(0); }
 };
 
 #endif

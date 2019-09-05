@@ -32,7 +32,7 @@
 
 
 Overlay::Overlay() :
-    image(nullptr), painter(nullptr), heightInPixels(32), texture(0)
+    image(nullptr), painter(nullptr), heightInPixels(32)
 {
     prepare(1); // to get a valid painter etc
 }
@@ -41,9 +41,6 @@ Overlay::~Overlay()
 {
     delete painter;
     delete image;
-    auto gl = getGlFunctionsFromCurrentContext();
-    if (gl)
-        gl->glDeleteTextures(1, &texture);
 }
 
 void Overlay::prepare(int widthInPixels)
@@ -106,16 +103,18 @@ void Overlay::uploadImageToTexture()
 {
     ASSERT_GLCHECK();
     auto gl = getGlFunctionsFromCurrentContext();
-    if (texture == 0) {
-        gl->glGenTextures(1, &texture);
-        gl->glBindTexture(GL_TEXTURE_2D, texture);
+    if (!_textureHolder.get())
+        _textureHolder = std::make_shared<TextureHolder>();
+    if (_textureHolder->size() != 1) {
+        _textureHolder->create(1);
+        gl->glBindTexture(GL_TEXTURE_2D, texture());
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
     size_t size = image->width() * image->height() * 4;
-    gl->glBindTexture(GL_TEXTURE_2D, texture);
+    gl->glBindTexture(GL_TEXTURE_2D, texture());
     gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glGetGlobalPBO());
     gl->glBufferData(GL_PIXEL_UNPACK_BUFFER, size, nullptr, GL_STREAM_DRAW);
     void* ptr = gl->glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, size,

@@ -24,6 +24,7 @@ add_executable(qv
     version.hpp
     utils.hpp utils.cpp
     gl.hpp gl.cpp
+    textureholder.hpp textureholder.cpp
     color.hpp
     statistic.hpp statistic.cpp
     histogram.hpp histogram.cpp

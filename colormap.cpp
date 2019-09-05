@@ -35,19 +35,14 @@
 ColorMap::ColorMap() :
     _count { 4, 4, 1, 1 },
     _type(ColorMapNone),
-    _index { 0, 0, 0, 0 },
-    _texture(0)
+    _index { 0, 0, 0, 0 }
 {
-}
-
-ColorMap::~ColorMap()
-{
-    clearTexture();
 }
 
 void ColorMap::reload()
 {
-    clearTexture();
+    if (_textureHolder.get())
+        _textureHolder->clear();
     _sRgbData.clear();
 
     QString csvData;
@@ -110,11 +105,17 @@ void ColorMap::cycle()
 
 unsigned int ColorMap::texture()
 {
-    ASSERT_GLCHECK();
-    auto gl = getGlFunctionsFromCurrentContext();
-    if (_texture == 0 && type() != ColorMapNone) {
-        gl->glGenTextures(1, &_texture);
-        gl->glBindTexture(GL_TEXTURE_2D, _texture);
+    if (type() == ColorMapNone)
+        return 0;
+
+    if (!_textureHolder.get())
+        _textureHolder = std::make_shared<TextureHolder>();
+
+    if (_textureHolder->size() != 1) {
+        _textureHolder->create(1);
+        ASSERT_GLCHECK();
+        auto gl = getGlFunctionsFromCurrentContext();
+        gl->glBindTexture(GL_TEXTURE_2D, _textureHolder->texture(0));
         gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glGetGlobalPBO());
         gl->glBufferData(GL_PIXEL_UNPACK_BUFFER, _sRgbData.size(), nullptr, GL_STREAM_DRAW);
         void* ptr = gl->glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, _sRgbData.size(),
@@ -135,13 +136,5 @@ unsigned int ColorMap::texture()
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         ASSERT_GLCHECK();
     }
-    return _texture;
-}
-
-void ColorMap::clearTexture()
-{
-    auto gl = getGlFunctionsFromCurrentContext();
-    if (gl) // at program termination, the GL context might already be gone
-        gl->glDeleteTextures(1, &_texture);
-    _texture = 0;
+    return _textureHolder->texture(0);
 }

@@ -34,42 +34,6 @@ Frame::Frame() :
 {
 }
 
-Frame::~Frame()
-{
-    clearTextures();
-}
-
-Frame::Frame(const Frame& f)
-{
-    *this = f;
-}
-
-Frame& Frame::operator=(const Frame& f)
-{
-    _originalArray = f._originalArray;
-    _floatArray = f._floatArray;
-    _lumArray = f._lumArray;
-    _lumArrayChannel = f._lumArrayChannel;
-    _minVals = f._minVals;
-    _maxVals = f._maxVals;
-    _statistics = f._statistics;
-    _histograms = f._histograms;
-    _colorSpace = f._colorSpace;
-    _colorChannels[0] = f._colorChannels[0];
-    _colorChannels[1] = f._colorChannels[1];
-    _colorChannels[2] = f._colorChannels[2];
-    _alphaChannel = f._alphaChannel;
-    _colorMinVal = f._colorMinVal;
-    _colorMaxVal = f._colorMaxVal;
-    _colorVisMinVal = f._colorVisMinVal;
-    _colorVisMaxVal = f._colorVisMaxVal;
-    _colorStatistic = f._colorStatistic;
-    _colorHistogram = f._colorHistogram;
-    _channelIndex = f._channelIndex;
-    _textures.clear(); // We need to regenerate them; the destructor of the old frame will delete them
-    return *this;
-}
-
 static int componentIndex(const TAD::ArrayContainer& a, const std::string& interpretationValue)
 {
     int ret = -1;
@@ -187,7 +151,8 @@ void Frame::init(const TAD::ArrayContainer& a)
 
 void Frame::reset()
 {
-    clearTextures();
+    if (_textureHolder.get())
+        _textureHolder->clear();
     *this = Frame();
 }
 
@@ -430,13 +395,14 @@ static void uploadArrayToTexture(const TAD::ArrayContainer& array,
 
 unsigned int Frame::texture(int channelIndex)
 {
-    auto gl = getGlFunctionsFromCurrentContext();
+    if (!_textureHolder.get())
+        _textureHolder = std::make_shared<TextureHolder>();
+
     unsigned int tex = 0;
     if (channelCount() <= 4) {
         // single texture
-        if (_textures.size() != 1) {
-            _textures.resize(1);
-            gl->glGenTextures(1, _textures.data());
+        if (_textureHolder->size() != 1) {
+            _textureHolder->create(1);
             GLenum formats[4] = { GL_RED, GL_RG, GL_RGB, GL_RGBA };
             GLenum format = formats[channelCount() - 1];
             if (colorSpace() == ColorSpaceSLum || colorSpace() == ColorSpaceSRGB) {
@@ -444,39 +410,30 @@ unsigned int Frame::texture(int channelIndex)
                         : colorSpace() == ColorSpaceSRGB && !hasAlpha() ? GL_SRGB8
                         : GL_SRGB8_ALPHA8);
                 GLenum type = GL_UNSIGNED_BYTE;
-                uploadArrayToTexture(_originalArray, _textures[0], internalFormat, format, type);
+                uploadArrayToTexture(_originalArray, _textureHolder->texture(0), internalFormat, format, type);
             } else {
                 GLint internalFormats[4] = { GL_R32F, GL_RG32F, GL_RGB32F, GL_RGBA32F };
                 GLint internalFormat = internalFormats[channelCount() - 1];
                 GLenum type = GL_FLOAT;
-                uploadArrayToTexture(floatArray(), _textures[0], internalFormat, format, type);
+                uploadArrayToTexture(floatArray(), _textureHolder->texture(0), internalFormat, format, type);
             }
         }
-        tex = _textures[0];
+        tex = _textureHolder->texture(0);
     } else {
         // one texture per channel
-        if (_textures.size() != size_t(channelCount()))
-            _textures.resize(channelCount(), 0);
-        if (_textures[channelIndex] == 0) {
-            gl->glGenTextures(1, &(_textures[channelIndex]));
+        if (_textureHolder->size() != channelCount()) {
+            _textureHolder->create(channelCount());
+        }
+        if (!_textureHolder->flag(channelIndex)) {
             TAD::Array<float> dataArray(_originalArray.dimensions(), 1);
             for (size_t e = 0; e < dataArray.elementCount(); e++)
                 dataArray.set<float>(e, 0, floatArray().get<float>(e, channelIndex));
-            uploadArrayToTexture(dataArray, _textures[channelIndex], GL_R32F, GL_RED, GL_FLOAT);
+            uploadArrayToTexture(dataArray, _textureHolder->texture(channelIndex), GL_R32F, GL_RED, GL_FLOAT);
+            _textureHolder->setFlag(channelIndex);
         }
-        tex = _textures[channelIndex];
+        tex = _textureHolder->texture(channelIndex);
     }
     return tex;
-}
-
-void Frame::clearTextures()
-{
-    if (_textures.size() > 0) {
-        auto gl = getGlFunctionsFromCurrentContext();
-        if (gl) // at program termination, the GL context might already be gone
-            gl->glDeleteTextures(_textures.size(), _textures.data());
-        _textures.clear();
-    }
 }
 
 void Frame::setChannelIndex(int index)

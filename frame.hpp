@@ -25,12 +25,14 @@
 #define QV_FRAME_HPP
 
 #include <vector>
+#include <memory>
 
 #include <tad/array.hpp>
 
 #include "color.hpp"
 #include "statistic.hpp"
 #include "histogram.hpp"
+#include "textureholder.hpp"
 
 
 class Frame {
@@ -52,22 +54,15 @@ private:
     Statistic _colorStatistic;
     Histogram _colorHistogram;
     /* textures: */
-    std::vector<unsigned int> _textures; // one per channel
+    std::shared_ptr<TextureHolder> _textureHolder;
     /* current channel: */
     int _channelIndex;
 
     const TAD::Array<float>& floatArray();
     const TAD::Array<float>& lumArray(int& lumArrayChannel);
 
-    void clearTextures();
-
 public:
     Frame();
-    ~Frame();
-
-    // Copy constructor and operator= are necessary for GL resource handling
-    Frame(const Frame& f);
-    Frame& operator=(const Frame& f);
 
     void init(const TAD::ArrayContainer& a);
     void reset();

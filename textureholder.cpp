@@ -21,42 +21,35 @@
  * SOFTWARE.
  */
 
-#ifndef QV_COLORMAP_HPP
-#define QV_COLORMAP_HPP
-
-#include <vector>
-#include <memory>
-
 #include "textureholder.hpp"
+#include "gl.hpp"
 
 
-typedef enum {
-    ColorMapSequential = 0,
-    ColorMapDiverging = 1,
-    ColorMapQualitative = 2,
-    ColorMapCustom = 3,
-    ColorMapNone = 4
-} ColorMapType;
+TextureHolder::TextureHolder()
+{
+}
 
-class ColorMap {
-private:
-    int _count[5];
-    ColorMapType _type;
-    int _index[5];
-    std::vector<unsigned char> _sRgbData;
-    std::shared_ptr<TextureHolder> _textureHolder;
+TextureHolder::~TextureHolder()
+{
+    clear();
+}
 
-    void reload();
+void TextureHolder::create(size_t n)
+{
+    clear();
+    _textures.resize(n);
+    _flags.resize(n, false);
+    auto gl = getGlFunctionsFromCurrentContext();
+    gl->glGenTextures(n, _textures.data());
+}
 
-public:
-    ColorMap();
-
-    ColorMapType type() const { return _type; }
-    void setType(ColorMapType type);
-    void cycle();
-
-    const std::vector<unsigned char> sRgbData() const { return _sRgbData; }
-    unsigned int texture();
-};
-
-#endif
+void TextureHolder::clear()
+{
+    if (_textures.size() > 0) {
+        auto gl = getGlFunctionsFromCurrentContext();
+        if (gl) // the context might vanish at program termination
+            gl->glDeleteTextures(_textures.size(), _textures.data());
+        _textures.clear();
+        _flags.clear();
+    }
+}

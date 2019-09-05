@@ -21,42 +21,29 @@
  * SOFTWARE.
  */
 
-#ifndef QV_COLORMAP_HPP
-#define QV_COLORMAP_HPP
+#ifndef TEXTURE_HOLDER_HPP
+#define TEXTURE_HOLDER_HPP
 
 #include <vector>
-#include <memory>
 
-#include "textureholder.hpp"
-
-
-typedef enum {
-    ColorMapSequential = 0,
-    ColorMapDiverging = 1,
-    ColorMapQualitative = 2,
-    ColorMapCustom = 3,
-    ColorMapNone = 4
-} ColorMapType;
-
-class ColorMap {
+class TextureHolder
+{
 private:
-    int _count[5];
-    ColorMapType _type;
-    int _index[5];
-    std::vector<unsigned char> _sRgbData;
-    std::shared_ptr<TextureHolder> _textureHolder;
-
-    void reload();
+    std::vector<unsigned int> _textures;
+    std::vector<bool> _flags;
 
 public:
-    ColorMap();
+    TextureHolder();
+    ~TextureHolder();
 
-    ColorMapType type() const { return _type; }
-    void setType(ColorMapType type);
-    void cycle();
+    void create(size_t n);
+    void clear();
 
-    const std::vector<unsigned char> sRgbData() const { return _sRgbData; }
-    unsigned int texture();
+    void setFlag(size_t index) { _flags[index] = true; }
+    bool flag(size_t index) const { return _flags[index]; }
+
+    int size() const { return _textures.size(); }
+    unsigned int texture(size_t index) const { return _textures[index]; }
 };
 
 #endif

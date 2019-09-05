@@ -55,6 +55,7 @@ private:
     Histogram _colorHistogram;
     /* textures: */
     std::shared_ptr<TextureHolder> _textureHolder;
+    TAD::Array<float> _textureTransferArray;
     /* current channel: */
     int _channelIndex;
 

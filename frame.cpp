@@ -425,10 +425,12 @@ unsigned int Frame::texture(int channelIndex)
             _textureHolder->create(channelCount());
         }
         if (!_textureHolder->flag(channelIndex)) {
-            TAD::Array<float> dataArray(_originalArray.dimensions(), 1);
-            for (size_t e = 0; e < dataArray.elementCount(); e++)
-                dataArray.set<float>(e, 0, floatArray().get<float>(e, channelIndex));
-            uploadArrayToTexture(dataArray, _textureHolder->texture(channelIndex), GL_R32F, GL_RED, GL_FLOAT);
+            if (_textureTransferArray.dimensionCount() == 0)
+                _textureTransferArray = TAD::Array<float>(_originalArray.dimensions(), 1);
+            const TAD::Array<float>& origArray = floatArray();
+            for (size_t e = 0; e < _textureTransferArray.elementCount(); e++)
+                _textureTransferArray.set<float>(e, 0, origArray().get<float>(e, channelIndex));
+            uploadArrayToTexture(_textureTransferArray, _textureHolder->texture(channelIndex), GL_R32F, GL_RED, GL_FLOAT);
             _textureHolder->setFlag(channelIndex);
         }
         tex = _textureHolder->texture(channelIndex);

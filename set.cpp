@@ -94,10 +94,15 @@ bool Set::setFileIndex(int index, std::string& errorMessage)
         frameIndex = _files[_fileIndex].frameIndex();
     }
 
-    if (frameIndex < 0)
+    if (frameIndex < 0) {
         frameIndex = 0;
-    else if (frameIndex >= _files[index].frameCount())
-        frameIndex = _files[index].frameCount() - 1;
+    } else {
+        int frameCount = _files[index].frameCount(errorMessage);
+        if (frameCount < 1)
+            return false;
+        if (frameIndex >= frameCount)
+            frameIndex = frameCount - 1;
+    }
 
     if (!_files[index].setFrameIndex(frameIndex, errorMessage))
         return false;
@@ -112,6 +117,7 @@ bool Set::setFileIndex(int index, std::string& errorMessage)
 std::string Set::currentDescription()
 {
     std::string desc;
+    std::string dummyErrorMsg;
     if (currentFile()) {
         if (fileCount() > 1) {
             desc = std::to_string(fileIndex())
@@ -119,9 +125,9 @@ std::string Set::currentDescription()
         }
         std::string fileName = std::filesystem::path(currentFile()->fileName()).filename().string();
         desc += fileName + ' ';
-        if (currentFile()->frameCount() > 1) {
+        if (currentFile()->frameCount(dummyErrorMsg) > 1) {
             desc += std::to_string(currentFile()->frameIndex())
-                + '/' + std::to_string(currentFile()->frameCount()) + ' ';
+                + '/' + std::to_string(currentFile()->frameCount(dummyErrorMsg)) + ' ';
         }
         if (currentFile()->currentFrame()->channelCount() > 1) {
             if (currentFile()->currentFrame()->channelIndex() == ColorChannelIndex)

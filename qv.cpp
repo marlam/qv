@@ -382,14 +382,21 @@ void QV::adjustFrameIndex(int offset)
     File* file = _set.currentFile();
     if (!file)
         return;
+
+    std::string errMsg;
+    int fc = file->frameCount(errMsg);
+    if (fc < 1) {
+        QMessageBox::critical(nullptr, "Error", errMsg.c_str());
+        return;
+    }
+
     int i = file->frameIndex();
     int ni = i + offset;
     if (ni < 0)
         ni = 0;
-    else if (ni >= file->frameCount())
-        ni = file->frameCount() - 1;
+    else if (ni >= fc)
+        ni = fc - 1;
     if (ni != i) {
-        std::string errMsg;
         if (file->setFrameIndex(ni, errMsg)) {
             this->updateTitle();
             this->update();

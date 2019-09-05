@@ -46,7 +46,7 @@ public:
     bool init(const std::string& fileName, std::string& errorMessage);
 
     const std::string& fileName() const { return _fileName; }
-    int frameCount();
+    int frameCount(std::string& errorMessage); // returns < 1 on error
 
     bool setFrameIndex(int index, std::string& errorMessage); // index=-1 is allowed and frees resources; this cannot fail
     int frameIndex() const { return _frameIndex; }

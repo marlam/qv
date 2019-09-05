@@ -49,12 +49,18 @@ bool File::init(const std::string& fileName, std::string& errorMessage)
     return true;
 }
 
-int File::frameCount()
+int File::frameCount(std::string& errorMessage)
 {
     int arrayCount = importer().arrayCount();
-    if (arrayCount <= 0)
-        arrayCount = 1;
-    return arrayCount;
+    if (arrayCount < 0) {
+        errorMessage = fileName() + ": unknown number of frames";
+        return -1;
+    } else if (arrayCount == 0) {
+        errorMessage = fileName() + ": no frames";
+        return -1;
+    } else {
+        return arrayCount;
+    }
 }
 
 static bool isCompatible(const TAD::ArrayDescription& desc0, const TAD::ArrayDescription& desc1)
@@ -82,7 +88,10 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
         _frameIndex = -1;
         return true;
     }
-    if (index >= frameCount()) {
+    int frCnt = frameCount(errorMessage);
+    if (frCnt < 1)
+        return false;
+    if (index >= frCnt) {
         errorMessage = fileName() + ": " + "array " + std::to_string(index) + " does not exist";
         return false;
     }
@@ -134,16 +143,22 @@ bool File::reload(std::string& errorMessage)
         return false;
     }
 
-    _importer = newImporter;
-    _description = a;
     int index = frameIndex();
-    _frame.init(a);
-    _frameIndex = 0;
     if (index == 0) {
+        _importer = newImporter;
+        _description = a;
+        _frame.init(a);
+        _frameIndex = 0;
         return true;
     } else {
-        if (index >= frameCount())
-            index = frameCount() - 1;
+        int frCnt = frameCount(errorMessage);
+        if (frCnt < 1)
+            return false;
+        if (index >= frCnt)
+            index = frCnt - 1;
+        _importer = newImporter;
+        _description = a;
+        _frameIndex = -1;
         return setFrameIndex(index, errorMessage);
     }
 }

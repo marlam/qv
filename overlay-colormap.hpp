@@ -28,11 +28,9 @@
 #include "parameters.hpp"
 #include "overlay.hpp"
 
-class OverlayColorMap: public Overlay {
+class OverlayColorMap: public Overlay
+{
 public:
-    OverlayColorMap();
-    ~OverlayColorMap();
-
     void update(int widthInPixels, Parameters& parameters);
 };
 

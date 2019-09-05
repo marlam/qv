@@ -57,25 +57,18 @@ OverlayHelp::OverlayHelp()
     _helpText << " F8: use color map from clipboard in CSV format";
     _helpText << "";
     _helpText << " qv " QV_VERSION " -- https://marlam.de/qv";
-
-    int lines = _helpText.size();
-    heightInPixels = painter->fontInfo().pixelSize() * (lines + 0.5f);
-}
-
-OverlayHelp::~OverlayHelp()
-{
 }
 
 void OverlayHelp::update(int widthInPixels)
 {
-    Overlay::prepare(widthInPixels);
+    prepare(widthInPixels, _painter->fontInfo().pixelSize() * (_helpText.size() + 0.5f));
 
     float xOffset = 0.0f;
     for (int line = 0; line < _helpText.size(); line++) {
-        float yOffset = (line + 1.25f) * painter->fontInfo().pixelSize();
-        painter->drawText(xOffset, yOffset, _helpText[line]);
+        float yOffset = (line + 1.25f) * _painter->fontInfo().pixelSize();
+        _painter->drawText(xOffset, yOffset, _helpText[line]);
     }
 
     fixFormat();
-    Overlay::uploadImageToTexture();
+    uploadImageToTexture();
 }

@@ -28,13 +28,13 @@
 
 #include "overlay.hpp"
 
-class OverlayHelp : public Overlay {
+class OverlayHelp : public Overlay
+{
 private:
     QStringList _helpText;
 
 public:
     OverlayHelp();
-    ~OverlayHelp();
 
     void update(int widthInPixels);
 };

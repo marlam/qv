@@ -28,11 +28,9 @@
 #include "parameters.hpp"
 #include "overlay.hpp"
 
-class OverlayStatistic : public Overlay {
+class OverlayStatistic : public Overlay
+{
 public:
-    OverlayStatistic();
-    ~OverlayStatistic();
-
     void update(int widthInPixels, Set& set, Parameters& parameters);
 };
 

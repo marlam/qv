@@ -265,48 +265,48 @@ void QV::paintGL()
     int overlayYOffset = 0;
     if (overlayColorMapActive) {
         _overlayColorMap.update(_w, _parameters);
-        gl->glViewport(0, overlayYOffset, _w, _overlayColorMap.heightInPixels);
+        gl->glViewport(0, overlayYOffset, _w, _overlayColorMap.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, _overlayColorMap.texture());
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-        overlayYOffset += _overlayColorMap.heightInPixels;
+        overlayYOffset += _overlayColorMap.heightInPixels();
     }
     if (overlayHistogramActive) {
         _overlayHistogram.update(_w, dataX, dataY,_set, _parameters);
-        gl->glViewport(0, overlayYOffset, _w, _overlayHistogram.heightInPixels);
+        gl->glViewport(0, overlayYOffset, _w, _overlayHistogram.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, _overlayHistogram.texture());
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-        overlayYOffset += _overlayHistogram.heightInPixels;
+        overlayYOffset += _overlayHistogram.heightInPixels();
     }
     if (overlayStatisticActive) {
         _overlayStatistic.update(_w, _set, _parameters);
-        gl->glViewport(0, overlayYOffset, _w, _overlayStatistic.heightInPixels);
+        gl->glViewport(0, overlayYOffset, _w, _overlayStatistic.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, _overlayStatistic.texture());
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-        overlayYOffset += _overlayStatistic.heightInPixels;
+        overlayYOffset += _overlayStatistic.heightInPixels();
     }
     if (overlayInfoActive) {
         _overlayInfo.update(_w, dataX, dataY, _set, _parameters);
-        gl->glViewport(0, overlayYOffset, _w, _overlayInfo.heightInPixels);
+        gl->glViewport(0, overlayYOffset, _w, _overlayInfo.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, _overlayInfo.texture());
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-        overlayYOffset += _overlayInfo.heightInPixels;
+        overlayYOffset += _overlayInfo.heightInPixels();
     }
     if (overlayHelpActive) {
         _overlayHelp.update(_w);
-        gl->glViewport(0, overlayYOffset, _w, _overlayHelp.heightInPixels);
+        gl->glViewport(0, overlayYOffset, _w, _overlayHelp.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, _overlayHelp.texture());
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-        overlayYOffset += _overlayHelp.heightInPixels;
+        overlayYOffset += _overlayHelp.heightInPixels();
     }
     gl->glDisable(GL_BLEND);
     ASSERT_GLCHECK();

@@ -28,11 +28,9 @@
 #include "parameters.hpp"
 #include "overlay.hpp"
 
-class OverlayHistogram: public Overlay {
+class OverlayHistogram: public Overlay
+{
 public:
-    OverlayHistogram();
-    ~OverlayHistogram();
-
     void update(int widthInPixels, int x, int y, Set& set, Parameters& parameters);
 };
 

@@ -30,15 +30,6 @@
 #include "overlay-histogram.hpp"
 
 
-OverlayHistogram::OverlayHistogram()
-{
-    heightInPixels = 64;
-}
-
-OverlayHistogram::~OverlayHistogram()
-{
-}
-
 static float clamp(float v, float lo, float hi)
 {
     if (v < lo)
@@ -56,7 +47,7 @@ static float logtransf(float x)
 
 void OverlayHistogram::update(int widthInPixels, int x, int y, Set& set, Parameters& parameters)
 {
-    Overlay::prepare(widthInPixels);
+    prepare(widthInPixels, 64);
 
     Frame* frame = set.currentFile()->currentFrame();
     const Histogram& H = frame->currentHistogram();
@@ -67,13 +58,13 @@ void OverlayHistogram::update(int widthInPixels, int x, int y, Set& set, Paramet
     int borderX0 = borderSize - 1;
     int borderY0 = borderSize - 1;
     int borderX1 = widthInPixels - 1 - borderX0;
-    int borderY1 = heightInPixels - 1 - borderY0;
+    int borderY1 = heightInPixels() - 1 - borderY0;
     int borderWidth = borderX1 - borderX0;
     int borderHeight = borderY1 - borderY0;
-    painter->fillRect(borderX0, borderY0, borderWidth, 1, borderColor);
-    painter->fillRect(borderX0, borderY1, borderWidth, 1, borderColor);
-    painter->fillRect(borderX0, borderY0, 1, borderHeight, borderColor);
-    painter->fillRect(borderX1, borderY0, 1, borderHeight + 1 /* Huh?? */, borderColor);
+    _painter->fillRect(borderX0, borderY0, borderWidth, 1, borderColor);
+    _painter->fillRect(borderX0, borderY1, borderWidth, 1, borderColor);
+    _painter->fillRect(borderX0, borderY0, 1, borderHeight, borderColor);
+    _painter->fillRect(borderX1, borderY0, 1, borderHeight + 1 /* Huh?? */, borderColor);
 
     // Vis Interval
     float visMin = parameters.visMinVal(frame->channelIndex());
@@ -83,17 +74,17 @@ void OverlayHistogram::update(int widthInPixels, int x, int y, Set& set, Paramet
     int visX0 = borderSize + normalizedVisMin * (widthInPixels - 2 * borderSize);
     int visX1 = borderSize + normalizedVisMax * (widthInPixels - 2 * borderSize);
     int visY0 = borderSize;
-    int visY1 = heightInPixels - 1 - borderSize;
+    int visY1 = heightInPixels() - 1 - borderSize;
     QColor visIntervalColor = QColor(Qt::gray);
-    painter->fillRect(visX0, visY0, visX1 - visX0, visY1 - visY0 + 1, visIntervalColor);
+    _painter->fillRect(visX0, visY0, visX1 - visX0, visY1 - visY0 + 1, visIntervalColor);
 
     // Histogram
     bool outside = (x < 0 || y < 0 || x >= frame->width() || y >= frame->height());
     float value = (outside ? 0.0f : frame->value(x, y, frame->channelIndex()));
     int availableWidth = widthInPixels - 2 * borderSize;
     float binWidth = float(availableWidth) / H.binCount();
-    int availableHeight = heightInPixels - 2 * borderSize;
-    int binY = heightInPixels - borderSize;
+    int availableHeight = heightInPixels() - 2 * borderSize;
+    int binY = heightInPixels() - borderSize;
     for (int bin = 0; bin < H.binCount(); bin++) {
         int binX = borderSize + std::round(bin * binWidth);
         if (binX >= borderX1)
@@ -108,13 +99,13 @@ void OverlayHistogram::update(int widthInPixels, int x, int y, Set& set, Paramet
         }
         int binHeight = std::round(normalizedBinHeight * availableHeight);
         if (!outside && H.binIndex(value) == bin) {
-            painter->fillRect(binX, borderSize, thisBinWidth, availableHeight, QColor(Qt::green));
-            painter->fillRect(binX, binY, thisBinWidth, -binHeight, QColor(Qt::green));
+            _painter->fillRect(binX, borderSize, thisBinWidth, availableHeight, QColor(Qt::green));
+            _painter->fillRect(binX, binY, thisBinWidth, -binHeight, QColor(Qt::green));
         } else {
-            painter->fillRect(binX, binY, thisBinWidth, -binHeight, QColor(Qt::white));
+            _painter->fillRect(binX, binY, thisBinWidth, -binHeight, QColor(Qt::white));
         }
     }
 
     fixFormat();
-    Overlay::uploadImageToTexture();
+    uploadImageToTexture();
 }

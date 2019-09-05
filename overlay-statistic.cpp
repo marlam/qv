@@ -27,18 +27,9 @@
 #include "overlay-statistic.hpp"
 
 
-OverlayStatistic::OverlayStatistic()
-{
-    heightInPixels = painter->fontInfo().pixelSize() * 1.5f;
-}
-
-OverlayStatistic::~OverlayStatistic()
-{
-}
-
 void OverlayStatistic::update(int widthInPixels, Set& set, Parameters& /* parameters */)
 {
-    Overlay::prepare(widthInPixels);
+    prepare(widthInPixels, _painter->fontInfo().pixelSize() * 1.5f);
 
     Frame* frame = set.currentFile()->currentFrame();
     QString s = " channel=";
@@ -50,9 +41,9 @@ void OverlayStatistic::update(int widthInPixels, Set& set, Parameters& /* parame
     s += QString(" min=%1 max=%2 mean=%3 var=%4 dev=%5").
         arg(S.minVal()).arg(S.maxVal()).arg(S.sampleMean()).arg(S.sampleVariance()).arg(S.sampleDeviation());
     float xOffset = 0.0f;
-    float yOffset = 1.25f * painter->fontInfo().pixelSize();
-    painter->drawText(xOffset, yOffset, s);
+    float yOffset = 1.25f * _painter->fontInfo().pixelSize();
+    _painter->drawText(xOffset, yOffset, s);
 
     fixFormat();
-    Overlay::uploadImageToTexture();
+    uploadImageToTexture();
 }

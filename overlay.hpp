@@ -37,20 +37,19 @@ private:
     std::shared_ptr<TextureHolder> _textureHolder;
 
 protected:
-    QImage* image;
-    QPainter* painter;
+    QImage* _image;
+    QPainter* _painter;
 
-    void prepare(int widthInPixels);
+    void prepare(int widthInPixels, int heightInPixels);
     void fixFormat(int opaqueBlockX = -1, int opaqueBlockY = -1,
             int opaqueBlockW = -1, int opaqueBlockH = -1);
     void uploadImageToTexture();
 
 public:
-    int heightInPixels;
-
     Overlay();
     virtual ~Overlay();
 
+    int heightInPixels() const { return _image->height(); }
     unsigned int texture() const { return _textureHolder->texture(0); }
 };
 

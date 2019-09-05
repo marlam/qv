@@ -31,69 +31,72 @@
 #include "gl.hpp"
 
 
-Overlay::Overlay() :
-    image(nullptr), painter(nullptr), heightInPixels(32)
+Overlay::Overlay() : _image(nullptr), _painter(nullptr)
 {
-    prepare(1); // to get a valid painter etc
+    prepare(1, 1); // to get an initial valid _painter
 }
 
 Overlay::~Overlay()
 {
-    delete painter;
-    delete image;
+    delete _painter;
+    delete _image;
 }
 
-void Overlay::prepare(int widthInPixels)
+void Overlay::prepare(int widthInPixels, int heightInPixels)
 {
-    if (image && (image->width() != widthInPixels || image->height() != heightInPixels)) {
-        delete painter;
-        painter = nullptr;
-        delete image;
-        image = nullptr;
+    if (_image && (_image->width() != widthInPixels || _image->height() != heightInPixels)) {
+        delete _painter;
+        _painter = nullptr;
+        delete _image;
+        _image = nullptr;
     }
-    if (!image) {
-        image = new QImage(widthInPixels, heightInPixels, QImage::Format_ARGB32_Premultiplied);
-        painter = new QPainter(image);
+    if (!_image) {
+        _image = new QImage(widthInPixels, heightInPixels, QImage::Format_ARGB32_Premultiplied);
+        _painter = new QPainter(_image);
         QFont font;
         font.setFamily("Monospace");
         font.setStyleHint(QFont::Monospace, QFont::PreferAntialias);
         font.setWeight(QFont::DemiBold);
-        painter->setFont(font);
-        painter->setRenderHint(QPainter::Antialiasing);
-        painter->setRenderHint(QPainter::TextAntialiasing);
-        painter->setRenderHint(QPainter::HighQualityAntialiasing);
+        _painter->setFont(font);
+        _painter->setRenderHint(QPainter::Antialiasing);
+        _painter->setRenderHint(QPainter::TextAntialiasing);
+        _painter->setRenderHint(QPainter::HighQualityAntialiasing);
         QPen pen;
         pen.setColor(QColor(Qt::white));
         pen.setStyle(Qt::SolidLine);
         pen.setWidth(1);
-        painter->setPen(pen);
+        _painter->setPen(pen);
         QBrush brush;
         brush.setColor(QColor(Qt::white));
         brush.setStyle(Qt::SolidPattern);
-        painter->setBrush(brush);
+        _painter->setBrush(brush);
     }
     const unsigned char bgColor = 3 * 255 / 6;
-    image->fill(QColor(bgColor, bgColor, bgColor, 255));
+    _image->fill(QColor(bgColor, bgColor, bgColor, 255));
 }
 
 void Overlay::fixFormat(int opaqueBlockX, int opaqueBlockY, int opaqueBlockW, int opaqueBlockH)
 {
     const unsigned char transparencyAlpha = 5 * 255 / 6;
-    for (int l = 0; l < image->height(); l++) {
-        unsigned char* lineData = image->scanLine(l);
-        for (int c = 0; c < image->width(); c++) {
-            float preAlpha = lineData[4 * c + 3] / 255.0f;
-            float v0 = lineData[4 * c + 0] / preAlpha;
-            float v1 = lineData[4 * c + 1] / preAlpha;
-            float v2 = lineData[4 * c + 2] / preAlpha;
-            lineData[4 * c + 0] = std::round(v2);
-            lineData[4 * c + 1] = std::round(v1);
-            lineData[4 * c + 2] = std::round(v0);
+    for (int l = 0; l < _image->height(); l++) {
+        unsigned char* lineData = _image->scanLine(l);
+        for (int c = 0; c < _image->width(); c++) {
+            unsigned char v0 = lineData[4 * c + 0];
+            unsigned char v1 = lineData[4 * c + 1];
+            unsigned char v2 = lineData[4 * c + 2];
+            unsigned char v3 = lineData[4 * c + 3];
+            float preAlpha = v3 / 255.0f;
+            float vv0 = v0 / preAlpha;
+            float vv1 = v1 / preAlpha;
+            float vv2 = v2 / preAlpha;
             unsigned char alpha = transparencyAlpha;
             if (l >= opaqueBlockY && l < opaqueBlockY + opaqueBlockH
                     && c >= opaqueBlockX && c < opaqueBlockX + opaqueBlockW) {
                 alpha = 255;
             }
+            lineData[4 * c + 0] = std::round(vv2);
+            lineData[4 * c + 1] = std::round(vv1);
+            lineData[4 * c + 2] = std::round(vv0);
             lineData[4 * c + 3] = alpha;
         }
     }
@@ -113,16 +116,16 @@ void Overlay::uploadImageToTexture()
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
-    size_t size = image->width() * image->height() * 4;
+    size_t size = _image->width() * _image->height() * 4;
     gl->glBindTexture(GL_TEXTURE_2D, texture());
     gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glGetGlobalPBO());
     gl->glBufferData(GL_PIXEL_UNPACK_BUFFER, size, nullptr, GL_STREAM_DRAW);
     void* ptr = gl->glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, size,
             GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-    std::memcpy(ptr, image->constBits(), size);
+    std::memcpy(ptr, _image->constBits(), size);
     gl->glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8,
-            image->width(), image->height(), 0,
+            _image->width(), _image->height(), 0,
             GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
     gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
     ASSERT_GLCHECK();

@@ -27,25 +27,16 @@
 #include "overlay-info.hpp"
 
 
-OverlayInfo::OverlayInfo()
-{
-    heightInPixels = painter->fontInfo().pixelSize() * 1.5f;
-}
-
-OverlayInfo::~OverlayInfo()
-{
-}
-
 void OverlayInfo::update(int widthInPixels, int x, int y, Set& set, Parameters& /* parameters */)
 {
-    Overlay::prepare(widthInPixels);
+    prepare(widthInPixels, _painter->fontInfo().pixelSize() * 1.5f);
 
     Frame* frame = set.currentFile()->currentFrame();
     bool outside = (x < 0 || y < 0 || x >= frame->width() || y >= frame->height());
 
-    QFontMetricsF fontMetrics(painter->font(), painter->device());
+    QFontMetricsF fontMetrics(_painter->font(), _painter->device());
     float xOffset = 0.0f;
-    float yOffset = 1.25f * painter->fontInfo().pixelSize();
+    float yOffset = 1.25f * _painter->fontInfo().pixelSize();
 
     QString pos = QString(" pos=");
     if (outside) {
@@ -58,7 +49,7 @@ void OverlayInfo::update(int widthInPixels, int x, int y, Set& set, Parameters& 
                 : 5);
         pos += QString("%1,%2  ").arg(x, fieldWidth).arg(y, fieldWidth);
     }
-    painter->drawText(xOffset, yOffset, pos);
+    _painter->drawText(xOffset, yOffset, pos);
     xOffset += fontMetrics.horizontalAdvance(pos);
 
     if (!outside) {
@@ -77,10 +68,10 @@ void OverlayInfo::update(int widthInPixels, int x, int y, Set& set, Parameters& 
             float v = frame->value(x, y, ColorChannelIndex);
             val += QString("lum=%1").arg(v);
         }
-        painter->drawText(xOffset, yOffset, val);
+        _painter->drawText(xOffset, yOffset, val);
         xOffset += fontMetrics.horizontalAdvance(val);
     }
 
     fixFormat();
-    Overlay::uploadImageToTexture();
+    uploadImageToTexture();
 }

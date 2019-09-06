@@ -90,8 +90,11 @@ bool Set::setFileIndex(int index, std::string& errorMessage)
     }
 
     int frameIndex = 0;
+    int channelIndex = -1;
     if (_fileIndex >= 0) {
-        frameIndex = _files[_fileIndex].frameIndex();
+        frameIndex = currentFile()->frameIndex();
+        if (frameIndex >= 0)
+            channelIndex = currentFile()->currentFrame()->channelIndex();
     }
 
     if (frameIndex < 0) {
@@ -106,6 +109,11 @@ bool Set::setFileIndex(int index, std::string& errorMessage)
 
     if (!_files[index].setFrameIndex(frameIndex, errorMessage))
         return false;
+
+    if (channelIndex != ColorChannelIndex && channelIndex >= _files[index].currentFrame()->channelCount())
+        channelIndex = -1;
+    if (channelIndex >= 0)
+        _files[index].currentFrame()->setChannelIndex(channelIndex);
 
     if (_fileIndex >= 0 && _fileIndex < fileCount())
         _files[_fileIndex].setFrameIndex(-1, errorMessage);

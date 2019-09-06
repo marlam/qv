@@ -50,6 +50,7 @@ QV::QV(Set& set, Parameters& parameters) :
     _overlayHistogramActive(false),
     _overlayColorMapActive(false)
 {
+    setMouseTracking(true);
     setWindowIcon(QIcon(":cg-logo.png"));
     setMinimumSize(QSize(500, 500));
     File* file = _set.currentFile();

@@ -71,13 +71,13 @@ void Overlay::prepare(int widthInPixels, int heightInPixels)
         brush.setStyle(Qt::SolidPattern);
         _painter->setBrush(brush);
     }
-    const unsigned char bgColor = 3 * 255 / 6;
+    const unsigned char bgColor = 32;
     _image->fill(QColor(bgColor, bgColor, bgColor, 255));
 }
 
 void Overlay::fixFormat(int opaqueBlockX, int opaqueBlockY, int opaqueBlockW, int opaqueBlockH)
 {
-    const unsigned char transparencyAlpha = 5 * 255 / 6;
+    const unsigned char transparencyAlpha = 192;
     for (int l = 0; l < _image->height(); l++) {
         unsigned char* lineData = _image->scanLine(l);
         for (int c = 0; c < _image->width(); c++) {

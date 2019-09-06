@@ -27,7 +27,18 @@ smooth in vec2 vtexcoord;
 
 layout(location = 0) out vec4 fcolor;
 
+float linear_to_s(float x)
+{
+    return (x <= 0.0031308 ? (x * 12.92) : (1.055 * pow(x, 1.0 / 2.4) - 0.055));
+}
+
+vec3 rgb_to_srgb(vec3 rgb)
+{
+    return vec3(linear_to_s(rgb.r), linear_to_s(rgb.g), linear_to_s(rgb.b));
+}
+
 void main(void)
 {
-    fcolor = texture(tex, vtexcoord).rgba;
+    vec4 val = texture(tex, vtexcoord).rgba;
+    fcolor = vec4(rgb_to_srgb(val.rgb), val.a);
 }

@@ -104,7 +104,7 @@ void main(void)
         v = clamp(v, 0.0, 1.0);
         // Apply color map
         if (colorMap) {
-            srgb = texture(colorMapTex, vec2(v, 0.5)).rgb;
+            srgb = rgb_to_srgb(texture(colorMapTex, vec2(v, 0.5)).rgb);
         } else {
             vec3 xyz = adjust_y(d65_xyz, 100.0 * v);
             srgb = rgb_to_srgb(xyz_to_rgb(xyz));
@@ -147,7 +147,7 @@ void main(void)
         y = clamp(y, 0.0, 1.0);
         // Apply color map
         if (colorMap) {
-            srgb = texture(colorMapTex, vec2(y, 0.5)).rgb;
+            srgb = rgb_to_srgb(texture(colorMapTex, vec2(y, 0.5)).rgb);
         } else {
             xyz = adjust_y(xyz, 100.0 * y);
             vec3 rgb = xyz_to_rgb(xyz);

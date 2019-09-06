@@ -55,7 +55,7 @@ void OverlayHistogram::update(int widthInPixels, const QPoint& arrayCoordinates,
 
     // Border
     const int borderSize = 5;
-    const QColor borderColor = QColor(QColor(64, 64, 64));
+    const QColor borderColor = QColor(QColor(0, 0, 0));
     int borderX0 = borderSize - 1;
     int borderY0 = borderSize - 1;
     int borderX1 = widthInPixels - 1 - borderX0;
@@ -76,7 +76,7 @@ void OverlayHistogram::update(int widthInPixels, const QPoint& arrayCoordinates,
     int visX1 = borderSize + normalizedVisMax * (widthInPixels - 2 * borderSize);
     int visY0 = borderSize;
     int visY1 = heightInPixels() - 1 - borderSize;
-    QColor visIntervalColor = QColor(Qt::gray);
+    QColor visIntervalColor = QColor(Qt::darkGray);
     _painter->fillRect(visX0, visY0, visX1 - visX0, visY1 - visY0 + 1, visIntervalColor);
 
     // Histogram

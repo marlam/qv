@@ -35,7 +35,7 @@ void OverlayColorMap::update(int widthInPixels, Parameters& parameters)
 
     // Border
     const int borderSize = 5;
-    const QColor borderColor = QColor(QColor(64, 64, 64));
+    const QColor borderColor = QColor(QColor(0, 0, 0));
     int borderX0 = borderSize - 1;
     int borderY0 = borderSize - 1;
     int borderX1 = widthInPixels - 1 - borderX0;
@@ -60,8 +60,7 @@ void OverlayColorMap::update(int widthInPixels, Parameters& parameters)
             QColor color = QColor(
                     sRgbData[3 * sRgbIndex + 0],
                     sRgbData[3 * sRgbIndex + 1],
-                    sRgbData[3 * sRgbIndex + 2],
-                    255);
+                    sRgbData[3 * sRgbIndex + 2]);
             _painter->fillRect(borderSize + i, borderSize, 1, heightInPixels() - 2 * borderSize, color);
         }
         fixFormat(borderSize, borderSize, _image->width() - 2 * borderSize, _image->height() - 2 * borderSize);

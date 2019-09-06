@@ -25,6 +25,7 @@
 #include <cmath>
 
 #include <QGuiApplication>
+#include <QClipboard>
 #include <QScreen>
 #include <QFile>
 #include <QFileInfo>
@@ -74,9 +75,9 @@ void QV::initializeGL()
     ASSERT_GLCHECK();
 
     auto gl = getGlFunctionsFromCurrentContext();
-    if (!gl) {
-        qFatal("No valid OpenGL context.");
-    }
+
+    gl->glGenFramebuffers(1, &_fbo);
+    gl->glGenTextures(1, &_fboTex);
 
     const float quadPositions[] = {
         -1.0f, +1.0f, 0.0f,
@@ -232,6 +233,38 @@ QPoint QV::renderFrame(Frame* frame, int w, int h, QPoint mousePos)
     if (dy < 0.0f || dataY >= frame->height())
         dataY = -1;
     return QPoint(dataX, dataY);
+}
+
+QImage QV::renderFrameToImage(Frame* frame)
+{
+    ASSERT_GLCHECK();
+    auto gl = getGlFunctionsFromCurrentContext();
+    int _fboBak;
+    gl->glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &_fboBak);
+    gl->glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
+    gl->glBindTexture(GL_TEXTURE_2D, _fboTex);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frame->width(), frame->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _fboTex, 0);
+    gl->glViewport(0, 0, frame->width(), frame->height());
+    renderFrame(frame, frame->width(), frame->height(), QPoint(0, 0));
+    QImage rawImg(frame->width(), frame->height(), QImage::Format_RGB32);
+    gl->glReadPixels(0, 0, frame->width(), frame->height(), GL_RGBA, GL_UNSIGNED_BYTE, rawImg.bits());
+    gl->glBindFramebuffer(GL_FRAMEBUFFER, _fboBak);
+    ASSERT_GLCHECK();
+    QImage img(frame->width(), frame->height(), QImage::Format_RGB32);
+    for (int l = 0; l < img.height(); l++) {
+        const unsigned char* srcLine = rawImg.scanLine(img.height() - 1 - l);
+        unsigned char* dstLine = img.scanLine(l);
+        for (int c = 0; c < img.width(); c++) {
+            unsigned char v0 = srcLine[4 * c + 0];
+            unsigned char v1 = srcLine[4 * c + 1];
+            unsigned char v2 = srcLine[4 * c + 2];
+            dstLine[4 * c + 0] = v2;
+            dstLine[4 * c + 1] = v1;
+            dstLine[4 * c + 2] = v0;
+        }
+    }
+    return img;
 }
 
 void QV::resizeGL(int w, int h)
@@ -498,6 +531,31 @@ void QV::changeColorMap(ColorMapType type)
     this->update();
 }
 
+void QV::saveView(bool pure)
+{
+    File* file = _set.currentFile();
+    Frame* frame = (file ? file->currentFrame() : nullptr);
+    if (!frame)
+        return;
+    QString name = QFileDialog::getSaveFileName(nullptr, QString(), QString(), "PNG images (*.png)");
+    if (!name.isEmpty()) {
+        QImage img = (pure ? renderFrameToImage(frame) : grabFramebuffer());
+        if (!img.save(name, "png")) {
+            QMessageBox::critical(nullptr, "Error", "Saving failed.");
+        }
+    }
+}
+
+void QV::copyView(bool pure)
+{
+    File* file = _set.currentFile();
+    Frame* frame = (file ? file->currentFrame() : nullptr);
+    if (!frame)
+        return;
+    QGuiApplication::clipboard()->setImage(
+            pure ? renderFrameToImage(frame) : grabFramebuffer());
+}
+
 void QV::keyReleaseEvent(QKeyEvent* e)
 {
     if (e->key() == Qt::Key_Q || e->matches(QKeySequence::Quit)) {
@@ -612,6 +670,14 @@ void QV::keyReleaseEvent(QKeyEvent* e)
     } else if (e->key() == Qt::Key_M) {
         _overlayColorMapActive = !_overlayColorMapActive;
         this->update();
+    } else if (e->key() == Qt::Key_F2) {
+        saveView(false);
+    } else if (e->key() == Qt::Key_F3) {
+        saveView(true);
+    } else if (e->key() == Qt::Key_F9) {
+        copyView(false);
+    } else if (e->key() == Qt::Key_F10) {
+        copyView(true);
     } else {
         QOpenGLWindow::keyPressEvent(e);
     }

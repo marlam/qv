@@ -44,6 +44,8 @@ private:
     Set& _set;
     Parameters& _parameters;
     int _w, _h;
+    unsigned int _fbo;
+    unsigned int _fboTex;
     unsigned int _vao;
     QOpenGLShaderProgram _viewPrg;
     QOpenGLShaderProgram _overlayPrg;
@@ -63,6 +65,7 @@ private:
 
     void updateTitle();
     QPoint renderFrame(Frame* frame, int w, int h, QPoint mousePos);
+    QImage renderFrameToImage(Frame* frame);
 
     void openFile();
     void closeFile();
@@ -74,6 +77,8 @@ private:
     void adjustVisInterval(int minSteps, int maxSteps);
     void resetVisInterval();
     void changeColorMap(ColorMapType type);
+    void saveView(bool pure);
+    void copyView(bool pure);
 
 public:
     QV(Set& set, Parameters& parameters);

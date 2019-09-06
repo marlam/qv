@@ -27,12 +27,13 @@
 #include "overlay-info.hpp"
 
 
-void OverlayInfo::update(int widthInPixels, int x, int y, Set& set, Parameters& /* parameters */)
+void OverlayInfo::update(int widthInPixels, const QPoint& arrayCoordinates, Set& set)
 {
     prepare(widthInPixels, _painter->fontInfo().pixelSize() * 1.5f);
 
     Frame* frame = set.currentFile()->currentFrame();
-    bool outside = (x < 0 || y < 0 || x >= frame->width() || y >= frame->height());
+    bool outside = (arrayCoordinates.x() < 0 || arrayCoordinates.y() < 0
+            || arrayCoordinates.x() >= frame->width() || arrayCoordinates.y() >= frame->height());
 
     QFontMetricsF fontMetrics(_painter->font(), _painter->device());
     float xOffset = 0.0f;
@@ -47,7 +48,7 @@ void OverlayInfo::update(int widthInPixels, int x, int y, Set& set, Parameters& 
                 : frame->width() <= 1000  && frame->height() <= 1000  ? 3
                 : frame->width() <= 10000 && frame->height() <= 10000 ? 4
                 : 5);
-        pos += QString("%1,%2  ").arg(x, fieldWidth).arg(y, fieldWidth);
+        pos += QString("%1,%2  ").arg(arrayCoordinates.x(), fieldWidth).arg(arrayCoordinates.y(), fieldWidth);
     }
     _painter->drawText(xOffset, yOffset, pos);
     xOffset += fontMetrics.horizontalAdvance(pos);
@@ -61,11 +62,11 @@ void OverlayInfo::update(int widthInPixels, int x, int y, Set& set, Parameters& 
                 : frame->type() == TAD::uint16 ? 5
                 : 11);
         for (int i = 0; i < frame->channelCount(); i++) {
-            float v = frame->value(x, y, i);
+            float v = frame->value(arrayCoordinates.x(), arrayCoordinates.y(), i);
             val += QString("ch%1=%2 ").arg(frame->channelName(i).c_str()).arg(v, fieldWidth, 'g');
         }
         if (frame->colorSpace() != ColorSpaceNone) {
-            float v = frame->value(x, y, ColorChannelIndex);
+            float v = frame->value(arrayCoordinates.x(), arrayCoordinates.y(), ColorChannelIndex);
             val += QString("lum=%1").arg(v);
         }
         _painter->drawText(xOffset, yOffset, val);

@@ -31,7 +31,7 @@
 class OverlayInfo : public Overlay
 {
 public:
-    void update(int widthInPixels, int x, int y, Set& set, Parameters& parameters);
+    void update(int widthInPixels, const QPoint& arrayCoordinates, Set& set);
 };
 
 #endif

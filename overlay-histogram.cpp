@@ -45,7 +45,8 @@ static float logtransf(float x)
     return clamp(std::log(1.0f + x * (base - 1.0f)) / std::log(base), 0.0f, 1.0f);
 }
 
-void OverlayHistogram::update(int widthInPixels, int x, int y, Set& set, Parameters& parameters)
+void OverlayHistogram::update(int widthInPixels, const QPoint& arrayCoordinates,
+        Set& set, Parameters& parameters)
 {
     prepare(widthInPixels, 64);
 
@@ -79,8 +80,9 @@ void OverlayHistogram::update(int widthInPixels, int x, int y, Set& set, Paramet
     _painter->fillRect(visX0, visY0, visX1 - visX0, visY1 - visY0 + 1, visIntervalColor);
 
     // Histogram
-    bool outside = (x < 0 || y < 0 || x >= frame->width() || y >= frame->height());
-    float value = (outside ? 0.0f : frame->value(x, y, frame->channelIndex()));
+    bool outside = (arrayCoordinates.x() < 0 || arrayCoordinates.y() < 0
+            || arrayCoordinates.x() >= frame->width() || arrayCoordinates.y() >= frame->height());
+    float value = (outside ? 0.0f : frame->value(arrayCoordinates.x(), arrayCoordinates.y(), frame->channelIndex()));
     int availableWidth = widthInPixels - 2 * borderSize;
     float binWidth = float(availableWidth) / H.binCount();
     int availableHeight = heightInPixels() - 2 * borderSize;

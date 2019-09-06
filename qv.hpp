@@ -62,6 +62,7 @@ private:
     OverlayColorMap _overlayColorMap;
 
     void updateTitle();
+    QPoint renderFrame(Frame* frame, int w, int h, QPoint mousePos);
 
     void openFile();
     void closeFile();

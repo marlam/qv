@@ -147,6 +147,93 @@ void QV::initializeGL()
     gl->glDisable(GL_DEPTH_TEST);
 }
 
+QPoint QV::renderFrame(Frame* frame, int w, int h, QPoint mousePos)
+{
+    ASSERT_GLCHECK();
+    auto gl = getGlFunctionsFromCurrentContext();
+    gl->glUseProgram(_viewPrg.programId());
+    // Aspect ratio
+    float windowAR = float(w) / h;
+    float frameAR = float(frame->width()) / frame->height();
+    float arFactorX = 1.0f;
+    float arFactorY = 1.0f;
+    if (windowAR > frameAR) {
+        arFactorX = frameAR / windowAR;
+    } else if (frameAR > windowAR) {
+        arFactorY = windowAR / frameAR;
+    }
+    // Navigation and zoom
+    float xFactor = arFactorX / _parameters.zoom;
+    float yFactor = arFactorY / _parameters.zoom;
+    float xOffset = 2.0f * _parameters.xOffset / w;
+    float yOffset = 2.0f * _parameters.yOffset / h;
+    _viewPrg.setUniformValue("xFactor", xFactor);
+    _viewPrg.setUniformValue("yFactor", yFactor);
+    _viewPrg.setUniformValue("xOffset", xOffset);
+    _viewPrg.setUniformValue("yOffset", yOffset);
+    _viewPrg.setUniformValue("magGrid", _parameters.magGrid);
+    // Min/max values
+    float visMinVal = _parameters.visMinVal(frame->channelIndex());
+    float visMaxVal = _parameters.visMaxVal(frame->channelIndex());
+    if (!std::isfinite(visMinVal) || !std::isfinite(visMaxVal)) {
+        visMinVal = frame->visMinVal(frame->channelIndex());
+        visMaxVal = frame->visMaxVal(frame->channelIndex());
+        _parameters.setVisMinVal(frame->channelIndex(), visMinVal);
+        _parameters.setVisMaxVal(frame->channelIndex(), visMaxVal);
+    }
+    _viewPrg.setUniformValue("visMinVal", visMinVal);
+    _viewPrg.setUniformValue("visMaxVal", visMaxVal);
+    // Color and data information
+    bool showColor = (frame->channelIndex() == ColorChannelIndex);
+    _viewPrg.setUniformValue("colorMap", _parameters.colorMap().type() != ColorMapNone);
+    _viewPrg.setUniformValue("showColor", showColor);
+    _viewPrg.setUniformValue("colorSpace", int(frame->colorSpace()));
+    _viewPrg.setUniformValue("channelCount", frame->channelCount());
+    _viewPrg.setUniformValue("dataChannelIndex", frame->channelIndex());
+    _viewPrg.setUniformValue("colorChannel0Index", frame->colorChannelIndex(0));
+    _viewPrg.setUniformValue("colorChannel1Index", frame->colorChannelIndex(1));
+    _viewPrg.setUniformValue("colorChannel2Index", frame->colorChannelIndex(2));
+    _viewPrg.setUniformValue("alphaChannelIndex", frame->alphaChannelIndex());
+    // Textures
+    _viewPrg.setUniformValue("tex0", 0);
+    _viewPrg.setUniformValue("tex1", 1);
+    _viewPrg.setUniformValue("tex2", 2);
+    _viewPrg.setUniformValue("alphaTex", 3);
+    _viewPrg.setUniformValue("colorMapTex", 4);
+    gl->glActiveTexture(GL_TEXTURE0);
+    gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(0)) : frame->texture(frame->channelIndex()));
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glActiveTexture(GL_TEXTURE1);
+    gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(1)) : 0);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glActiveTexture(GL_TEXTURE2);
+    gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(2)) : 0);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glActiveTexture(GL_TEXTURE3);
+    gl->glBindTexture(GL_TEXTURE_2D, (showColor && frame->hasAlpha()) ? frame->texture(frame->alphaChannelIndex()) : 0);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glActiveTexture(GL_TEXTURE4);
+    gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
+    // Draw the image
+    gl->glBindVertexArray(_vao);
+    gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    ASSERT_GLCHECK();
+    // Return array coordinates
+    float wx = (float(mousePos.x()) / w - 0.5f) * 2.0f;
+    float wy = (float(h - 1 - mousePos.y()) / h - 0.5f) * 2.0f;
+    float px = (wx - xOffset) / xFactor;
+    float py = (wy - yOffset) / yFactor;
+    float dx = 0.5f * (px + 1.0f) * frame->width();
+    float dy = 0.5f * (py + 1.0f) * frame->height();
+    int dataX = dx;
+    int dataY = dy;
+    if (dx < 0.0f || dataX >= frame->width())
+        dataX = -1;
+    if (dy < 0.0f || dataY >= frame->height())
+        dataY = -1;
+    return QPoint(dataX, dataY);
+}
+
 void QV::resizeGL(int w, int h)
 {
     _w = w;
@@ -156,96 +243,18 @@ void QV::resizeGL(int w, int h)
 void QV::paintGL()
 {
     ASSERT_GLCHECK();
-
     auto gl = getGlFunctionsFromCurrentContext();
     gl->glViewport(0, 0, _w, _h);
     gl->glClear(GL_COLOR_BUFFER_BIT);
+    ASSERT_GLCHECK();
 
+    // Draw the frame
     File* file = _set.currentFile();
     Frame* frame = (file ? file->currentFrame() : nullptr);
-    int dataX = -1, dataY = -1;
+    QPoint arrayCoordinates(-1, -1);
     if (frame) {
-        gl->glUseProgram(_viewPrg.programId());
-        // Aspect ratio
-        float windowAR = float(_w) / _h;
-        float frameAR = float(frame->width()) / frame->height();
-        float arFactorX = 1.0f;
-        float arFactorY = 1.0f;
-        if (windowAR > frameAR) {
-            arFactorX = frameAR / windowAR;
-        } else if (frameAR > windowAR) {
-            arFactorY = windowAR / frameAR;
-        }
-        // Navigation and zoom
-        float xFactor = arFactorX / _parameters.zoom;
-        float yFactor = arFactorY / _parameters.zoom;
-        float xOffset = 2.0f * _parameters.xOffset / _w;
-        float yOffset = 2.0f * _parameters.yOffset / _h;
-        _viewPrg.setUniformValue("xFactor", xFactor);
-        _viewPrg.setUniformValue("yFactor", yFactor);
-        _viewPrg.setUniformValue("xOffset", xOffset);
-        _viewPrg.setUniformValue("yOffset", yOffset);
-        _viewPrg.setUniformValue("magGrid", _parameters.magGrid);
-        // Data coordinates
-        float wx = (float(_mousePos.x()) / _w - 0.5f) * 2.0f;
-        float wy = (float(_h - 1 - _mousePos.y()) / _h - 0.5f) * 2.0f;
-        float px = (wx - xOffset) / xFactor;
-        float py = (wy - yOffset) / yFactor;
-        float dx = 0.5f * (px + 1.0f) * frame->width();
-        float dy = 0.5f * (py + 1.0f) * frame->height();
-        dataX = dx;
-        dataY = dy;
-        if (dx < 0.0f || dataX >= frame->width())
-            dataX = -1;
-        if (dy < 0.0f || dataY >= frame->height())
-            dataY = -1;
-        // Min/max values
-        float visMinVal = _parameters.visMinVal(frame->channelIndex());
-        float visMaxVal = _parameters.visMaxVal(frame->channelIndex());
-        if (!std::isfinite(visMinVal) || !std::isfinite(visMaxVal)) {
-            visMinVal = frame->visMinVal(frame->channelIndex());
-            visMaxVal = frame->visMaxVal(frame->channelIndex());
-            _parameters.setVisMinVal(frame->channelIndex(), visMinVal);
-            _parameters.setVisMaxVal(frame->channelIndex(), visMaxVal);
-        }
-        _viewPrg.setUniformValue("visMinVal", visMinVal);
-        _viewPrg.setUniformValue("visMaxVal", visMaxVal);
-        // Color and data information
-        bool showColor = (frame->channelIndex() == ColorChannelIndex);
-        _viewPrg.setUniformValue("colorMap", _parameters.colorMap().type() != ColorMapNone);
-        _viewPrg.setUniformValue("showColor", showColor);
-        _viewPrg.setUniformValue("colorSpace", int(frame->colorSpace()));
-        _viewPrg.setUniformValue("channelCount", frame->channelCount());
-        _viewPrg.setUniformValue("dataChannelIndex", frame->channelIndex());
-        _viewPrg.setUniformValue("colorChannel0Index", frame->colorChannelIndex(0));
-        _viewPrg.setUniformValue("colorChannel1Index", frame->colorChannelIndex(1));
-        _viewPrg.setUniformValue("colorChannel2Index", frame->colorChannelIndex(2));
-        _viewPrg.setUniformValue("alphaChannelIndex", frame->alphaChannelIndex());
-        // Textures
-        _viewPrg.setUniformValue("tex0", 0);
-        _viewPrg.setUniformValue("tex1", 1);
-        _viewPrg.setUniformValue("tex2", 2);
-        _viewPrg.setUniformValue("alphaTex", 3);
-        _viewPrg.setUniformValue("colorMapTex", 4);
-        gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(0)) : frame->texture(frame->channelIndex()));
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-        gl->glActiveTexture(GL_TEXTURE1);
-        gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(1)) : 0);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-        gl->glActiveTexture(GL_TEXTURE2);
-        gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(2)) : 0);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-        gl->glActiveTexture(GL_TEXTURE3);
-        gl->glBindTexture(GL_TEXTURE_2D, (showColor && frame->hasAlpha()) ? frame->texture(frame->alphaChannelIndex()) : 0);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-        gl->glActiveTexture(GL_TEXTURE4);
-        gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
-        // Draw the image
-        gl->glBindVertexArray(_vao);
-        gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+        arrayCoordinates = renderFrame(frame, _w, _h, _mousePos);
     }
-    ASSERT_GLCHECK();
 
     // Draw the overlays
     bool overlayHelpActive = _overlayHelpActive;
@@ -260,6 +269,7 @@ void QV::paintGL()
         overlayHistogramActive = false;
         overlayColorMapActive = false;
     }
+    ASSERT_GLCHECK();
     gl->glEnable(GL_BLEND);
     gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     int overlayYOffset = 0;
@@ -273,7 +283,7 @@ void QV::paintGL()
         overlayYOffset += _overlayColorMap.heightInPixels();
     }
     if (overlayHistogramActive) {
-        _overlayHistogram.update(_w, dataX, dataY,_set, _parameters);
+        _overlayHistogram.update(_w, arrayCoordinates, _set, _parameters);
         gl->glViewport(0, overlayYOffset, _w, _overlayHistogram.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
@@ -291,7 +301,7 @@ void QV::paintGL()
         overlayYOffset += _overlayStatistic.heightInPixels();
     }
     if (overlayInfoActive) {
-        _overlayInfo.update(_w, dataX, dataY, _set, _parameters);
+        _overlayInfo.update(_w, arrayCoordinates, _set);
         gl->glViewport(0, overlayYOffset, _w, _overlayInfo.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
@@ -324,7 +334,7 @@ void QV::openFile()
     }
     while (_set.fileCount() > previousFileCount && !_set.setFileIndex(previousFileCount, errMsg)) {
         QMessageBox::critical(nullptr, "Error", (errMsg
-                    + ".\n\nRemoving file from set.").c_str());
+                    + ".\n\nClosing this file.").c_str());
         _set.removeFile(previousFileCount);
     }
     if (previousFileCount == 0 && _set.fileCount() > 0) {
@@ -371,7 +381,7 @@ void QV::adjustFileIndex(int offset)
         std::string errMsg;
         if (!_set.setFileIndex(ni, errMsg)) {
             QMessageBox::critical(nullptr, "Error", (errMsg
-                        + ".\n\nRemoving file from set.").c_str());
+                        + ".\n\nClosing this file.").c_str());
             _set.removeFile(ni);
         }
         this->updateTitle();

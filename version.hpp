@@ -1,1 +1,1 @@
-#define QV_VERSION "0.0"
+#define QV_VERSION "1.0"

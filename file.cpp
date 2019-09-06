@@ -144,11 +144,16 @@ bool File::reload(std::string& errorMessage)
     }
 
     int index = frameIndex();
+    int channelIndex = (currentFrame() ? currentFrame()->channelIndex() : -1);
     if (index == 0) {
         _importer = newImporter;
         _description = a;
         _frame.init(a);
         _frameIndex = 0;
+        if (channelIndex != ColorChannelIndex && channelIndex >= _frame.channelCount())
+            channelIndex = -1;
+        if (channelIndex >= 0)
+            _frame.setChannelIndex(channelIndex);
         return true;
     } else {
         int frCnt = frameCount(errorMessage);
@@ -159,6 +164,14 @@ bool File::reload(std::string& errorMessage)
         _importer = newImporter;
         _description = a;
         _frameIndex = -1;
-        return setFrameIndex(index, errorMessage);
+        if (setFrameIndex(index, errorMessage)) {
+            if (channelIndex != ColorChannelIndex && channelIndex >= _frame.channelCount())
+                channelIndex = -1;
+            if (channelIndex >= 0)
+                _frame.setChannelIndex(channelIndex);
+            return true;
+        } else {
+            return false;
+        }
     }
 }

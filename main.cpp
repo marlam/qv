@@ -34,6 +34,7 @@
 #include <QApplication>
 #include <QMessageBox>
 #include <QSurfaceFormat>
+#include <QOpenGLContext>
 
 #include "version.hpp"
 #include "set.hpp"

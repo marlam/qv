@@ -34,6 +34,7 @@
 #include <QWheelEvent>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <QIcon>
 
 #include "utils.hpp"
 #include "qv.hpp"
@@ -49,7 +50,7 @@ QV::QV(Set& set, Parameters& parameters) :
     _overlayHistogramActive(false),
     _overlayColorMapActive(false)
 {
-    setIcon(QIcon(":cg-logo.png"));
+    setWindowIcon(QIcon(":cg-logo.png"));
     setMinimumSize(QSize(500, 500));
     File* file = _set.currentFile();
     Frame* frame = (file ? file->currentFrame() : nullptr);
@@ -67,7 +68,7 @@ void QV::updateTitle()
         s = "qv";
     else
         s += " - qv";
-    setTitle(s.c_str());
+    setWindowTitle(s.c_str());
 }
 
 void QV::initializeGL()
@@ -359,14 +360,14 @@ void QV::openFile()
 {
     int previousFileCount = _set.fileCount();
     std::string errMsg;
-    QStringList names = QFileDialog::getOpenFileNames();
+    QStringList names = QFileDialog::getOpenFileNames(this);
     for (int i = 0; i < names.size(); i++) {
         if (!_set.addFile(qPrintable(names[i]), errMsg)) {
-            QMessageBox::critical(nullptr, "Error", errMsg.c_str());
+            QMessageBox::critical(this, "Error", errMsg.c_str());
         }
     }
     while (_set.fileCount() > previousFileCount && !_set.setFileIndex(previousFileCount, errMsg)) {
-        QMessageBox::critical(nullptr, "Error", (errMsg
+        QMessageBox::critical(this, "Error", (errMsg
                     + ".\n\nClosing this file.").c_str());
         _set.removeFile(previousFileCount);
     }
@@ -394,7 +395,7 @@ void QV::reloadFile()
         return;
     std::string errMsg;
     if (!file->reload(errMsg)) {
-        QMessageBox::critical(nullptr, "Error", errMsg.c_str());
+        QMessageBox::critical(this, "Error", errMsg.c_str());
     }
     this->updateTitle();
     this->update();
@@ -413,7 +414,7 @@ void QV::adjustFileIndex(int offset)
     if (ni != i) {
         std::string errMsg;
         if (!_set.setFileIndex(ni, errMsg)) {
-            QMessageBox::critical(nullptr, "Error", (errMsg
+            QMessageBox::critical(this, "Error", (errMsg
                         + ".\n\nClosing this file.").c_str());
             _set.removeFile(ni);
         }
@@ -431,7 +432,7 @@ void QV::adjustFrameIndex(int offset)
     std::string errMsg;
     int fc = file->frameCount(errMsg);
     if (fc < 1) {
-        QMessageBox::critical(nullptr, "Error", errMsg.c_str());
+        QMessageBox::critical(this, "Error", errMsg.c_str());
         return;
     }
 
@@ -446,7 +447,7 @@ void QV::adjustFrameIndex(int offset)
             this->updateTitle();
             this->update();
         } else {
-            QMessageBox::critical(nullptr, "Error", errMsg.c_str());
+            QMessageBox::critical(this, "Error", errMsg.c_str());
         }
     }
 }
@@ -537,11 +538,11 @@ void QV::saveView(bool pure)
     Frame* frame = (file ? file->currentFrame() : nullptr);
     if (!frame)
         return;
-    QString name = QFileDialog::getSaveFileName(nullptr, QString(), QString(), "PNG images (*.png)");
+    QString name = QFileDialog::getSaveFileName(this, QString(), QString(), "PNG images (*.png)");
     if (!name.isEmpty()) {
         QImage img = (pure ? renderFrameToImage(frame) : grabFramebuffer());
         if (!img.save(name, "png")) {
-            QMessageBox::critical(nullptr, "Error", "Saving failed.");
+            QMessageBox::critical(this, "Error", "Saving failed.");
         }
     }
 }
@@ -561,12 +562,12 @@ void QV::keyReleaseEvent(QKeyEvent* e)
     if (e->key() == Qt::Key_Q || e->matches(QKeySequence::Quit)) {
         this->close();
     } else if (e->key() == Qt::Key_Escape) {
-        if (this->windowStates() & Qt::WindowFullScreen)
+        if (this->windowState() & Qt::WindowFullScreen)
             this->showNormal();
         else
             this->close();
     } else if (e->key() == Qt::Key_F11 || e->matches(QKeySequence::FullScreen)) {
-        if (this->windowStates() & Qt::WindowFullScreen)
+        if (this->windowState() & Qt::WindowFullScreen)
             this->showNormal();
         else
             this->showFullScreen();
@@ -679,7 +680,7 @@ void QV::keyReleaseEvent(QKeyEvent* e)
     } else if (e->key() == Qt::Key_F10) {
         copyView(true);
     } else {
-        QOpenGLWindow::keyPressEvent(e);
+        QOpenGLWidget::keyPressEvent(e);
     }
 }
 

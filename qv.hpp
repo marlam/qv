@@ -24,7 +24,7 @@
 #ifndef QV_HPP
 #define QV_HPP
 
-#include <QOpenGLWindow>
+#include <QOpenGLWidget>
 #include <QOpenGLShaderProgram>
 
 #include "set.hpp"
@@ -36,7 +36,7 @@
 #include "overlay-colormap.hpp"
 
 
-class QV : public QOpenGLWindow
+class QV : public QOpenGLWidget
 {
 Q_OBJECT
 

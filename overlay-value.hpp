@@ -21,16 +21,16 @@
  * SOFTWARE.
  */
 
-#ifndef QV_OVERLAY_INFO_HPP
-#define QV_OVERLAY_INFO_HPP
+#ifndef QV_OVERLAY_VALUE_HPP
+#define QV_OVERLAY_VALUE_HPP
 
 #include "overlay.hpp"
 #include "set.hpp"
 
-class OverlayInfo : public Overlay
+class OverlayValue : public Overlay
 {
 public:
-    void update(int widthInPixels, Set& set);
+    void update(int widthInPixels, const QPoint& arrayCoordinates, Set& set);
 };
 
 #endif

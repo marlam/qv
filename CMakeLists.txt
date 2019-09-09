@@ -36,6 +36,7 @@ add_executable(qv
     overlay.hpp overlay.cpp
     overlay-help.hpp overlay-help.cpp
     overlay-info.hpp overlay-info.cpp
+    overlay-value.hpp overlay-value.cpp
     overlay-statistic.hpp overlay-statistic.cpp
     overlay-histogram.hpp overlay-histogram.cpp
     overlay-colormap.hpp overlay-colormap.cpp

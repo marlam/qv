@@ -45,9 +45,10 @@ OverlayHelp::OverlayHelp()
     _helpText << "";
     _helpText << " Analysis tools:           Adjust displayed interval:";
     _helpText << " i: toggle info            (,): shift left/right";
-    _helpText << " s: toggle statistics      {,}: dec./inc. lower bound";
-    _helpText << " h: toggle histogram       [,]: dec./inc. upper bound";
-    _helpText << " m: toggle color map       \\: reset";
+    _helpText << " v: toggle value inspect   {,}: dec./inc. lower bound";
+    _helpText << " s: toggle statistics      [,]: dec./inc. upper bound";
+    _helpText << " h: toggle histogram       \\: reset";
+    _helpText << " m: toggle color map";
     _helpText << "";
     _helpText << " Choose color map:";
     _helpText << " F4: disable color map";

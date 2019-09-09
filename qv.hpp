@@ -31,6 +31,7 @@
 #include "parameters.hpp"
 #include "overlay-help.hpp"
 #include "overlay-info.hpp"
+#include "overlay-value.hpp"
 #include "overlay-statistic.hpp"
 #include "overlay-histogram.hpp"
 #include "overlay-colormap.hpp"
@@ -56,6 +57,8 @@ private:
     OverlayHelp _overlayHelp;
     bool _overlayInfoActive;
     OverlayInfo _overlayInfo;
+    bool _overlayValueActive;
+    OverlayValue _overlayValue;
     bool _overlayStatisticActive;
     OverlayStatistic _overlayStatistic;
     bool _overlayHistogramActive;

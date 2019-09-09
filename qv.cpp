@@ -46,6 +46,7 @@ QV::QV(Set& set, Parameters& parameters) :
     _dragMode(false),
     _overlayHelpActive(false),
     _overlayInfoActive(false),
+    _overlayValueActive(false),
     _overlayStatisticActive(false),
     _overlayHistogramActive(false),
     _overlayColorMapActive(false)
@@ -294,12 +295,14 @@ void QV::paintGL()
     // Draw the overlays
     bool overlayHelpActive = _overlayHelpActive;
     bool overlayInfoActive = _overlayInfoActive;
+    bool overlayValueActive = _overlayValueActive;
     bool overlayStatisticActive = _overlayStatisticActive;
     bool overlayHistogramActive = _overlayHistogramActive;
     bool overlayColorMapActive = _overlayColorMapActive;
     if (!frame) {
         overlayHelpActive = true;
         overlayInfoActive = false;
+        overlayValueActive = false;
         overlayStatisticActive = false;
         overlayHistogramActive = false;
         overlayColorMapActive = false;
@@ -335,8 +338,17 @@ void QV::paintGL()
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
         overlayYOffset += _overlayStatistic.heightInPixels();
     }
+    if (overlayValueActive) {
+        _overlayValue.update(_w, arrayCoordinates, _set);
+        gl->glViewport(0, overlayYOffset, _w, _overlayValue.heightInPixels());
+        gl->glUseProgram(_overlayPrg.programId());
+        gl->glActiveTexture(GL_TEXTURE0);
+        gl->glBindTexture(GL_TEXTURE_2D, _overlayValue.texture());
+        gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+        overlayYOffset += _overlayValue.heightInPixels();
+    }
     if (overlayInfoActive) {
-        _overlayInfo.update(_w, arrayCoordinates, _set);
+        _overlayInfo.update(_w, _set);
         gl->glViewport(0, overlayYOffset, _w, _overlayInfo.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
@@ -662,6 +674,9 @@ void QV::keyReleaseEvent(QKeyEvent* e)
         this->update();
     } else if (e->key() == Qt::Key_I) {
         _overlayInfoActive = !_overlayInfoActive;
+        this->update();
+    } else if (e->key() == Qt::Key_V) {
+        _overlayValueActive = !_overlayValueActive;
         this->update();
     } else if (e->key() == Qt::Key_S) {
         _overlayStatisticActive = !_overlayStatisticActive;

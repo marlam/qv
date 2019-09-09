@@ -1,11 +1,48 @@
-HEADERS = version.hpp color.hpp colormap.hpp file.hpp frame.hpp gl.hpp textureholder.hpp histogram.hpp \
-	overlay-help.hpp overlay-info.hpp overlay-statistic.hpp overlay-histogram.hpp overlay-colormap.hpp overlay.hpp \
-	parameters.hpp qv.hpp set.hpp statistic.hpp utils.hpp
-SOURCES = colormap.cpp file.cpp frame.cpp gl.cpp textureholder.cpp histogram.cpp \
-	overlay-help.cpp overlay-info.cpp overlay-statistic.cpp overlay-histogram.cpp overlay-colormap.cpp overlay.cpp \
-	parameters.cpp qv.cpp set.cpp statistic.cpp utils.cpp main.cpp
+HEADERS = version.hpp \
+          color.hpp \
+          colormap.hpp \
+          file.hpp \
+          frame.hpp \
+          gl.hpp \
+          textureholder.hpp \
+          histogram.hpp \
+          overlay-help.hpp \
+          overlay-info.hpp \
+          overlay-value.hpp \
+          overlay-statistic.hpp \
+          overlay-histogram.hpp \
+          overlay-colormap.hpp \
+          overlay.hpp \
+          parameters.hpp \
+          qv.hpp \
+          set.hpp \
+          statistic.hpp \
+          utils.hpp
+
+SOURCES = colormap.cpp \
+          file.cpp \
+          frame.cpp \
+          gl.cpp \
+          textureholder.cpp \
+          histogram.cpp \
+          overlay-help.cpp \
+          overlay-info.cpp \
+          overlay-value.cpp \
+          overlay-statistic.cpp \
+          overlay-histogram.cpp \
+          overlay-colormap.cpp \
+          overlay.cpp \
+          parameters.cpp \
+          qv.cpp \
+          set.cpp \
+          statistic.cpp \
+          utils.cpp \
+          main.cpp
+
 RESOURCES = resources.qrc
+
 CONFIG += release
+
 QT += widgets
 
 QMAKE_CXXFLAGS += -std=c++17

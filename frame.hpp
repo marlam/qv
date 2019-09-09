@@ -68,6 +68,7 @@ public:
     void init(const TAD::ArrayContainer& a);
     void reset();
 
+    const TAD::ArrayContainer& array() const { return _originalArray; }
     TAD::Type type() const { return _originalArray.componentType(); }
     int channelCount() const { return _originalArray.componentCount(); }
     int width() const { return _originalArray.elementCount() > 0 ? _originalArray.dimension(0) : 0; }

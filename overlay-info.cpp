@@ -21,56 +21,73 @@
  * SOFTWARE.
  */
 
+#include <filesystem>
 #include <QImage>
 #include <QPainter>
 
 #include "overlay-info.hpp"
 
 
-void OverlayInfo::update(int widthInPixels, const QPoint& arrayCoordinates, Set& set)
+static void addTagList(const TAD::TagList& tl, QString& line)
 {
-    prepare(widthInPixels, _painter->fontInfo().pixelSize() * 1.5f);
-
-    Frame* frame = set.currentFile()->currentFrame();
-    bool outside = (arrayCoordinates.x() < 0 || arrayCoordinates.y() < 0
-            || arrayCoordinates.x() >= frame->width() || arrayCoordinates.y() >= frame->height());
-
-    QFontMetricsF fontMetrics(_painter->font(), _painter->device());
-    float xOffset = 0.0f;
-    float yOffset = 1.25f * _painter->fontInfo().pixelSize();
-
-    QString pos = QString(" pos=");
-    if (outside) {
-        pos += "outside";
-    } else {
-        int fieldWidth = (
-                  frame->width() <= 100   && frame->height() <= 100   ? 2
-                : frame->width() <= 1000  && frame->height() <= 1000  ? 3
-                : frame->width() <= 10000 && frame->height() <= 10000 ? 4
-                : 5);
-        pos += QString("%1,%2  ").arg(arrayCoordinates.x(), fieldWidth).arg(arrayCoordinates.y(), fieldWidth);
+    for (auto it = tl.cbegin(); it != tl.cend(); it++) {
+        if (it != tl.cbegin())
+            line += ", ";
+        if (QString(it->first.c_str()) == "INTERPRETATION") {
+            line += QString(it->second.c_str());
+        } else {
+            line += QString("%1=%2").arg(it->first.c_str()).arg(it->second.c_str());
+        }
     }
-    _painter->drawText(xOffset, yOffset, pos);
-    xOffset += fontMetrics.horizontalAdvance(pos);
+}
 
-    if (!outside) {
-        QString val;
-        int fieldWidth = (
-                  frame->type() == TAD::int8   ? 4
-                : frame->type() == TAD::uint8  ? 3
-                : frame->type() == TAD::int16  ? 6
-                : frame->type() == TAD::uint16 ? 5
-                : 11);
-        for (int i = 0; i < frame->channelCount(); i++) {
-            float v = frame->value(arrayCoordinates.x(), arrayCoordinates.y(), i);
-            val += QString("ch%1=%2 ").arg(frame->channelName(i).c_str()).arg(v, fieldWidth, 'g');
+void OverlayInfo::update(int widthInPixels, Set& set)
+{
+    File* file = set.currentFile();
+    Frame* frame = file->currentFrame();
+    const TAD::ArrayContainer& array = frame->array();
+
+    std::string errMsg;
+    QStringList sl;
+    QString line;
+
+    line = QString(" ") + std::filesystem::path(file->fileName()).filename().string().c_str();
+    if (set.fileCount() > 1)
+        line.prepend(QString(" file %1/%2:").arg(set.fileIndex()).arg(set.fileCount()));
+    sl << line;
+    line = QString(" %1x%2, %3 x %4").arg(frame->width()).arg(frame->height())
+        .arg(frame->channelCount()).arg(TAD::typeToString(frame->type()));
+    if (file->frameCount(errMsg) > 1) {
+        line.prepend(QString(" frame %1/%2:").arg(file->frameIndex()).arg(file->frameCount(errMsg)));
+    }
+    sl << line;
+    sl << QString(" current channel: %1").arg(frame->currentChannelName().c_str());
+    if (array.globalTagList().size() > 0) {
+        QString line(" global: ");
+        addTagList(array.globalTagList(), line);
+        sl << line;
+    }
+    for (size_t i = 0; i < 2; i++) {
+        if (array.dimensionTagList(i).size() > 0) {
+            QString line = QString(" %1 axis: ").arg(i == 0 ? 'x' : 'y');
+            addTagList(array.dimensionTagList(i), line);
+            sl << line;
         }
-        if (frame->colorSpace() != ColorSpaceNone) {
-            float v = frame->value(arrayCoordinates.x(), arrayCoordinates.y(), ColorChannelIndex);
-            val += QString("lum=%1").arg(v);
+    }
+    for (size_t i = 0; i < array.componentCount(); i++) {
+        if (array.componentTagList(i).size() > 0) {
+            QString line = QString(" channel %1: ").arg(i);
+            addTagList(array.componentTagList(i), line);
+            sl << line;
         }
-        _painter->drawText(xOffset, yOffset, val);
-        xOffset += fontMetrics.horizontalAdvance(val);
+    }
+
+    prepare(widthInPixels, _painter->fontInfo().pixelSize() * (sl.size() + 0.5f));
+
+    float xOffset = 0.0f;
+    for (int line = 0; line < sl.size(); line++) {
+        float yOffset = (line + 1.25f) * _painter->fontInfo().pixelSize();
+        _painter->drawText(xOffset, yOffset, sl[line]);
     }
 
     fixFormat();

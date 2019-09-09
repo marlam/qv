@@ -6,4 +6,6 @@ statistics, histogram, range selection, and color maps.
 It is useful for all kinds of 2D data from sensors, simulation, rendering, or
 high dynamic range imaging.
 
+qv requires Qt and [tad](https://marlam.de/tad).
+
 This project uses the MIT license.

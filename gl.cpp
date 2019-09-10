@@ -26,6 +26,7 @@
 #include <cstring>
 
 #include <QOpenGLContext>
+#include <QOffscreenSurface>
 
 #include "gl.hpp"
 
@@ -65,4 +66,22 @@ unsigned int glGetGlobalPBO()
         gl->glGenBuffers(1, &pbo);
     }
     return pbo;
+}
+
+GlInfo glInfo;
+
+void glInitInfoFromCurrentContext()
+{
+    auto gl = getGlFunctionsFromCurrentContext();
+    gl->glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glInfo.maxTextureSize);
+}
+
+void glInitInfoFromTemporaryContext()
+{
+    QOffscreenSurface surface;
+    surface.create();
+    QOpenGLContext context;
+    if (context.create() && context.makeCurrent(&surface)) {
+        glInitInfoFromCurrentContext();
+    }
 }

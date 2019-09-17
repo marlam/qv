@@ -46,61 +46,6 @@ static int componentIndex(const TAD::ArrayContainer& a, const std::string& inter
     return ret;
 }
 
-static void setColumnsInvalid(TAD::ArrayContainer& array, size_t row, int startColumn, int columns)
-{
-    if (array.componentType() == TAD::float32) {
-        for (int i = 0; i < columns; i++)
-            for (size_t j = 0; j < array.componentCount(); j++)
-                array.set<float>({ size_t(i + startColumn), row }, j, std::numeric_limits<float>::quiet_NaN());
-    } else {
-        for (int i = 0; i < columns; i++)
-            for (size_t j = 0; j < array.componentCount(); j++)
-                array.set<uint8_t>({ size_t(i + startColumn), row }, j, 0);
-    }
-}
-
-TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
-{
-    if (qx >= quadTreeLevelWidth(0) || qy >= quadTreeLevelHeight(0)) {
-        if (_invalidQuad.componentCount() == 0) {
-            _invalidQuad = TAD::ArrayContainer(_quadLevel0Description);
-            for (size_t y = 0; y < _invalidQuad.dimension(1); y++)
-                setColumnsInvalid(_invalidQuad, y, 0, _invalidQuad.dimension(0));
-        }
-        return _invalidQuad;
-    } else {
-        TAD::ArrayContainer q(_quadLevel0Description);
-        TAD::ArrayContainer srcArray;
-        if (q.componentType() == type())
-            srcArray = _originalArray;
-        else
-            srcArray = floatArray();
-        int srcX = qx * quadWidth() - quadBorderSize(0);
-        int colsA = std::max(0, 0 - srcX);
-        int colsB = quadWidth() + 2 * quadBorderSize(0) - colsA;
-        if (srcX + colsA + colsB >= width())
-            colsB = width() - srcX - colsA;
-        int colsC = q.dimension(0) - colsB - colsA;
-        int srcY = qy * quadHeight() - quadBorderSize(0);
-        int rowsA = std::max(0, 0 - srcY);
-        int rowsB = quadHeight() + 2 * quadBorderSize(0) - colsA;
-        if (srcY + rowsA + rowsB >= height())
-            rowsB = height() - srcY - rowsA;
-        for (size_t y = 0; y < q.dimension(1); y++) {
-            if (y >= size_t(rowsA) && y < size_t(rowsA + rowsB)) {
-                setColumnsInvalid(q, y, 0, colsA);
-                std::memcpy(q.get({ size_t(colsA), y }),
-                        srcArray.get({ size_t(srcX + colsA), srcY + y }),
-                        colsB * _quadLevel0Description.elementSize());
-                setColumnsInvalid(q, y, colsA + colsB, colsC);
-            } else {
-                setColumnsInvalid(q, y, 0, q.dimension(0));
-            }
-        }
-        return q;
-    }
-}
-
 void Frame::init(const TAD::ArrayContainer& a)
 {
     reset();
@@ -247,16 +192,6 @@ void Frame::init(const TAD::ArrayContainer& a)
         _quadTreeWidths.push_back(quadsX);
         _quadTreeHeights.push_back(quadsY);
     }
-}
-
-bool Frame::textureChannelIsS(int texChannel)
-{
-    return (channelCount() <= 4
-            && ((colorSpace() == ColorSpaceSLum && colorChannelIndex(0) == texChannel)
-                || (colorSpace() == ColorSpaceSRGB &&
-                    (colorChannelIndex(0) == texChannel
-                     || colorChannelIndex(1) == texChannel
-                     || colorChannelIndex(2) == texChannel))));
 }
 
 void Frame::reset()
@@ -478,6 +413,59 @@ void Frame::setChannelIndex(int index)
     else
         assert(index >= 0 && index < channelCount());
     _channelIndex = index;
+}
+
+TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
+{
+    assert(qx >= 0 && qx < quadTreeLevelWidth(0));
+    assert(qy >= 0 && qy < quadTreeLevelHeight(0));
+
+    TAD::ArrayContainer q(_quadLevel0Description);
+    TAD::ArrayContainer srcArray;
+    if (q.componentType() == type())
+        srcArray = _originalArray;
+    else
+        srcArray = floatArray();
+    int srcX = qx * quadWidth() - quadBorderSize(0);
+    int srcY = qy * quadHeight() - quadBorderSize(0);
+    if (srcX >= 0 && srcY >= 0
+            && srcX + int(q.dimension(0)) < width()
+            && srcY + int(q.dimension(1)) < height()) {
+        for (size_t y = 0; y < q.dimension(1); y++) {
+            std::memcpy(q.get({ 0, y }),
+                    srcArray.get({ size_t(srcX), size_t(srcY + y) }),
+                    q.dimension(0) * q.elementSize());
+        }
+    } else {
+        for (size_t y = 0; y < q.dimension(1); y++) {
+            int clampedSrcY = srcY + y;
+            if (clampedSrcY < 0)
+                clampedSrcY = 0;
+            else if (clampedSrcY >= height())
+                clampedSrcY = height() - 1;
+            for (size_t x = 0; x < q.dimension(0); x++) {
+                int clampedSrcX = srcX + x;
+                if (clampedSrcX < 0)
+                    clampedSrcX = 0;
+                else if (clampedSrcX >= width())
+                    clampedSrcX = width() - 1;
+                std::memcpy(q.get({ x, y }),
+                        srcArray.get({ size_t(clampedSrcX), size_t(clampedSrcY) }),
+                        q.elementSize());
+            }
+        }
+    }
+    return q;
+}
+
+bool Frame::textureChannelIsS(int texChannel)
+{
+    return (channelCount() <= 4
+            && ((colorSpace() == ColorSpaceSLum && colorChannelIndex(0) == texChannel)
+                || (colorSpace() == ColorSpaceSRGB &&
+                    (colorChannelIndex(0) == texChannel
+                     || colorChannelIndex(1) == texChannel
+                     || colorChannelIndex(2) == texChannel))));
 }
 
 static void uploadArrayToTexture(const TAD::ArrayContainer& array,

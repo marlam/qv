@@ -24,10 +24,13 @@
 layout(location = 0) in vec4 pos;
 layout(location = 1) in vec2 texcoord;
 
+uniform float texCoordFactorX, texCoordFactorY;
+uniform float texCoordOffsetX, texCoordOffsetY;
+
 smooth out vec2 vtexcoord;
 
 void main(void)
 {
-    vtexcoord = texcoord;
+    vtexcoord = vec2(texCoordFactorX, texCoordFactorY) * texcoord + vec2(texCoordOffsetX, texCoordOffsetY);
     gl_Position = pos;
 }

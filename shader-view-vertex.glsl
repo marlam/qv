@@ -29,11 +29,14 @@ uniform float quadOffsetX, quadOffsetY;
 uniform float xFactor, yFactor;
 uniform float xOffset, yOffset;
 
+uniform float texCoordFactorX, texCoordFactorY;
+uniform float texCoordOffsetX, texCoordOffsetY;
+
 smooth out vec2 vtexcoord;
 
 void main(void)
 {
-    vtexcoord = texcoord;
+    vtexcoord = vec2(texCoordFactorX, texCoordFactorY) * texcoord + vec2(texCoordOffsetX, texCoordOffsetY);
     vec2 qpos = ((0.5 * pos.xy + 0.5) + vec2(quadOffsetX, quadOffsetY)) * vec2(quadFactorX, quadFactorY);
     qpos = 2.0 * qpos - 1.0;
     gl_Position = vec4(qpos * vec2(xFactor, yFactor) + vec2(xOffset, yOffset), 0.0, 1.0);

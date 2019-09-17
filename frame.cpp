@@ -46,16 +46,16 @@ static int componentIndex(const TAD::ArrayContainer& a, const std::string& inter
     return ret;
 }
 
-static void setRestOfRowInvalid(TAD::ArrayContainer& array, size_t row, size_t startColumn)
+static void setColumnsInvalid(TAD::ArrayContainer& array, size_t row, int startColumn, int columns)
 {
     if (array.componentType() == TAD::float32) {
-        for (size_t i = startColumn; i < array.dimension(0); i++)
+        for (int i = 0; i < columns; i++)
             for (size_t j = 0; j < array.componentCount(); j++)
-                array.set<float>({ i, row }, j, std::numeric_limits<float>::quiet_NaN());
+                array.set<float>({ size_t(i + startColumn), row }, j, std::numeric_limits<float>::quiet_NaN());
     } else {
-        for (size_t i = startColumn; i < array.dimension(0); i++)
+        for (int i = 0; i < columns; i++)
             for (size_t j = 0; j < array.componentCount(); j++)
-                array.set<uint8_t>({ i, row }, j, 0);
+                array.set<uint8_t>({ size_t(i + startColumn), row }, j, 0);
     }
 }
 
@@ -63,33 +63,39 @@ TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
 {
     if (qx >= quadTreeLevelWidth(0) || qy >= quadTreeLevelHeight(0)) {
         if (_invalidQuad.componentCount() == 0) {
-            _invalidQuad = TAD::ArrayContainer(_quadDescription);
+            _invalidQuad = TAD::ArrayContainer(_quadLevel0Description);
             for (size_t y = 0; y < _invalidQuad.dimension(1); y++)
-                setRestOfRowInvalid(_invalidQuad, y, 0);
+                setColumnsInvalid(_invalidQuad, y, 0, _invalidQuad.dimension(0));
         }
         return _invalidQuad;
     } else {
-        TAD::ArrayContainer q(_quadDescription);
-        size_t dataRowX = qx * quadWidth();
-        size_t columns = quadWidth();
-        if (dataRowX + columns >= size_t(width()))
-            columns = width() - dataRowX;
-        size_t rows = quadHeight();
-        if (qy * quadHeight() + rows >= size_t(height()))
-            rows = height() - qy * quadHeight();
-        size_t dataRowSize = columns * _quadDescription.elementSize();
+        TAD::ArrayContainer q(_quadLevel0Description);
         TAD::ArrayContainer srcArray;
         if (q.componentType() == type())
             srcArray = _originalArray;
         else
             srcArray = floatArray();
-        for (size_t y = 0; y < rows; y++) {
-            size_t dataRowY = qy * quadHeight() + y;
-            std::memcpy(q.get({ 0, y }), srcArray.get({ dataRowX, dataRowY }), dataRowSize);
-            setRestOfRowInvalid(q, y, columns);
-        }
-        for (size_t y = rows; y < size_t(quadHeight()); y++) {
-            setRestOfRowInvalid(q, y, 0);
+        int srcX = qx * quadWidth() - quadBorderSize(0);
+        int colsA = std::max(0, 0 - srcX);
+        int colsB = quadWidth() + 2 * quadBorderSize(0) - colsA;
+        if (srcX + colsA + colsB >= width())
+            colsB = width() - srcX - colsA;
+        int colsC = q.dimension(0) - colsB - colsA;
+        int srcY = qy * quadHeight() - quadBorderSize(0);
+        int rowsA = std::max(0, 0 - srcY);
+        int rowsB = quadHeight() + 2 * quadBorderSize(0) - colsA;
+        if (srcY + rowsA + rowsB >= height())
+            rowsB = height() - srcY - rowsA;
+        for (size_t y = 0; y < q.dimension(1); y++) {
+            if (y >= size_t(rowsA) && y < size_t(rowsA + rowsB)) {
+                setColumnsInvalid(q, y, 0, colsA);
+                std::memcpy(q.get({ size_t(colsA), y }),
+                        srcArray.get({ size_t(srcX + colsA), srcY + y }),
+                        colsB * _quadLevel0Description.elementSize());
+                setColumnsInvalid(q, y, colsA + colsB, colsC);
+            } else {
+                setColumnsInvalid(q, y, 0, q.dimension(0));
+            }
         }
         return q;
     }
@@ -198,16 +204,6 @@ void Frame::init(const TAD::ArrayContainer& a)
     _channelIndex = (_colorSpace != ColorSpaceNone ? ColorChannelIndex : 0);
     // Initialize quadtree representation. Quads in level 0 are never explicitly
     // stored in order to not duplicate the original data in memory
-#if 0
-    std::vector<size_t> quadDims(2, 1024);
-    if (width() <= 4096 && height() <= 4096) {
-        // optimization for frames that fit into a single texture (covers 4K resolution)
-        quadDims[0] = width();
-        quadDims[1] = height();
-    }
-#else
-    std::vector<size_t> quadDims(2, 64);
-#endif
     TAD::Type quadType = TAD::float32;
     if (channelCount() <= 4) {
         // single texture
@@ -230,22 +226,27 @@ void Frame::init(const TAD::ArrayContainer& a)
         _texFormat = GL_RED;
         _texType = GL_FLOAT;
     }
-    _quadDescription = TAD::ArrayDescription(quadDims, channelCount(), quadType);
+    _quadLevel0BorderSize = 1;
+    std::vector<size_t> quadDims(2, 1024 + 2 * quadBorderSize(0));
+    if (width() <= 4096 && height() <= 4096) {
+        // optimization for frames that fit into a single texture (covers 4K resolution)
+        _quadLevel0BorderSize = 0;
+        quadDims[0] = width();
+        quadDims[1] = height();
+    }
+    _quadLevel0Description = TAD::ArrayDescription(quadDims, channelCount(), quadType);
     int level = 0;
     int quadsX = std::max(width() / quadWidth() + (width() % quadWidth() ? 1 : 0), 1);
     int quadsY = std::max(height() / quadHeight() + (height() % quadHeight() ? 1 : 0), 1);
     _quadTreeWidths.push_back(quadsX);
     _quadTreeHeights.push_back(quadsY);
-    fprintf(stderr, "level 0: %dx%d\n", quadTreeLevelWidth(0), quadTreeLevelHeight(0));
     while (quadsX > 1 || quadsY > 1) {
         level++;
         quadsX = quadsX / 2 + quadsX % 2;
         quadsY = quadsY / 2 + quadsY % 2;
         _quadTreeWidths.push_back(quadsX);
         _quadTreeHeights.push_back(quadsY);
-        fprintf(stderr, "level %d: %dx%d\n", level, quadTreeLevelWidth(level), quadTreeLevelHeight(level));
     }
-    fprintf(stderr, "levels = %d\n", quadTreeLevels());
 }
 
 bool Frame::textureChannelIsS(int texChannel)
@@ -541,7 +542,7 @@ unsigned int Frame::quadTexture(int level, int qx, int qy, int channelIndex,
             } else {
                 // one texture per channel
                 if (_textureTransferArray.dimensionCount() == 0)
-                    _textureTransferArray = TAD::Array<float>(_quadDescription.dimensions(), 1);
+                    _textureTransferArray = TAD::Array<float>({ size_t(quadWidth()), size_t(quadHeight()) }, 1);
                 const TAD::Array<float> origQuad = quadFromLevel0(qx, qy);
                 for (size_t e = 0; e < _textureTransferArray.elementCount(); e++)
                     _textureTransferArray.set<float>(e, 0, origQuad.get<float>(e, channelIndex));
@@ -593,6 +594,16 @@ unsigned int Frame::quadTexture(int level, int qx, int qy, int channelIndex,
             quadTreePrg.setUniformValue("toS1", textureChannelIsS(1));
             quadTreePrg.setUniformValue("toS2", textureChannelIsS(2));
             quadTreePrg.setUniformValue("toS3", textureChannelIsS(3));
+            float quadWidthWithBorder = quadWidth() + 2 * quadBorderSize(level - 1);
+            float quadHeightWithBorder = quadHeight() + 2 * quadBorderSize(level - 1);
+            float texCoordFactorX = quadWidth() / quadWidthWithBorder;
+            float texCoordFactorY = quadHeight() / quadHeightWithBorder;
+            float texCoordOffsetX = quadBorderSize(level) / quadWidthWithBorder;
+            float texCoordOffsetY = quadBorderSize(level) / quadHeightWithBorder;
+            quadTreePrg.setUniformValue("texCoordFactorX", texCoordFactorX);
+            quadTreePrg.setUniformValue("texCoordFactorY", texCoordFactorY);
+            quadTreePrg.setUniformValue("texCoordOffsetX", texCoordOffsetX);
+            quadTreePrg.setUniformValue("texCoordOffsetY", texCoordOffsetY);
             gl->glActiveTexture(GL_TEXTURE0);
             gl->glBindTexture(GL_TEXTURE_2D, quadTex0);
             gl->glActiveTexture(GL_TEXTURE1);

@@ -239,13 +239,23 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
     _viewPrg.setUniformValue("colorChannel2Index", frame->colorChannelIndex(2));
     _viewPrg.setUniformValue("alphaChannelIndex", frame->alphaChannelIndex());
     // Textures
+    _viewPrg.setUniformValue("colorMapTex", 4);
+    gl->glActiveTexture(GL_TEXTURE4);
+    gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
     _viewPrg.setUniformValue("tex0", 0);
     _viewPrg.setUniformValue("tex1", 1);
     _viewPrg.setUniformValue("tex2", 2);
     _viewPrg.setUniformValue("alphaTex", 3);
-    _viewPrg.setUniformValue("colorMapTex", 4);
-    gl->glActiveTexture(GL_TEXTURE4);
-    gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
+    float quadWidthWithBorder = frame->quadWidth() + 2 * frame->quadBorderSize(quadTreeLevel);
+    float quadHeightWithBorder = frame->quadHeight() + 2 * frame->quadBorderSize(quadTreeLevel);
+    float texCoordFactorX = frame->quadWidth() / quadWidthWithBorder;
+    float texCoordFactorY = frame->quadHeight() / quadHeightWithBorder;
+    float texCoordOffsetX = frame->quadBorderSize(quadTreeLevel) / quadWidthWithBorder;
+    float texCoordOffsetY = frame->quadBorderSize(quadTreeLevel) / quadHeightWithBorder;
+    _viewPrg.setUniformValue("texCoordFactorX", texCoordFactorX);
+    _viewPrg.setUniformValue("texCoordFactorY", texCoordFactorY);
+    _viewPrg.setUniformValue("texCoordOffsetX", texCoordOffsetX);
+    _viewPrg.setUniformValue("texCoordOffsetY", texCoordOffsetY);
     // Loop over the quads on the requested level
     int maxQuadTreeLevelSize = 1;
     for (int l = frame->quadTreeLevels() - 1; l > quadTreeLevel; l--)
@@ -259,12 +269,26 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
     float quadCompensationFactorX = 1.0f / (float(frame->width()) / coveredWidth);
     float quadCompensationFactorY = 1.0f / (float(frame->height()) / coveredHeight);
     gl->glBindVertexArray(_vao);
+    const QRectF frustum2D(-1.0f, -1.0f, 2.0f, 2.0f);
     for (int qy = 0; qy < frame->quadTreeLevelHeight(quadTreeLevel); qy++) {
         for (int qx = 0; qx < frame->quadTreeLevelWidth(quadTreeLevel); qx++) {
-            _viewPrg.setUniformValue("quadFactorX", quadCompensationFactorX / maxQuadTreeLevelSize);
-            _viewPrg.setUniformValue("quadFactorY", quadCompensationFactorY / maxQuadTreeLevelSize);
-            _viewPrg.setUniformValue("quadOffsetX", float(qx));
-            _viewPrg.setUniformValue("quadOffsetY", float(qy));
+            float quadFactorX = quadCompensationFactorX / maxQuadTreeLevelSize;
+            float quadFactorY = quadCompensationFactorY / maxQuadTreeLevelSize;
+            float quadOffsetX = qx;
+            float quadOffsetY = qy;
+            // "view frustum" culling
+            float quadVertexMinX = (2.0f * quadOffsetX * quadFactorX - 1.0f) * xFactor + xOffset;
+            float quadVertexMinY = (2.0f * quadOffsetY * quadFactorY - 1.0f) * yFactor + yOffset;
+            float quadVertexMaxX = (2.0f * (1.0f + quadOffsetX) * quadFactorX - 1.0f) * xFactor + xOffset;
+            float quadVertexMaxY = (2.0f * (1.0f + quadOffsetY) * quadFactorY - 1.0f) * yFactor + yOffset;
+            const QRectF quadRect(quadVertexMinX, quadVertexMinY, quadVertexMaxX - quadVertexMinX, quadVertexMaxY - quadVertexMinY);
+            if (!quadRect.intersects(frustum2D))
+                continue;
+            // render quad
+            _viewPrg.setUniformValue("quadFactorX", quadFactorX);
+            _viewPrg.setUniformValue("quadFactorY", quadFactorY);
+            _viewPrg.setUniformValue("quadOffsetX", quadOffsetX);
+            _viewPrg.setUniformValue("quadOffsetY", quadOffsetY);
             unsigned int t0 = showColor ?
                   frame->quadTexture(quadTreeLevel, qx, qy, frame->colorChannelIndex(0), _fbo, _vao, _quadTreePrg)
                 : frame->quadTexture(quadTreeLevel, qx, qy, frame->channelIndex(), _fbo, _vao, _quadTreePrg);
@@ -565,9 +589,9 @@ void QV::setChannelIndex(int index)
 
 void QV::adjustZoom(int steps)
 {
-    float adjustmentPerStep = std::max(0.01f, _parameters.zoom * 0.05f);
+    float adjustmentPerStep = std::max(0.000001f, _parameters.zoom * 0.05f);
     float oldZoom = _parameters.zoom;
-    float newZoom = std::max(0.01f, _parameters.zoom - steps * adjustmentPerStep);
+    float newZoom = std::max(0.000001f, _parameters.zoom - steps * adjustmentPerStep);
     _parameters.xOffset = _parameters.xOffset * oldZoom / newZoom;
     _parameters.yOffset = _parameters.yOffset * oldZoom / newZoom;
     _parameters.zoom = newZoom;

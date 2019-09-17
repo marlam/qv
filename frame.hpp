@@ -58,7 +58,8 @@ private:
     /* current channel: */
     int _channelIndex;
     /* quadtree: */
-    TAD::ArrayDescription _quadDescription;
+    int _quadLevel0BorderSize;
+    TAD::ArrayDescription _quadLevel0Description;
     std::vector<int> _quadTreeWidths;
     std::vector<int> _quadTreeHeights;
     TAD::ArrayContainer _invalidQuad;
@@ -114,8 +115,9 @@ public:
     int channelIndex() const { return _channelIndex; }
 
     // Quadtree representation for rendering
-    int quadWidth() const { return _quadDescription.dimension(0); }
-    int quadHeight() const { return _quadDescription.dimension(1); }
+    int quadBorderSize(int level) const { return (level == 0 ? _quadLevel0BorderSize : 0); }
+    int quadWidth() const { return _quadLevel0Description.dimension(0) - 2 * quadBorderSize(0); }
+    int quadHeight() const { return _quadLevel0Description.dimension(1) - 2 * quadBorderSize(0); }
     int quadTreeLevels() const { return _quadTreeWidths.size(); }
     int quadTreeLevelWidth(int level) const { return _quadTreeWidths[level]; }
     int quadTreeLevelHeight(int level) const { return _quadTreeHeights[level]; }

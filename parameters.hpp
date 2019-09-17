@@ -46,6 +46,8 @@ public:
     bool magGrid;
     float zoom;
     float xOffset, yOffset;
+    bool dynamicRangeReduction;
+    float drrBrightness;
 
     /* Managed parameters */
     float visMinVal(int channelIndex);

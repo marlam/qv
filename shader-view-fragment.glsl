@@ -42,6 +42,9 @@ uniform int alphaChannelIndex;
 uniform float visMinVal;
 uniform float visMaxVal;
 
+uniform bool dynamicRangeReduction;
+uniform float drrBrightness;
+
 uniform bool colorMap;
 uniform sampler2D colorMapTex;
 
@@ -106,6 +109,15 @@ vec3 rgb_to_srgb(vec3 rgb)
     return vec3(linear_to_s(rgb.r), linear_to_s(rgb.g), linear_to_s(rgb.b));
 }
 
+// Dynamic Range Reduction proposed by C. Schlick in the chapter
+// "Quantization Techniques for the Visualization of High Dynamic Range Pictures"
+// in Photorealistic Rendering Techniques, Springer, 1994.
+float uniformRationalQuantization(float v /* in [0,1] */)
+{
+    // drrBrightness in [1,infty)
+    return drrBrightness * v / ((drrBrightness - 1.0) * v + 1.0);
+}
+
 void main(void)
 {
     vec3 srgb;
@@ -118,6 +130,10 @@ void main(void)
         // Apply range selection
         v = (v - visMinVal) / (visMaxVal - visMinVal);
         v = clamp(v, 0.0, 1.0);
+        // Apply dynamic range reduction
+        if (dynamicRangeReduction) {
+            v = uniformRationalQuantization(v);
+        }
         // Apply color map
         if (colorMap) {
             srgb = rgb_to_srgb(texture(colorMapTex, vec2(v, 0.5)).rgb);
@@ -161,6 +177,10 @@ void main(void)
         float y = xyz.y;
         y = (y - visMinVal) / (visMaxVal - visMinVal);
         y = clamp(y, 0.0, 1.0);
+        // Apply dynamic range reduction
+        if (dynamicRangeReduction) {
+            y = uniformRationalQuantization(y);
+        }
         // Apply color map
         if (colorMap) {
             srgb = rgb_to_srgb(texture(colorMapTex, vec2(y, 0.5)).rgb);

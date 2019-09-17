@@ -227,6 +227,9 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
     }
     _viewPrg.setUniformValue("visMinVal", visMinVal);
     _viewPrg.setUniformValue("visMaxVal", visMaxVal);
+    // Dynamic Range Reduction
+    _viewPrg.setUniformValue("dynamicRangeReduction", _parameters.dynamicRangeReduction);
+    _viewPrg.setUniformValue("drrBrightness", _parameters.drrBrightness);
     // Color and data information
     bool showColor = (frame->channelIndex() == ColorChannelIndex);
     _viewPrg.setUniformValue("colorMap", _parameters.colorMap().type() != ColorMapNone);
@@ -764,6 +767,18 @@ void QV::keyReleaseEvent(QKeyEvent* e)
         adjustVisInterval(+1, +1);
     } else if (e->key() == Qt::Key_Backslash) {
         resetVisInterval();
+    } else if (e->key() == Qt::Key_D) {
+        _parameters.dynamicRangeReduction = !_parameters.dynamicRangeReduction;
+        this->update();
+    } else if (e->key() == Qt::Key_Comma) {
+        _parameters.drrBrightness = std::max(1.0f, _parameters.drrBrightness - 1.0f);
+        this->update();
+    } else if (e->key() == Qt::Key_Period) {
+        _parameters.drrBrightness = _parameters.drrBrightness + 1.0f;
+        this->update();
+    } else if (e->key() == Qt::Key_Slash) {
+        _parameters.drrBrightness = Parameters().drrBrightness;
+        this->update();
     } else if (e->key() == Qt::Key_F4) {
         changeColorMap(ColorMapNone);
     } else if (e->key() == Qt::Key_F5) {

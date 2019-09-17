@@ -172,7 +172,6 @@ void Frame::init(const TAD::ArrayContainer& a)
         _texType = GL_FLOAT;
     }
     _quadLevel0BorderSize = 1;
-#if 1
     std::vector<size_t> quadDims(2, 1024 + 2 * quadBorderSize(0));
     if (width() <= 4096 && height() <= 4096) {
         // optimization for frames that fit into a single texture (covers 4K resolution)
@@ -180,9 +179,6 @@ void Frame::init(const TAD::ArrayContainer& a)
         quadDims[0] = width();
         quadDims[1] = height();
     }
-#else
-    std::vector<size_t> quadDims(2, 32 + 2 * quadBorderSize(0));
-#endif
     _quadLevel0Description = TAD::ArrayDescription(quadDims, channelCount(), quadType);
     int level = 0;
     int quadsX = std::max(width() / quadWidth() + (width() % quadWidth() ? 1 : 0), 1);
@@ -442,31 +438,20 @@ TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
         }
     } else {
         for (size_t y = 0; y < q.dimension(1); y++) {
-            int origSrcY = srcY + y;
-            int clampedSrcY = origSrcY;
+            int clampedSrcY = srcY + y;
             if (clampedSrcY < 0)
                 clampedSrcY = 0;
             else if (clampedSrcY >= height())
                 clampedSrcY = height() - 1;
             for (size_t x = 0; x < q.dimension(0); x++) {
-                int origSrcX = srcX + x;
-                int clampedSrcX = origSrcX;
+                int clampedSrcX = srcX + x;
                 if (clampedSrcX < 0)
                     clampedSrcX = 0;
                 else if (clampedSrcX >= width())
                     clampedSrcX = width() - 1;
-                if (std::abs(clampedSrcY - origSrcY) <= 1 && std::abs(clampedSrcX - origSrcX) <= 1) {
-                    std::memcpy(q.get({ x, y }),
-                            srcArray.get({ size_t(clampedSrcX), size_t(clampedSrcY) }),
-                            q.elementSize());
-                } else {
-                    if (q.componentType() == TAD::float32) {
-                        for (size_t c = 0; c < q.componentCount(); c++)
-                            q.set<float>({ x, y }, c, std::numeric_limits<float>::quiet_NaN());
-                    } else {
-                        std::memset(q.get({ x, y }), 0, q.elementSize());
-                    }
-                }
+                std::memcpy(q.get({ x, y }),
+                        srcArray.get({ size_t(clampedSrcX), size_t(clampedSrcY) }),
+                        q.elementSize());
             }
         }
     }

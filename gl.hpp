@@ -41,4 +41,13 @@ void glCheck(const char* callingFunction, const char* file, int line);
 
 unsigned int glGetGlobalPBO();
 
+typedef struct {
+    int maxTextureSize;
+} GlInfo;
+
+extern GlInfo glInfo;
+
+void glInitInfoFromCurrentContext();
+void glInitInfoFromTemporaryContext();
+
 #endif

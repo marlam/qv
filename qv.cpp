@@ -247,13 +247,11 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
     _viewPrg.setUniformValue("colorChannel2Index", frame->colorChannelIndex(2));
     _viewPrg.setUniformValue("alphaChannelIndex", frame->alphaChannelIndex());
     // Textures
-    _viewPrg.setUniformValue("colorMapTex", 4);
-    gl->glActiveTexture(GL_TEXTURE4);
-    gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
     _viewPrg.setUniformValue("tex0", 0);
     _viewPrg.setUniformValue("tex1", 1);
     _viewPrg.setUniformValue("tex2", 2);
     _viewPrg.setUniformValue("alphaTex", 3);
+    _viewPrg.setUniformValue("colorMapTex", 4);
     float quadWidthWithBorder = frame->quadWidth() + 2 * frame->quadBorderSize(quadTreeLevel);
     float quadHeightWithBorder = frame->quadHeight() + 2 * frame->quadBorderSize(quadTreeLevel);
     float texCoordFactorX = frame->quadWidth() / quadWidthWithBorder;
@@ -317,6 +315,8 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
             gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
             gl->glActiveTexture(GL_TEXTURE3);
             gl->glBindTexture(GL_TEXTURE_2D, t3);
+            gl->glActiveTexture(GL_TEXTURE4);
+            gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
             gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
             gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
             ASSERT_GLCHECK();

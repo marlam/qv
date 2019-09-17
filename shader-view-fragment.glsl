@@ -52,6 +52,8 @@ smooth in vec2 vtexcoord;
 layout(location = 0) out vec4 fcolor;
 
 const vec3 d65_xyz = vec3(95.047, 100.000, 108.883);
+const float d65_u_prime = 0.197839824821;
+const float d65_v_prime = 0.468336302932;
 
 vec3 adjust_y(vec3 xyz, float new_y)
 {
@@ -62,6 +64,20 @@ vec3 adjust_y(vec3 xyz, float new_y)
     // apply new luminance
     float r = new_y / y;
     return vec3(r * x, new_y, r * (1.0 - x - y));
+}
+
+vec3 l_to_xyz(float l) // l from Luv color space (perceptually linear)
+{
+    vec3 xyz;
+    if (l <= 8.0) {
+        xyz.y = d65_xyz.y * l * (3.0f * 3.0f * 3.0f / (29.0f * 29.0f * 29.0f));
+    } else {
+        float tmp = (l + 16.0f) / 116.0f;
+        xyz.y = d65_xyz.y * tmp * tmp * tmp;
+    }
+    xyz.x = xyz.y * (9.0f * d65_u_prime) / (4.0f * d65_v_prime);
+    xyz.z = xyz.y * (12.0f - 3.0f * d65_u_prime - 20.0f * d65_v_prime) / (4.0f * d65_v_prime);
+    return xyz;
 }
 
 vec3 rgb_to_xyz(vec3 rgb)
@@ -106,7 +122,7 @@ void main(void)
         if (colorMap) {
             srgb = rgb_to_srgb(texture(colorMapTex, vec2(v, 0.5)).rgb);
         } else {
-            vec3 xyz = adjust_y(d65_xyz, 100.0 * v);
+            vec3 xyz = l_to_xyz(100.0 * v);
             srgb = rgb_to_srgb(xyz_to_rgb(xyz));
         }
     } else {

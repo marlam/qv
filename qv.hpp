@@ -50,6 +50,7 @@ private:
     unsigned int _vao;
     QOpenGLShaderProgram _viewPrg;
     QOpenGLShaderProgram _overlayPrg;
+    QOpenGLShaderProgram _quadTreePrg;
     bool _dragMode;
     QPoint _dragStart;
     QPoint _mousePos;
@@ -67,7 +68,18 @@ private:
     OverlayColorMap _overlayColorMap;
 
     void updateTitle();
-    QPoint renderFrame(Frame* frame, int w, int h, QPoint mousePos);
+    void navigationParameters(Frame* frame,
+            int widgetWidth, int widgetHeight,
+            float& xFactor, float& yFactor,
+            float& xOffset, float& yOffset);
+    QPoint dataCoordinates(QPoint widgetCoordinates,
+            int widgetWidth, int widgetHeight,
+            int frameWidth, int frameHeight,
+            float xFactor, float yFactor,
+            float xOffset, float yOffset);
+    void renderFrame(Frame* frame, int quadTreeLevel,
+            float xFactor, float yFactor,
+            float xOffset, float yOffset);
     QImage renderFrameToImage(Frame* frame);
 
     void openFile();

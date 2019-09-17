@@ -27,6 +27,8 @@
 #include <vector>
 #include <memory>
 
+#include <QOpenGLShaderProgram>
+
 #include <tad/array.hpp>
 
 #include "color.hpp"
@@ -53,14 +55,24 @@ private:
     float _colorVisMinVal, _colorVisMaxVal;
     Statistic _colorStatistic;
     Histogram _colorHistogram;
-    /* textures: */
-    std::shared_ptr<TextureHolder> _textureHolder;
-    TAD::Array<float> _textureTransferArray;
     /* current channel: */
     int _channelIndex;
+    /* quadtree: */
+    TAD::ArrayDescription _quadDescription;
+    std::vector<int> _quadTreeWidths;
+    std::vector<int> _quadTreeHeights;
+    TAD::ArrayContainer _invalidQuad;
+    /* textures: */
+    unsigned int _texInternalFormat;
+    unsigned int _texFormat;
+    unsigned int _texType;
+    std::shared_ptr<TextureHolder> _textureHolder;
+    TAD::Array<float> _textureTransferArray;
 
     const TAD::Array<float>& floatArray();
     const TAD::Array<float>& lumArray(int& lumArrayChannel);
+    TAD::ArrayContainer quadFromLevel0(int qx, int qy);
+    bool textureChannelIsS(int index);
 
 public:
     Frame();
@@ -98,10 +110,17 @@ public:
     const Histogram& histogram(int channelIndex);
     const Histogram& currentHistogram() { return histogram(channelIndex()); }
 
-    unsigned int texture(int channelIndex);
-
     void setChannelIndex(int index);
     int channelIndex() const { return _channelIndex; }
+
+    // Quadtree representation for rendering
+    int quadWidth() const { return _quadDescription.dimension(0); }
+    int quadHeight() const { return _quadDescription.dimension(1); }
+    int quadTreeLevels() const { return _quadTreeWidths.size(); }
+    int quadTreeLevelWidth(int level) const { return _quadTreeWidths[level]; }
+    int quadTreeLevelHeight(int level) const { return _quadTreeHeights[level]; }
+    unsigned int quadTexture(int level, int qx, int qy, int channelIndex,
+            unsigned int fbo, unsigned int vao, QOpenGLShaderProgram& quadTreePrg);
 };
 
 #endif

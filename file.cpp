@@ -21,8 +21,9 @@
  * SOFTWARE.
  */
 
+#include <limits>
+
 #include "file.hpp"
-#include "gl.hpp"
 
 
 File::File() : _frameIndex(-1)
@@ -114,8 +115,8 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
             if (a.dimension(i) < 1) {
                 errorMessage = fileName() + ": " + "array has invalid dimensions";
                 return false;
-            } else if (a.dimension(i) > glInfo.maxTextureSize) {
-                errorMessage = fileName() + ": " + "array is too big for OpenGL texture";
+            } else if (a.dimension(i) >= size_t(std::numeric_limits<int>::max())) {
+                errorMessage = fileName() + ": " + "array is too big";
                 return false;
             }
         }

@@ -1,6 +1,8 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
     <file>cg-logo.png</file>
+    <file>shader-quadtree-vertex.glsl</file>
+    <file>shader-quadtree-fragment.glsl</file>
     <file>shader-view-vertex.glsl</file>
     <file>shader-view-fragment.glsl</file>
     <file>shader-overlay-vertex.glsl</file>

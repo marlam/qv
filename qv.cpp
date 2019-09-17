@@ -118,6 +118,20 @@ void QV::initializeGL()
 
     ASSERT_GLCHECK();
 
+    QString quadTreeVsSource = readFile(":shader-quadtree-vertex.glsl");
+    QString quadTreeFsSource  = readFile(":shader-quadtree-fragment.glsl");
+    if (isOpenGLES()) {
+        quadTreeVsSource.prepend("#version 300 es\n");
+        quadTreeFsSource.prepend("precision highp float;\n");
+        quadTreeFsSource.prepend("#version 300 es\n");
+    } else {
+        quadTreeVsSource.prepend("#version 330\n");
+        quadTreeFsSource.prepend("#version 330\n");
+    }
+    _quadTreePrg.addShaderFromSourceCode(QOpenGLShader::Vertex, quadTreeVsSource);
+    _quadTreePrg.addShaderFromSourceCode(QOpenGLShader::Fragment, quadTreeFsSource);
+    _quadTreePrg.link();
+
     QString viewVsSource = readFile(":shader-view-vertex.glsl");
     QString viewFsSource  = readFile(":shader-view-fragment.glsl");
     if (isOpenGLES()) {
@@ -151,13 +165,13 @@ void QV::initializeGL()
     gl->glDisable(GL_DEPTH_TEST);
 }
 
-QPoint QV::renderFrame(Frame* frame, int w, int h, QPoint mousePos)
+void QV::navigationParameters(Frame* frame,
+        int widgetWidth, int widgetHeight,
+        float& xFactor, float& yFactor,
+        float& xOffset, float& yOffset)
 {
-    ASSERT_GLCHECK();
-    auto gl = getGlFunctionsFromCurrentContext();
-    gl->glUseProgram(_viewPrg.programId());
     // Aspect ratio
-    float windowAR = float(w) / h;
+    float windowAR = float(widgetWidth) / widgetHeight;
     float frameAR = float(frame->width()) / frame->height();
     float arFactorX = 1.0f;
     float arFactorY = 1.0f;
@@ -167,10 +181,36 @@ QPoint QV::renderFrame(Frame* frame, int w, int h, QPoint mousePos)
         arFactorY = windowAR / frameAR;
     }
     // Navigation and zoom
-    float xFactor = arFactorX / _parameters.zoom;
-    float yFactor = arFactorY / _parameters.zoom;
-    float xOffset = 2.0f * _parameters.xOffset / w;
-    float yOffset = 2.0f * _parameters.yOffset / h;
+    xFactor = arFactorX / _parameters.zoom;
+    yFactor = arFactorY / _parameters.zoom;
+    xOffset = 2.0f * _parameters.xOffset / widgetWidth;
+    yOffset = 2.0f * _parameters.yOffset / widgetHeight;
+}
+
+QPoint QV::dataCoordinates(QPoint widgetCoordinates,
+        int widgetWidth, int widgetHeight,
+        int frameWidth, int frameHeight,
+        float xFactor, float yFactor, float xOffset, float yOffset)
+{
+    float wx = (float(widgetCoordinates.x()) / widgetWidth - 0.5f) * 2.0f;
+    float wy = (float(widgetHeight - 1 - widgetCoordinates.y()) / widgetHeight - 0.5f) * 2.0f;
+    float px = (wx - xOffset) / xFactor;
+    float py = (wy - yOffset) / yFactor;
+    float dx = 0.5f * (px + 1.0f) * frameWidth;
+    float dy = 0.5f * (py + 1.0f) * frameHeight;
+    int dataX = dx;
+    int dataY = dy;
+    return QPoint(dataX, dataY);
+}
+
+void QV::renderFrame(Frame* frame, int quadTreeLevel,
+        float xFactor, float yFactor,
+        float xOffset, float yOffset)
+{
+    ASSERT_GLCHECK();
+    auto gl = getGlFunctionsFromCurrentContext();
+    gl->glUseProgram(_viewPrg.programId());
+    // Navigation and zoom
     _viewPrg.setUniformValue("xFactor", xFactor);
     _viewPrg.setUniformValue("yFactor", yFactor);
     _viewPrg.setUniformValue("xOffset", xOffset);
@@ -204,38 +244,52 @@ QPoint QV::renderFrame(Frame* frame, int w, int h, QPoint mousePos)
     _viewPrg.setUniformValue("tex2", 2);
     _viewPrg.setUniformValue("alphaTex", 3);
     _viewPrg.setUniformValue("colorMapTex", 4);
-    gl->glActiveTexture(GL_TEXTURE0);
-    gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(0)) : frame->texture(frame->channelIndex()));
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-    gl->glActiveTexture(GL_TEXTURE1);
-    gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(1)) : 0);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-    gl->glActiveTexture(GL_TEXTURE2);
-    gl->glBindTexture(GL_TEXTURE_2D, showColor ? frame->texture(frame->colorChannelIndex(2)) : 0);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-    gl->glActiveTexture(GL_TEXTURE3);
-    gl->glBindTexture(GL_TEXTURE_2D, (showColor && frame->hasAlpha()) ? frame->texture(frame->alphaChannelIndex()) : 0);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
     gl->glActiveTexture(GL_TEXTURE4);
     gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
-    // Draw the image
+    // Loop over the quads on the requested level
+    int maxQuadTreeLevelSize = 1;
+    for (int l = frame->quadTreeLevels() - 1; l > quadTreeLevel; l--)
+        maxQuadTreeLevelSize *= 2;
+    int coveredWidth = frame->quadWidth();
+    int coveredHeight = frame->quadHeight();
+    for (int l = frame->quadTreeLevels() - 1; l > 0; l--) {
+        coveredWidth *= 2;
+        coveredHeight *= 2;
+    }
+    float quadCompensationFactorX = 1.0f / (float(frame->width()) / coveredWidth);
+    float quadCompensationFactorY = 1.0f / (float(frame->height()) / coveredHeight);
     gl->glBindVertexArray(_vao);
-    gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-    ASSERT_GLCHECK();
-    // Return array coordinates
-    float wx = (float(mousePos.x()) / w - 0.5f) * 2.0f;
-    float wy = (float(h - 1 - mousePos.y()) / h - 0.5f) * 2.0f;
-    float px = (wx - xOffset) / xFactor;
-    float py = (wy - yOffset) / yFactor;
-    float dx = 0.5f * (px + 1.0f) * frame->width();
-    float dy = 0.5f * (py + 1.0f) * frame->height();
-    int dataX = dx;
-    int dataY = dy;
-    if (dx < 0.0f || dataX >= frame->width())
-        dataX = -1;
-    if (dy < 0.0f || dataY >= frame->height())
-        dataY = -1;
-    return QPoint(dataX, dataY);
+    for (int qy = 0; qy < frame->quadTreeLevelHeight(quadTreeLevel); qy++) {
+        for (int qx = 0; qx < frame->quadTreeLevelWidth(quadTreeLevel); qx++) {
+            _viewPrg.setUniformValue("quadFactorX", quadCompensationFactorX / maxQuadTreeLevelSize);
+            _viewPrg.setUniformValue("quadFactorY", quadCompensationFactorY / maxQuadTreeLevelSize);
+            _viewPrg.setUniformValue("quadOffsetX", float(qx));
+            _viewPrg.setUniformValue("quadOffsetY", float(qy));
+            unsigned int t0 = showColor ?
+                  frame->quadTexture(quadTreeLevel, qx, qy, frame->colorChannelIndex(0), _fbo, _vao, _quadTreePrg)
+                : frame->quadTexture(quadTreeLevel, qx, qy, frame->channelIndex(), _fbo, _vao, _quadTreePrg);
+            unsigned int t1 = showColor ?
+                frame->quadTexture(quadTreeLevel, qx, qy, frame->colorChannelIndex(1), _fbo, _vao, _quadTreePrg) : 0;
+            unsigned int t2 = showColor ?
+                frame->quadTexture(quadTreeLevel, qx, qy, frame->colorChannelIndex(2), _fbo, _vao, _quadTreePrg) : 0;
+            unsigned int t3 = (showColor && frame->hasAlpha()) ?
+                frame->quadTexture(quadTreeLevel, qx, qy, frame->alphaChannelIndex(), _fbo, _vao, _quadTreePrg) : 0;
+            gl->glActiveTexture(GL_TEXTURE0);
+            gl->glBindTexture(GL_TEXTURE_2D, t0);
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+            gl->glActiveTexture(GL_TEXTURE1);
+            gl->glBindTexture(GL_TEXTURE_2D, t1);
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+            gl->glActiveTexture(GL_TEXTURE2);
+            gl->glBindTexture(GL_TEXTURE_2D, t2);
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+            gl->glActiveTexture(GL_TEXTURE3);
+            gl->glBindTexture(GL_TEXTURE_2D, t3);
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+            gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+            ASSERT_GLCHECK();
+        }
+    }
 }
 
 QImage QV::renderFrameToImage(Frame* frame)
@@ -249,7 +303,7 @@ QImage QV::renderFrameToImage(Frame* frame)
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frame->width(), frame->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _fboTex, 0);
     gl->glViewport(0, 0, frame->width(), frame->height());
-    renderFrame(frame, frame->width(), frame->height(), QPoint(0, 0));
+    renderFrame(frame, 0, 1.0f, 1.0f, 0.0f, 0.0f);
     QImage rawImg(frame->width(), frame->height(), QImage::Format_RGB32);
     gl->glReadPixels(0, 0, frame->width(), frame->height(), GL_RGBA, GL_UNSIGNED_BYTE, rawImg.bits());
     gl->glBindFramebuffer(GL_FRAMEBUFFER, _fboBak);
@@ -287,9 +341,36 @@ void QV::paintGL()
     // Draw the frame
     File* file = _set.currentFile();
     Frame* frame = (file ? file->currentFrame() : nullptr);
-    QPoint arrayCoordinates(-1, -1);
+    QPoint dataCoords(-1, -1);
     if (frame) {
-        arrayCoordinates = renderFrame(frame, _w, _h, _mousePos);
+        float xFactor, yFactor, xOffset, yOffset;
+        navigationParameters(frame, _w, _h, xFactor, yFactor, xOffset, yOffset);
+        // which part of the data do we cover?
+        QPoint dataA = dataCoordinates(QPoint(0, 0), _w, _h,
+                frame->width(), frame->height(),
+                xFactor, yFactor, xOffset, yOffset);
+        QPoint dataO = dataCoordinates(QPoint(_w, _h), _w, _h,
+                frame->width(), frame->height(),
+                xFactor, yFactor, xOffset, yOffset);
+        int dataWidth = std::max(dataA.x(), dataO.x()) - std::min(dataA.x(), dataO.x()) + 1;
+        int dataHeight = std::max(dataA.y(), dataO.y()) - std::min(dataA.y(), dataO.y()) + 1;
+        float widthRatio = float(dataWidth) / _w;
+        float heightRatio = float(dataHeight) / _h;
+        float ratio = std::min(widthRatio, heightRatio);
+        int qLevel = 0;
+        if (ratio > 1.0f)
+            qLevel = std::log2(ratio);
+        if (qLevel >= frame->quadTreeLevels())
+            qLevel = frame->quadTreeLevels() - 1;
+        // render
+        renderFrame(frame, qLevel, xFactor, yFactor, xOffset, yOffset);
+        dataCoords = dataCoordinates(_mousePos, _w, _h,
+                frame->width(), frame->height(),
+                xFactor, yFactor, xOffset, yOffset);
+        if (dataCoords.x() < 0 || dataCoords.x() >= frame->width()
+                || dataCoords.y() < 0 || dataCoords.y() >= frame->height()) {
+            dataCoords = QPoint(-1, -1);
+        }
     }
 
     // Draw the overlays
@@ -321,7 +402,7 @@ void QV::paintGL()
         overlayYOffset += _overlayColorMap.heightInPixels();
     }
     if (overlayHistogramActive) {
-        _overlayHistogram.update(_w, arrayCoordinates, _set, _parameters);
+        _overlayHistogram.update(_w, dataCoords, _set, _parameters);
         gl->glViewport(0, overlayYOffset, _w, _overlayHistogram.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
@@ -339,7 +420,7 @@ void QV::paintGL()
         overlayYOffset += _overlayStatistic.heightInPixels();
     }
     if (overlayValueActive) {
-        _overlayValue.update(_w, arrayCoordinates, _set);
+        _overlayValue.update(_w, dataCoords, _set);
         gl->glViewport(0, overlayYOffset, _w, _overlayValue.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
@@ -703,7 +784,7 @@ void QV::keyReleaseEvent(QKeyEvent* e)
 void QV::mouseMoveEvent(QMouseEvent* e)
 {
     _mousePos = e->pos();
-    if (_overlayInfoActive || _overlayHistogramActive)
+    if (_overlayValueActive || _overlayHistogramActive)
         this->update();
     if (_dragMode) {
         QPoint dragEnd = e->pos();
@@ -725,7 +806,7 @@ void QV::mousePressEvent(QMouseEvent* e)
 void QV::mouseReleaseEvent(QMouseEvent* e)
 {
     if (e->button() == Qt::LeftButton) {
-	_dragMode = false;
+        _dragMode = false;
     }
 }
 

@@ -21,20 +21,50 @@
  * SOFTWARE.
  */
 
-layout(location = 0) in vec4 pos;
-layout(location = 1) in vec2 texcoord;
+uniform sampler2D quadTex0;
+uniform sampler2D quadTex1;
+uniform sampler2D quadTex2;
+uniform sampler2D quadTex3;
+uniform bool haveQuadTex0;
+uniform bool haveQuadTex1;
+uniform bool haveQuadTex2;
+uniform bool haveQuadTex3;
+uniform bool toS0;
+uniform bool toS1;
+uniform bool toS2;
+uniform bool toS3;
+uniform float nan;
 
-uniform float quadFactorX, quadFactorY;
-uniform float quadOffsetX, quadOffsetY;
-uniform float xFactor, yFactor;
-uniform float xOffset, yOffset;
+smooth in vec2 vtexcoord;
 
-smooth out vec2 vtexcoord;
+layout(location = 0) out vec4 fcolor;
+
+float linear_to_s(float x)
+{
+    return (x <= 0.0031308 ? (x * 12.92) : (1.055 * pow(x, 1.0 / 2.4) - 0.055));
+}
 
 void main(void)
 {
-    vtexcoord = texcoord;
-    vec2 qpos = ((0.5 * pos.xy + 0.5) + vec2(quadOffsetX, quadOffsetY)) * vec2(quadFactorX, quadFactorY);
-    qpos = 2.0 * qpos - 1.0;
-    gl_Position = vec4(qpos * vec2(xFactor, yFactor) + vec2(xOffset, yOffset), 0.0, 1.0);
+    int quadX = (vtexcoord.x < 0.5 ? 0 : 1);
+    int quadY = (vtexcoord.y < 0.5 ? 0 : 1);
+    vec2 tc = 2.0 * vtexcoord - vec2(quadX, quadY);
+    vec4 v = vec4(nan);
+    if (quadX == 0 && quadY == 0 && haveQuadTex0)
+        v = texture(quadTex0, tc);
+    else if (quadX == 1 && quadY == 0 && haveQuadTex1)
+        v = texture(quadTex1, tc);
+    else if (quadX == 0 && quadY == 1 && haveQuadTex2)
+        v = texture(quadTex2, tc);
+    else if (haveQuadTex3)
+        v = texture(quadTex3, tc);
+    if (toS0)
+        v[0] = linear_to_s(v[0]);
+    if (toS1)
+        v[1] = linear_to_s(v[1]);
+    if (toS2)
+        v[2] = linear_to_s(v[2]);
+    if (toS3)
+        v[3] = linear_to_s(v[3]);
+    fcolor = v;
 }

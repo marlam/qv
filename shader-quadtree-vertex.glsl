@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2017, 2018, 2019
- * Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019 Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,23 +21,13 @@
  * SOFTWARE.
  */
 
-#ifndef QV_GL_HPP
-#define QV_GL_HPP
+layout(location = 0) in vec4 pos;
+layout(location = 1) in vec2 texcoord;
 
-#include <QOpenGLExtraFunctions>
+smooth out vec2 vtexcoord;
 
-QOpenGLExtraFunctions* getGlFunctionsFromCurrentContext();
-
-bool isOpenGLES();
-
-void glCheck(const char* callingFunction, const char* file, int line);
-
-#ifdef QT_NO_DEBUG
-# define ASSERT_GLCHECK() /* nothing */
-#else
-# define ASSERT_GLCHECK() glCheck(Q_FUNC_INFO, __FILE__, __LINE__)
-#endif
-
-unsigned int glGetGlobalPBO();
-
-#endif
+void main(void)
+{
+    vtexcoord = texcoord;
+    gl_Position = pos;
+}

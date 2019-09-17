@@ -46,6 +46,55 @@ static int componentIndex(const TAD::ArrayContainer& a, const std::string& inter
     return ret;
 }
 
+static void setRestOfRowInvalid(TAD::ArrayContainer& array, size_t row, size_t startColumn)
+{
+    if (array.componentType() == TAD::float32) {
+        for (size_t i = startColumn; i < array.dimension(0); i++)
+            for (size_t j = 0; j < array.componentCount(); j++)
+                array.set<float>({ i, row }, j, std::numeric_limits<float>::quiet_NaN());
+    } else {
+        for (size_t i = startColumn; i < array.dimension(0); i++)
+            for (size_t j = 0; j < array.componentCount(); j++)
+                array.set<uint8_t>({ i, row }, j, 0);
+    }
+}
+
+TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
+{
+    if (qx >= quadTreeLevelWidth(0) || qy >= quadTreeLevelHeight(0)) {
+        if (_invalidQuad.componentCount() == 0) {
+            _invalidQuad = TAD::ArrayContainer(_quadDescription);
+            for (size_t y = 0; y < _invalidQuad.dimension(1); y++)
+                setRestOfRowInvalid(_invalidQuad, y, 0);
+        }
+        return _invalidQuad;
+    } else {
+        TAD::ArrayContainer q(_quadDescription);
+        size_t dataRowX = qx * quadWidth();
+        size_t columns = quadWidth();
+        if (dataRowX + columns >= size_t(width()))
+            columns = width() - dataRowX;
+        size_t rows = quadHeight();
+        if (qy * quadHeight() + rows >= size_t(height()))
+            rows = height() - qy * quadHeight();
+        size_t dataRowSize = columns * _quadDescription.elementSize();
+        TAD::ArrayContainer srcArray;
+        if (q.componentType() == type())
+            srcArray = _originalArray;
+        else
+            srcArray = floatArray();
+        for (size_t y = 0; y < rows; y++) {
+            size_t dataRowY = qy * quadHeight() + y;
+            std::memcpy(q.get({ 0, y }), srcArray.get({ dataRowX, dataRowY }), dataRowSize);
+            setRestOfRowInvalid(q, y, columns);
+        }
+        for (size_t y = rows; y < size_t(quadHeight()); y++) {
+            setRestOfRowInvalid(q, y, 0);
+        }
+        return q;
+    }
+}
+
 void Frame::init(const TAD::ArrayContainer& a)
 {
     reset();
@@ -147,6 +196,66 @@ void Frame::init(const TAD::ArrayContainer& a)
     }
     // Set initial channel
     _channelIndex = (_colorSpace != ColorSpaceNone ? ColorChannelIndex : 0);
+    // Initialize quadtree representation. Quads in level 0 are never explicitly
+    // stored in order to not duplicate the original data in memory
+#if 0
+    std::vector<size_t> quadDims(2, 1024);
+    if (width() <= 4096 && height() <= 4096) {
+        // optimization for frames that fit into a single texture (covers 4K resolution)
+        quadDims[0] = width();
+        quadDims[1] = height();
+    }
+#else
+    std::vector<size_t> quadDims(2, 64);
+#endif
+    TAD::Type quadType = TAD::float32;
+    if (channelCount() <= 4) {
+        // single texture
+        GLenum formats[4] = { GL_RED, GL_RG, GL_RGB, GL_RGBA };
+        _texFormat = formats[channelCount() - 1];
+        if (colorSpace() == ColorSpaceSLum || colorSpace() == ColorSpaceSRGB) {
+            _texInternalFormat = (colorSpace() == ColorSpaceSLum ? GL_SRGB8
+                    : colorSpace() == ColorSpaceSRGB && !hasAlpha() ? GL_SRGB8
+                    : GL_SRGB8_ALPHA8);
+            _texType = GL_UNSIGNED_BYTE;
+            quadType = TAD::uint8;
+        } else {
+            GLint internalFormats[4] = { GL_R32F, GL_RG32F, GL_RGB32F, GL_RGBA32F };
+            _texInternalFormat = internalFormats[channelCount() - 1];
+            _texType = GL_FLOAT;
+        }
+    } else {
+        // one texture per channel
+        _texInternalFormat = GL_R32F;
+        _texFormat = GL_RED;
+        _texType = GL_FLOAT;
+    }
+    _quadDescription = TAD::ArrayDescription(quadDims, channelCount(), quadType);
+    int level = 0;
+    int quadsX = std::max(width() / quadWidth() + (width() % quadWidth() ? 1 : 0), 1);
+    int quadsY = std::max(height() / quadHeight() + (height() % quadHeight() ? 1 : 0), 1);
+    _quadTreeWidths.push_back(quadsX);
+    _quadTreeHeights.push_back(quadsY);
+    fprintf(stderr, "level 0: %dx%d\n", quadTreeLevelWidth(0), quadTreeLevelHeight(0));
+    while (quadsX > 1 || quadsY > 1) {
+        level++;
+        quadsX = quadsX / 2 + quadsX % 2;
+        quadsY = quadsY / 2 + quadsY % 2;
+        _quadTreeWidths.push_back(quadsX);
+        _quadTreeHeights.push_back(quadsY);
+        fprintf(stderr, "level %d: %dx%d\n", level, quadTreeLevelWidth(level), quadTreeLevelHeight(level));
+    }
+    fprintf(stderr, "levels = %d\n", quadTreeLevels());
+}
+
+bool Frame::textureChannelIsS(int texChannel)
+{
+    return (channelCount() <= 4
+            && ((colorSpace() == ColorSpaceSLum && colorChannelIndex(0) == texChannel)
+                || (colorSpace() == ColorSpaceSRGB &&
+                    (colorChannelIndex(0) == texChannel
+                     || colorChannelIndex(1) == texChannel
+                     || colorChannelIndex(2) == texChannel))));
 }
 
 void Frame::reset()
@@ -260,14 +369,18 @@ const TAD::Array<float>& Frame::lumArray(int& lumArrayChannel)
 float Frame::value(int x, int y, int channelIndex)
 {
     float v;
-    if (channelIndex == ColorChannelIndex) {
-        int lc;
-        const TAD::Array<float>& l = lumArray(lc);
-        v = l.get<float>({ size_t(x), size_t(y) }, size_t(lc));
-    } else if (type() == TAD::uint8) {
-        v = _originalArray.get<uint8_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
+    if (x >= 0 && x < width() && y >= 0 && y < height()) {
+        if (channelIndex == ColorChannelIndex) {
+            int lc;
+            const TAD::Array<float>& l = lumArray(lc);
+            v = l.get<float>({ size_t(x), size_t(y) }, size_t(lc));
+        } else if (type() == TAD::uint8) {
+            v = _originalArray.get<uint8_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
+        } else {
+            v = floatArray().get<float>({ size_t(x), size_t(y) }, size_t(channelIndex));
+        }
     } else {
-        v = floatArray().get<float>({ size_t(x), size_t(y) }, size_t(channelIndex));
+        v = std::numeric_limits<float>::quiet_NaN();
     }
     return v;
 }
@@ -357,6 +470,15 @@ const Histogram& Frame::histogram(int channelIndex)
     }
 }
 
+void Frame::setChannelIndex(int index)
+{
+    if (index == ColorChannelIndex)
+        assert(colorSpace() != ColorSpaceNone);
+    else
+        assert(index >= 0 && index < channelCount());
+    _channelIndex = index;
+}
+
 static void uploadArrayToTexture(const TAD::ArrayContainer& array,
         unsigned int texture,
         GLint internalFormat, GLenum format, GLenum type)
@@ -381,68 +503,126 @@ static void uploadArrayToTexture(const TAD::ArrayContainer& array,
             array.dimension(0), array.dimension(1), 0,
             format, type, nullptr);
     gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    if (isOpenGLES()) {
-        // mipmap generation does not seem to work reliably!?
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    } else {
-        gl->glGenerateMipmap(GL_TEXTURE_2D);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    }
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     ASSERT_GLCHECK();
 }
 
-unsigned int Frame::texture(int channelIndex)
+unsigned int Frame::quadTexture(int level, int qx, int qy, int channelIndex,
+        unsigned int fbo, unsigned int vao, QOpenGLShaderProgram& quadTreePrg)
 {
     if (!_textureHolder.get())
         _textureHolder = std::make_shared<TextureHolder>();
 
-    unsigned int tex = 0;
-    if (channelCount() <= 4) {
-        // single texture
-        if (_textureHolder->size() != 1) {
-            _textureHolder->create(1);
-            GLenum formats[4] = { GL_RED, GL_RG, GL_RGB, GL_RGBA };
-            GLenum format = formats[channelCount() - 1];
-            if (colorSpace() == ColorSpaceSLum || colorSpace() == ColorSpaceSRGB) {
-                GLint internalFormat = (colorSpace() == ColorSpaceSLum ? GL_SRGB8
-                        : colorSpace() == ColorSpaceSRGB && !hasAlpha() ? GL_SRGB8
-                        : GL_SRGB8_ALPHA8);
-                GLenum type = GL_UNSIGNED_BYTE;
-                uploadArrayToTexture(_originalArray, _textureHolder->texture(0), internalFormat, format, type);
+    int texturesPerQuad = (channelCount() <= 4 ? 1 : channelCount());
+    if (_textureHolder->size() == 0) {
+        int totalQuads = 0;
+        for (int l = 0; l < quadTreeLevels(); l++)
+            totalQuads += quadTreeLevelWidth(l) * quadTreeLevelHeight(l);
+        _textureHolder->create(totalQuads * texturesPerQuad);
+    }
+    int textureIndex = 0;
+    for (int l = 0; l < level; l++)
+        textureIndex += quadTreeLevelWidth(l) * quadTreeLevelHeight(l);
+    textureIndex += qy * quadTreeLevelWidth(level) + qx;
+    textureIndex *= texturesPerQuad;
+    if (texturesPerQuad != 1)
+        textureIndex += channelIndex;
+
+    if (!_textureHolder->flag(textureIndex)) {
+        auto gl = getGlFunctionsFromCurrentContext();
+        if (level == 0) {
+            if (channelCount() <= 4) {
+                // single texture
+                uploadArrayToTexture(quadFromLevel0(qx, qy), _textureHolder->texture(textureIndex),
+                        _texInternalFormat, _texFormat, _texType);
             } else {
-                GLint internalFormats[4] = { GL_R32F, GL_RG32F, GL_RGB32F, GL_RGBA32F };
-                GLint internalFormat = internalFormats[channelCount() - 1];
-                GLenum type = GL_FLOAT;
-                uploadArrayToTexture(floatArray(), _textureHolder->texture(0), internalFormat, format, type);
+                // one texture per channel
+                if (_textureTransferArray.dimensionCount() == 0)
+                    _textureTransferArray = TAD::Array<float>(_quadDescription.dimensions(), 1);
+                const TAD::Array<float> origQuad = quadFromLevel0(qx, qy);
+                for (size_t e = 0; e < _textureTransferArray.elementCount(); e++)
+                    _textureTransferArray.set<float>(e, 0, origQuad.get<float>(e, channelIndex));
+                uploadArrayToTexture(_textureTransferArray, _textureHolder->texture(textureIndex),
+                        _texInternalFormat, _texFormat, _texType);
+            }
+        } else {
+            ASSERT_GLCHECK();
+            // get source quad textures
+            unsigned int quadTex0 = 0, quadTex1 = 0, quadTex2 = 0, quadTex3 = 0;
+            if (2 * qx + 0 < quadTreeLevelWidth(level - 1) && 2 * qy + 0 < quadTreeLevelHeight(level - 1))
+                quadTex0 = quadTexture(level - 1, 2 * qx + 0, 2 * qy + 0, channelIndex, fbo, vao, quadTreePrg);
+            if (2 * qx + 1 < quadTreeLevelWidth(level - 1) && 2 * qy + 0 < quadTreeLevelHeight(level - 1))
+                quadTex1 = quadTexture(level - 1, 2 * qx + 1, 2 * qy + 0, channelIndex, fbo, vao, quadTreePrg);
+            if (2 * qx + 0 < quadTreeLevelWidth(level - 1) && 2 * qy + 1 < quadTreeLevelHeight(level - 1))
+                quadTex2 = quadTexture(level - 1, 2 * qx + 0, 2 * qy + 1, channelIndex, fbo, vao, quadTreePrg);
+            if (2 * qx + 1 < quadTreeLevelWidth(level - 1) && 2 * qy + 1 < quadTreeLevelHeight(level - 1))
+                quadTex3 = quadTexture(level - 1, 2 * qx + 1, 2 * qy + 1, channelIndex, fbo, vao, quadTreePrg);
+            // backup GL state
+            int fboBak, prgBak, vaoBak, vpBak[4];
+            gl->glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &fboBak);
+            gl->glGetIntegerv(GL_CURRENT_PROGRAM, &prgBak);
+            gl->glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vaoBak);
+            gl->glGetIntegerv(GL_VIEWPORT, vpBak);
+            // create new tex
+            gl->glBindTexture(GL_TEXTURE_2D, _textureHolder->texture(textureIndex));
+            gl->glTexImage2D(GL_TEXTURE_2D, 0, _texInternalFormat, quadWidth(), quadHeight(), 0,
+                    _texFormat, _texType, nullptr);
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+            // setup fbo
+            gl->glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+            gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _textureHolder->texture(textureIndex), 0);
+            gl->glViewport(0, 0, quadWidth(), quadHeight());
+            // render into new tex
+            gl->glUseProgram(quadTreePrg.programId());
+            quadTreePrg.setUniformValue("nan", std::numeric_limits<float>::quiet_NaN());
+            quadTreePrg.setUniformValue("quadTex0", 0);
+            quadTreePrg.setUniformValue("quadTex1", 1);
+            quadTreePrg.setUniformValue("quadTex2", 2);
+            quadTreePrg.setUniformValue("quadTex3", 3);
+            quadTreePrg.setUniformValue("haveQuadTex0", quadTex0 != 0);
+            quadTreePrg.setUniformValue("haveQuadTex1", quadTex1 != 0);
+            quadTreePrg.setUniformValue("haveQuadTex2", quadTex2 != 0);
+            quadTreePrg.setUniformValue("haveQuadTex3", quadTex3 != 0);
+            quadTreePrg.setUniformValue("toS0", textureChannelIsS(0));
+            quadTreePrg.setUniformValue("toS1", textureChannelIsS(1));
+            quadTreePrg.setUniformValue("toS2", textureChannelIsS(2));
+            quadTreePrg.setUniformValue("toS3", textureChannelIsS(3));
+            gl->glActiveTexture(GL_TEXTURE0);
+            gl->glBindTexture(GL_TEXTURE_2D, quadTex0);
+            gl->glActiveTexture(GL_TEXTURE1);
+            gl->glBindTexture(GL_TEXTURE_2D, quadTex1);
+            gl->glActiveTexture(GL_TEXTURE2);
+            gl->glBindTexture(GL_TEXTURE_2D, quadTex2);
+            gl->glActiveTexture(GL_TEXTURE3);
+            gl->glBindTexture(GL_TEXTURE_2D, quadTex3);
+            gl->glBindVertexArray(vao);
+            gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+            // Restore GL state
+            gl->glBindFramebuffer(GL_FRAMEBUFFER, fboBak);
+            gl->glUseProgram(prgBak);
+            gl->glBindVertexArray(vaoBak);
+            gl->glViewport(vpBak[0], vpBak[1], vpBak[2], vpBak[3]);
+            ASSERT_GLCHECK();
+        }
+        // generate mipmap only for the highest level
+        if (level == quadTreeLevels() - 1) {
+            gl->glBindTexture(GL_TEXTURE_2D, _textureHolder->texture(textureIndex));
+            if (isOpenGLES()) {
+                // mipmap generation does not seem to work reliably!?
+                gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+            } else {
+                gl->glGenerateMipmap(GL_TEXTURE_2D);
+                gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
             }
         }
-        tex = _textureHolder->texture(0);
-    } else {
-        // one texture per channel
-        if (_textureHolder->size() != channelCount()) {
-            _textureHolder->create(channelCount());
-        }
-        if (!_textureHolder->flag(channelIndex)) {
-            if (_textureTransferArray.dimensionCount() == 0)
-                _textureTransferArray = TAD::Array<float>(_originalArray.dimensions(), 1);
-            const TAD::Array<float>& origArray = floatArray();
-            for (size_t e = 0; e < _textureTransferArray.elementCount(); e++)
-                _textureTransferArray.set<float>(e, 0, origArray.get<float>(e, channelIndex));
-            uploadArrayToTexture(_textureTransferArray, _textureHolder->texture(channelIndex), GL_R32F, GL_RED, GL_FLOAT);
-            _textureHolder->setFlag(channelIndex);
-        }
-        tex = _textureHolder->texture(channelIndex);
+        ASSERT_GLCHECK();
+        _textureHolder->setFlag(textureIndex);
     }
-    return tex;
-}
-
-void Frame::setChannelIndex(int index)
-{
-    if (index == ColorChannelIndex)
-        assert(colorSpace() != ColorSpaceNone);
-    else
-        assert(index >= 0 && index < channelCount());
-    _channelIndex = index;
+    return _textureHolder->texture(textureIndex);
 }

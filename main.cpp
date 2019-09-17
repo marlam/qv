@@ -58,17 +58,6 @@ int main(int argc, char* argv[])
     // Initialize Qt
     QApplication app(argc, argv);
 
-    // Set the OpenGL context parameters
-    QSurfaceFormat format;
-    if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
-        format.setVersion(3, 0);
-    } else {
-        format.setProfile(QSurfaceFormat::CoreProfile);
-        format.setVersion(3, 3);
-    }
-    QSurfaceFormat::setDefaultFormat(format);
-    glInitInfoFromTemporaryContext();
-
     // Build the set of files to view
     Set set;
     Parameters parameters;
@@ -113,6 +102,16 @@ int main(int argc, char* argv[])
     if (set.fileCount() > 0) {
         parameters.magInterpolation = (set.currentFile()->currentFrame()->channelIndex() == ColorChannelIndex);
     }
+
+    // Set the OpenGL context parameters
+    QSurfaceFormat format;
+    if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
+        format.setVersion(3, 0);
+    } else {
+        format.setProfile(QSurfaceFormat::CoreProfile);
+        format.setVersion(3, 3);
+    }
+    QSurfaceFormat::setDefaultFormat(format);
 
     // Present window
     QV qv(set, parameters);

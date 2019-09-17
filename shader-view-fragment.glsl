@@ -23,6 +23,8 @@
 
 uniform sampler2D tex0, tex1, tex2, alphaTex;
 
+uniform float dataWidth, dataHeight;
+
 // these values are shared with frame.hpp!
 const int ColorSpaceNone        = 0;
 const int ColorSpaceLinearRGB   = 1;
@@ -50,7 +52,8 @@ uniform sampler2D colorMapTex;
 
 uniform bool magGrid;
 
-smooth in vec2 vtexcoord;
+smooth in vec2 vTexCoord;
+smooth in vec2 vDataCoord;
 
 layout(location = 0) out vec4 fcolor;
 
@@ -122,9 +125,12 @@ void main(void)
 {
     vec3 srgb;
 
+    if (vDataCoord.x >= dataWidth || vDataCoord.y >= dataHeight)
+        discard;
+
     if (!showColor) {
         // Get value
-        float v = texture(tex0, vtexcoord)[dataChannelIndex];
+        float v = texture(tex0, vTexCoord)[dataChannelIndex];
         if (colorSpace == ColorSpaceSLum || colorSpace == ColorSpaceSRGB)
             v *= 255.0f;
         // Apply range selection
@@ -145,7 +151,7 @@ void main(void)
         // Read data into canonical form
         vec4 data = vec4(0.0, 0.0, 0.0, 1.0);
         if (channelCount <= 4) {
-            vec4 tmpData = texture(tex0, vtexcoord);
+            vec4 tmpData = texture(tex0, vTexCoord);
             data[0] = tmpData[colorChannel0Index];
             data[1] = tmpData[colorChannel1Index];
             data[2] = tmpData[colorChannel2Index];
@@ -153,11 +159,11 @@ void main(void)
                 data[3] = tmpData[alphaChannelIndex];
             }
         } else {
-            data[0] = texture(tex0, vtexcoord).r;
-            data[1] = texture(tex1, vtexcoord).r;
-            data[2] = texture(tex2, vtexcoord).r;
+            data[0] = texture(tex0, vTexCoord).r;
+            data[1] = texture(tex1, vTexCoord).r;
+            data[2] = texture(tex2, vTexCoord).r;
             if (alphaChannelIndex >= 0) {
-                data[3] = texture(alphaTex, vtexcoord).r;
+                data[3] = texture(alphaTex, vTexCoord).r;
             }
         }
         // Get color
@@ -198,7 +204,7 @@ void main(void)
 
     // Apply grid
     if (magGrid) {
-        vec2 texelCoord = vtexcoord * vec2(textureSize(tex0, 0));
+        vec2 texelCoord = vTexCoord * vec2(textureSize(tex0, 0));
         vec2 fragmentSizeInTexels = vec2(dFdx(texelCoord.x), dFdy(texelCoord.y));
         if (all(lessThan(fragmentSizeInTexels, vec2(0.5)))
                 && any(lessThanEqual(fract(texelCoord), fragmentSizeInTexels))) {

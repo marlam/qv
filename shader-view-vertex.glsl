@@ -26,18 +26,20 @@ layout(location = 1) in vec2 texcoord;
 
 uniform float quadFactorX, quadFactorY;
 uniform float quadOffsetX, quadOffsetY;
+uniform float quadCoveredDataWidth, quadCoveredDataHeight;
 uniform float xFactor, yFactor;
 uniform float xOffset, yOffset;
-
 uniform float texCoordFactorX, texCoordFactorY;
 uniform float texCoordOffsetX, texCoordOffsetY;
 
-smooth out vec2 vtexcoord;
+smooth out vec2 vTexCoord;
+smooth out vec2 vDataCoord;
 
 void main(void)
 {
-    vtexcoord = vec2(texCoordFactorX, texCoordFactorY) * texcoord + vec2(texCoordOffsetX, texCoordOffsetY);
+    vTexCoord = vec2(texCoordFactorX, texCoordFactorY) * texcoord + vec2(texCoordOffsetX, texCoordOffsetY);
     vec2 qpos = ((0.5 * pos.xy + 0.5) + vec2(quadOffsetX, quadOffsetY)) * vec2(quadFactorX, quadFactorY);
+    vDataCoord = (vec2(quadOffsetX, quadOffsetY) + texcoord) * vec2(quadCoveredDataWidth, quadCoveredDataHeight);
     qpos = 2.0 * qpos - 1.0;
     gl_Position = vec4(qpos * vec2(xFactor, yFactor) + vec2(xOffset, yOffset), 0.0, 1.0);
 }

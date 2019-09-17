@@ -210,6 +210,11 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
     ASSERT_GLCHECK();
     auto gl = getGlFunctionsFromCurrentContext();
     gl->glUseProgram(_viewPrg.programId());
+    // Quadtree limits
+    _viewPrg.setUniformValue("quadCoveredDataWidth", std::pow(2.0f, float(quadTreeLevel)) * frame->quadWidth());
+    _viewPrg.setUniformValue("quadCoveredDataHeight", std::pow(2.0f, float(quadTreeLevel)) * frame->quadHeight());
+    _viewPrg.setUniformValue("dataWidth", float(frame->width()));
+    _viewPrg.setUniformValue("dataHeight", float(frame->height()));
     // Navigation and zoom
     _viewPrg.setUniformValue("xFactor", xFactor);
     _viewPrg.setUniformValue("yFactor", yFactor);

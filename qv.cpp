@@ -56,10 +56,14 @@ QV::QV(Set& set, Parameters& parameters) :
     setMinimumSize(QSize(500, 500));
     File* file = _set.currentFile();
     Frame* frame = (file ? file->currentFrame() : nullptr);
-    QSize frameSize = (frame ? QSize(frame->width(), frame->height()) : QSize(0, 0));
-    QSize screenSize = QGuiApplication::primaryScreen()->availableSize();
-    QSize maxSize = 0.9f * screenSize;
-    resize(frameSize.scaled(maxSize, Qt::KeepAspectRatio));
+    if (frame) {
+        QSize frameSize(frame->width(), frame->height());
+        QSize screenSize = QGuiApplication::primaryScreen()->availableSize();
+        QSize maxSize = 0.9f * screenSize;
+        resize(frameSize.scaled(maxSize, Qt::KeepAspectRatio));
+    } else {
+        resize(minimumSize());
+    }
     updateTitle();
 }
 

@@ -171,7 +171,7 @@ void main(void)
         if (colorSpace == ColorSpaceLinearRGB) {
             xyz = rgb_to_xyz(vec3(data[0], data[1], data[2]));
         } else if (colorSpace == ColorSpaceSLum) {
-            xyz = adjust_y(d65_xyz, 100.0 * data[0]);
+            xyz = rgb_to_xyz(vec3(data[0], data[0], data[0]));
         } else if (colorSpace == ColorSpaceSRGB) {
             xyz = rgb_to_xyz(vec3(data[0], data[1], data[2]));
         } else if (colorSpace == ColorSpaceY) {

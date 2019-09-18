@@ -27,11 +27,12 @@ uniform float dataWidth, dataHeight;
 
 // these values are shared with frame.hpp!
 const int ColorSpaceNone        = 0;
-const int ColorSpaceLinearRGB   = 1;
-const int ColorSpaceSLum        = 2;
-const int ColorSpaceSRGB        = 3;
-const int ColorSpaceY           = 4;
-const int ColorSpaceXYZ         = 5;
+const int ColorSpaceLinearGray  = 1;
+const int ColorSpaceLinearRGB   = 2;
+const int ColorSpaceSLum        = 3;
+const int ColorSpaceSRGB        = 4;
+const int ColorSpaceY           = 5;
+const int ColorSpaceXYZ         = 6;
 uniform bool showColor;
 uniform int colorSpace;
 uniform int channelCount;
@@ -168,7 +169,9 @@ void main(void)
         }
         // Get color
         vec3 xyz;
-        if (colorSpace == ColorSpaceLinearRGB) {
+        if (colorSpace == ColorSpaceLinearGray) {
+            xyz = rgb_to_xyz(vec3(data[0], data[0], data[0]));
+        } else if (colorSpace == ColorSpaceLinearRGB) {
             xyz = rgb_to_xyz(vec3(data[0], data[1], data[2]));
         } else if (colorSpace == ColorSpaceSLum) {
             xyz = rgb_to_xyz(vec3(data[0], data[0], data[0]));

@@ -59,7 +59,7 @@ QV::QV(Set& set, Parameters& parameters) :
     QSize frameSize = (frame ? QSize(frame->width(), frame->height()) : QSize(0, 0));
     QSize screenSize = QGuiApplication::primaryScreen()->availableSize();
     QSize maxSize = 0.9f * screenSize;
-    resize(frameSize.boundedTo(maxSize));
+    resize(frameSize.scaled(maxSize, Qt::KeepAspectRatio));
     updateTitle();
 }
 

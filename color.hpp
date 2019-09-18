@@ -32,7 +32,7 @@ typedef enum {
     ColorSpaceNone        = 0,
     ColorSpaceLinearGray  = 1,
     ColorSpaceLinearRGB   = 2,
-    ColorSpaceSLum        = 3, // only uint8, 1 channel
+    ColorSpaceSGray       = 3, // only uint8, 1 channel
     ColorSpaceSRGB        = 4, // only uint8, 3 or 4 channels, alpha must be in channel 3
     ColorSpaceY           = 5,
     ColorSpaceXYZ         = 6

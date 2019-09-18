@@ -79,9 +79,9 @@ void Frame::init(const TAD::ArrayContainer& a)
     }
     if (_colorSpace == ColorSpaceNone
             && type() == TAD::uint8 && (channelCount() == 1 || channelCount() == 2)) {
-        _colorChannels[0] = componentIndex(_originalArray, "SRGB/LUM");
+        _colorChannels[0] = componentIndex(_originalArray, "SRGB/GRAY");
         if (_colorChannels[0] >= 0) {
-            _colorSpace = ColorSpaceSLum;
+            _colorSpace = ColorSpaceSGray;
             _colorChannels[1] = _colorChannels[0];
             _colorChannels[2] = _colorChannels[0];
         }
@@ -130,7 +130,7 @@ void Frame::init(const TAD::ArrayContainer& a)
         _colorMaxVal = std::max(std::max(maxVal(colorChannelIndex(0)), maxVal(colorChannelIndex(1))), maxVal(colorChannelIndex(2)));
         _colorVisMinVal = statistic(ColorChannelIndex).minVal();
         _colorVisMaxVal = statistic(ColorChannelIndex).maxVal();
-    } else if (_colorSpace == ColorSpaceSLum) {
+    } else if (_colorSpace == ColorSpaceSGray) {
         _colorMinVal = 0.0f;
         _colorMaxVal = 255.0f;
         _colorVisMinVal = 0.0f;
@@ -160,8 +160,8 @@ void Frame::init(const TAD::ArrayContainer& a)
         // single texture
         GLenum formats[4] = { GL_RED, GL_RG, GL_RGB, GL_RGBA };
         _texFormat = formats[channelCount() - 1];
-        if (colorSpace() == ColorSpaceSLum || colorSpace() == ColorSpaceSRGB) {
-            _texInternalFormat = (colorSpace() == ColorSpaceSLum ? GL_SRGB8
+        if (colorSpace() == ColorSpaceSGray || colorSpace() == ColorSpaceSRGB) {
+            _texInternalFormat = (colorSpace() == ColorSpaceSGray ? GL_SRGB8
                     : colorSpace() == ColorSpaceSRGB && !hasAlpha() ? GL_SRGB8
                     : GL_SRGB8_ALPHA8);
             _texType = GL_UNSIGNED_BYTE;
@@ -236,7 +236,7 @@ std::string Frame::channelName(int channelIndex) const
             else if (channelIndex == colorChannelIndex(2))
                 channelName += "(B)";
             break;
-        case ColorSpaceSLum:
+        case ColorSpaceSGray:
             if (channelIndex == colorChannelIndex(0))
                 channelName += "(sLum)";
             break;
@@ -290,7 +290,7 @@ const TAD::Array<float>& Frame::lumArray(int& lumArrayChannel)
                 _lumArray.set<float>(e, 0, y);
             }
             _lumArrayChannel = 0;
-        } else if (colorSpace() == ColorSpaceSLum) {
+        } else if (colorSpace() == ColorSpaceSGray) {
             _lumArray = TAD::Array<float>(_originalArray.dimensions(), 1);
             for (size_t e = 0; e < _lumArray.elementCount(); e++) {
                 uint8_t lum = _originalArray.get<uint8_t>(e, colorChannelIndex(0));
@@ -480,7 +480,7 @@ TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
 bool Frame::textureChannelIsS(int texChannel)
 {
     return (channelCount() <= 4
-            && ((colorSpace() == ColorSpaceSLum && colorChannelIndex(0) == texChannel)
+            && ((colorSpace() == ColorSpaceSGray && colorChannelIndex(0) == texChannel)
                 || (colorSpace() == ColorSpaceSRGB &&
                     (colorChannelIndex(0) == texChannel
                      || colorChannelIndex(1) == texChannel

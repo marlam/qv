@@ -29,7 +29,7 @@ uniform float dataWidth, dataHeight;
 const int ColorSpaceNone        = 0;
 const int ColorSpaceLinearGray  = 1;
 const int ColorSpaceLinearRGB   = 2;
-const int ColorSpaceSLum        = 3;
+const int ColorSpaceSGray       = 3;
 const int ColorSpaceSRGB        = 4;
 const int ColorSpaceY           = 5;
 const int ColorSpaceXYZ         = 6;
@@ -173,7 +173,7 @@ void main(void)
             xyz = rgb_to_xyz(vec3(data[0], data[0], data[0]));
         } else if (colorSpace == ColorSpaceLinearRGB) {
             xyz = rgb_to_xyz(vec3(data[0], data[1], data[2]));
-        } else if (colorSpace == ColorSpaceSLum) {
+        } else if (colorSpace == ColorSpaceSGray) {
             xyz = rgb_to_xyz(vec3(data[0], data[0], data[0]));
         } else if (colorSpace == ColorSpaceSRGB) {
             xyz = rgb_to_xyz(vec3(data[0], data[1], data[2]));

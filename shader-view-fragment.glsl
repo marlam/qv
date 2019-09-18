@@ -132,7 +132,7 @@ void main(void)
     if (!showColor) {
         // Get value
         float v = texture(tex0, vTexCoord)[dataChannelIndex];
-        if (colorSpace == ColorSpaceSLum || colorSpace == ColorSpaceSRGB)
+        if (colorSpace == ColorSpaceSGray || colorSpace == ColorSpaceSRGB)
             v *= 255.0f;
         // Apply range selection
         v = (v - visMinVal) / (visMaxVal - visMinVal);

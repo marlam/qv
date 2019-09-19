@@ -440,40 +440,105 @@ TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
     assert(qy >= 0 && qy < quadTreeLevelHeight(0));
 
     TAD::ArrayContainer q(_quadLevel0Description);
-    TAD::ArrayContainer srcArray;
+    TAD::ArrayContainer src;
     if (q.componentType() == type())
-        srcArray = _originalArray;
+        src = _originalArray;
     else
-        srcArray = floatArray();
+        src = floatArray();
     int srcX = qx * quadWidth() - quadBorderSize(0);
     int srcY = qy * quadHeight() - quadBorderSize(0);
+
     if (srcX >= 0 && srcY >= 0
             && srcX + int(q.dimension(0)) < width()
             && srcY + int(q.dimension(1)) < height()) {
+        // case 1: copy the whole block
         for (size_t y = 0; y < q.dimension(1); y++) {
             std::memcpy(q.get({ 0, y }),
-                    srcArray.get({ size_t(srcX), size_t(srcY + y) }),
+                    src.get({ size_t(srcX), size_t(srcY + y) }),
                     q.dimension(0) * q.elementSize());
         }
     } else {
-        for (size_t y = 0; y < q.dimension(1); y++) {
-            int clampedSrcY = srcY + y;
-            if (clampedSrcY < 0)
-                clampedSrcY = 0;
-            else if (clampedSrcY >= height())
-                clampedSrcY = height() - 1;
-            for (size_t x = 0; x < q.dimension(0); x++) {
-                int clampedSrcX = srcX + x;
-                if (clampedSrcX < 0)
-                    clampedSrcX = 0;
-                else if (clampedSrcX >= width())
-                    clampedSrcX = width() - 1;
-                std::memcpy(q.get({ x, y }),
-                        srcArray.get({ size_t(clampedSrcX), size_t(clampedSrcY) }),
+        // case 2: border coordinates need to be clamped
+        int copyableBlockMinX = srcX;
+        if (copyableBlockMinX < 0)
+            copyableBlockMinX = 0;
+        int copyableBlockMaxX = srcX + q.dimension(0) - 1;
+        if (copyableBlockMaxX >= width())
+            copyableBlockMaxX = width() - 1;
+        int copyableBlockMinY = srcY;
+        if (copyableBlockMinY < 0)
+            copyableBlockMinY = 0;
+        int copyableBlockMaxY = srcY + q.dimension(1) - 1;
+        if (copyableBlockMaxY >= height())
+            copyableBlockMaxY = height() - 1;
+        for (int y = 0; y < copyableBlockMinY - srcY; y++) {
+            for (int x = 0; x < copyableBlockMinX - srcX; x++) {
+                std::memcpy(q.get({ size_t(x), size_t(y) }),
+                        src.get({ size_t(0), size_t(0) }),
+                        q.elementSize());
+            }
+            std::memcpy(q.get({ size_t(copyableBlockMinX - srcX), size_t(y) }),
+                    src.get({ size_t(copyableBlockMinX), size_t(0) }),
+                    (copyableBlockMaxX - copyableBlockMinX + 1) * q.elementSize());
+            for (int x = copyableBlockMaxX - srcX + 1; x < int(q.dimension(0)); x++) {
+                std::memcpy(q.get({ size_t(x), size_t(y) }),
+                        src.get({ size_t(width() - 1), size_t(0) }),
+                        q.elementSize());
+            }
+        }
+        for (int y = copyableBlockMinY - srcY; y <= copyableBlockMaxY - srcY; y++) {
+            for (int x = 0; x < copyableBlockMinX - srcX; x++) {
+                std::memcpy(q.get({ size_t(x), size_t(y) }),
+                        src.get({ size_t(0), size_t(srcY + y) }),
+                        q.elementSize());
+            }
+            std::memcpy(q.get({ size_t(copyableBlockMinX - srcX), size_t(y) }),
+                    src.get({ size_t(copyableBlockMinX), size_t(srcY + y) }),
+                    (copyableBlockMaxX - copyableBlockMinX + 1) * q.elementSize());
+            for (int x = copyableBlockMaxX - srcX + 1; x < int(q.dimension(0)); x++) {
+                std::memcpy(q.get({ size_t(x), size_t(y) }),
+                        src.get({ size_t(width() - 1), size_t(srcY + y) }),
+                        q.elementSize());
+            }
+        }
+        for (int y = copyableBlockMaxY - srcY + 1; y < int(q.dimension(1)); y++) {
+            for (int x = 0; x < copyableBlockMinX - srcX; x++) {
+                std::memcpy(q.get({ size_t(x), size_t(y) }),
+                        src.get({ size_t(0), size_t(height() - 1) }),
+                        q.elementSize());
+            }
+            std::memcpy(q.get({ size_t(copyableBlockMinX - srcX), size_t(y) }),
+                    src.get({ size_t(copyableBlockMinX), size_t(height() - 1) }),
+                    (copyableBlockMaxX - copyableBlockMinX + 1) * q.elementSize());
+            for (int x = copyableBlockMaxX - srcX + 1; x < int(q.dimension(0)); x++) {
+                std::memcpy(q.get({ size_t(x), size_t(y) }),
+                        src.get({ size_t(width() - 1), size_t(height() - 1) }),
                         q.elementSize());
             }
         }
     }
+#if 0
+    for (size_t y = 0; y < q.dimension(1); y++) {
+        int sy = srcY + y;
+        if (sy < 0)
+            sy = 0;
+        else if (sy >= height())
+            sy = height() - 1;
+        for (size_t x = 0; x < q.dimension(0); x++) {
+            const void* quadElement = q.get({ x, y });
+            int sx = srcX + x;
+            if (sx < 0)
+                sx = 0;
+            else if (sx >= width())
+                sx = width() - 1;
+            const void* srcElement = src.get({ sx, sy });
+            assert(memcmp(quadElement, srcElement, q.elementSize()) == 0);
+            if (memcmp(quadElement, srcElement, q.elementSize()) != 0) {
+                fprintf(stderr, "FAIL\n");
+            }
+        }
+    }
+#endif
     return q;
 }
 

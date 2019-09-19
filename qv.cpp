@@ -349,6 +349,7 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
 
 QImage QV::renderFrameToImage(Frame* frame)
 {
+    QGuiApplication::processEvents();
     makeCurrent();
     // We render into tiles that have the same size as the frame's quads,
     // and then combine the tiles into a QImage.
@@ -386,6 +387,7 @@ QImage QV::renderFrameToImage(Frame* frame)
     }
     gl->glBindFramebuffer(GL_FRAMEBUFFER, _fboBak);
     ASSERT_GLCHECK();
+    QGuiApplication::processEvents();
     return img;
 }
 
@@ -699,9 +701,13 @@ void QV::saveView(bool pure)
         return;
     QString name = QFileDialog::getSaveFileName(this, QString(), QString(), "PNG images (*.png)");
     if (!name.isEmpty()) {
+        QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         QImage img = (pure ? renderFrameToImage(frame) : grabFramebuffer());
         if (!img.save(name, "png")) {
+            QGuiApplication::restoreOverrideCursor();
             QMessageBox::critical(this, "Error", "Saving failed.");
+        } else {
+            QGuiApplication::restoreOverrideCursor();
         }
     }
 }
@@ -712,8 +718,10 @@ void QV::copyView(bool pure)
     Frame* frame = (file ? file->currentFrame() : nullptr);
     if (!frame)
         return;
+    QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     QGuiApplication::clipboard()->setImage(
             pure ? renderFrameToImage(frame) : grabFramebuffer());
+    QGuiApplication::restoreOverrideCursor();
 }
 
 void QV::keyReleaseEvent(QKeyEvent* e)

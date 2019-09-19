@@ -60,7 +60,10 @@ QV::QV(Set& set, Parameters& parameters) :
         QSize frameSize(frame->width(), frame->height());
         QSize screenSize = QGuiApplication::primaryScreen()->availableSize();
         QSize maxSize = 0.9f * screenSize;
-        resize(frameSize.scaled(maxSize, Qt::KeepAspectRatio));
+        if (frameSize.width() < maxSize.width() && frameSize.height() < maxSize.height())
+            resize(frameSize);
+        else
+            resize(frameSize.scaled(maxSize, Qt::KeepAspectRatio));
     } else {
         resize(minimumSize());
     }

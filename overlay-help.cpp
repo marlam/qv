@@ -48,7 +48,7 @@ OverlayHelp::OverlayHelp()
     _helpText << " v: toggle value inspect   [,]: dec./inc. upper bound";
     _helpText << " s: toggle statistics      \\: reset";
     _helpText << " h: toggle histogram/range d: toggle dyn. range reduction";
-    _helpText << " m: toggle color map       ,,.: dec/inc DRR brightness";
+    _helpText << " m: toggle color map       ,,.: dec./inc. DRR brightness";
     _helpText << "                           /: reset DRR brightness";
     _helpText << " Choose color map:";
     _helpText << " F4: disable color map";
@@ -59,7 +59,7 @@ OverlayHelp::OverlayHelp()
     _helpText << "";
     _helpText << " Save results:             Copy results:";
     _helpText << " F2: save current view     F9: copy current view";
-    _helpText << " F3: save pure 1:1 view    F10: copy pure 1:1 view";
+    _helpText << " F3: save 1:1 view         F10: copy 1:1 view";
     _helpText << "";
     _helpText << " qv " QV_VERSION " -- https://marlam.de/qv";
 }

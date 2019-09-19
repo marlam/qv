@@ -24,20 +24,25 @@
 #include <filesystem>
 #include <QImage>
 #include <QPainter>
+#include <QStringList>
 
 #include "overlay-info.hpp"
 
 
 static void addTagList(const TAD::TagList& tl, QString& line)
 {
+    QStringList list;
     for (auto it = tl.cbegin(); it != tl.cend(); it++) {
-        if (it != tl.cbegin())
-            line += ", ";
         if (QString(it->first.c_str()) == "INTERPRETATION") {
-            line += QString(it->second.c_str());
+            list.prepend(it->second.c_str());
         } else {
-            line += QString("%1=%2").arg(it->first.c_str()).arg(it->second.c_str());
+            list.append(QString("%1=%2").arg(it->first.c_str()).arg(it->second.c_str()));
         }
+    }
+    for (int i = 0; i < list.size(); i++) {
+        if (i != 0)
+            line += ", ";
+        line += list[i];
     }
 }
 

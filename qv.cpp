@@ -364,6 +364,13 @@ QImage QV::renderFrameToImage(Frame* frame)
     gl->glViewport(0, 0, frame->quadWidth(), frame->quadHeight());
     QImage img(frame->width(), frame->height(), QImage::Format_RGB888);
     TAD::Array<uint8_t> tmpArray({ size_t(frame->quadWidth()), size_t(frame->quadHeight()) }, 3);
+    size_t lineSize = tmpArray.dimension(0) * tmpArray.elementSize();
+    if (lineSize % 4 == 0)
+        gl->glPixelStorei(GL_PACK_ALIGNMENT, 4);
+    else if (lineSize % 2 == 0)
+        gl->glPixelStorei(GL_PACK_ALIGNMENT, 2);
+    else
+        gl->glPixelStorei(GL_PACK_ALIGNMENT, 1);
     prepareQuadRendering(frame, 0, 1.0f, 1.0f, 0.0f, 0.0f);
     for (int tileY = 0; tileY < frame->quadTreeLevelHeight(0); tileY++) {
         for (int tileX = 0; tileX < frame->quadTreeLevelWidth(0); tileX++) {

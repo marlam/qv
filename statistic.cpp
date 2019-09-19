@@ -23,7 +23,6 @@
 
 #include <cassert>
 #include <limits>
-#include <type_traits>
 #include <cmath>
 
 #include "statistic.hpp"
@@ -49,9 +48,12 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
     double sum = 0.0;
     double sumOfSquares = 0.0;
     _finiteValues = 0;
-    for (size_t e = 0; e < array.elementCount(); e++) {
-        T val = array[e][componentIndex];
-        if (std::is_floating_point<T>::value && !std::isfinite(val))
+    size_t n = array.elementCount();
+    size_t cc = array.componentCount();
+    const T* data = array[0];
+    for (size_t e = 0; e < n; e++) {
+        T val = data[e * cc + componentIndex];
+        if (!std::isfinite(val))
             continue;
         _finiteValues++;
         if (val < minVal)

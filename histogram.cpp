@@ -53,9 +53,12 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex, size_t 
         std::vector<unsigned long long>& _bins, unsigned long long& _maxBinVal)
 {
     _bins.resize(bins);
-    for (size_t e = 0; e < array.elementCount(); e++) {
-        T val = array[e][componentIndex];
-        if (std::is_floating_point<T>::value && !std::isfinite(val))
+    size_t n = array.elementCount();
+    size_t cc = array.componentCount();
+    const T* data = array[0];
+    for (size_t e = 0; e < n; e++) {
+        T val = data[e * cc + componentIndex];
+        if (!std::isfinite(val))
             continue;
         _bins[binIndexHelper(val, _minVal, _maxVal, _bins)]++;
     }

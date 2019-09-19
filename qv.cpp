@@ -207,7 +207,7 @@ QPoint QV::dataCoordinates(QPoint widgetCoordinates,
     return QPoint(dataX, dataY);
 }
 
-void QV::renderFrame(Frame* frame, int quadTreeLevel,
+void QV::prepareQuadRendering(Frame* frame, int quadTreeLevel,
         float xFactor, float yFactor,
         float xOffset, float yOffset)
 {
@@ -240,9 +240,8 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
     _viewPrg.setUniformValue("dynamicRangeReduction", _parameters.dynamicRangeReduction);
     _viewPrg.setUniformValue("drrBrightness", _parameters.drrBrightness);
     // Color and data information
-    bool showColor = (frame->channelIndex() == ColorChannelIndex);
     _viewPrg.setUniformValue("colorMap", _parameters.colorMap().type() != ColorMapNone);
-    _viewPrg.setUniformValue("showColor", showColor);
+    _viewPrg.setUniformValue("showColor", frame->channelIndex() == ColorChannelIndex);
     _viewPrg.setUniformValue("colorSpace", int(frame->colorSpace()));
     _viewPrg.setUniformValue("channelCount", frame->channelCount());
     _viewPrg.setUniformValue("dataChannelIndex", frame->channelIndex());
@@ -266,6 +265,53 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
     _viewPrg.setUniformValue("texCoordFactorY", texCoordFactorY);
     _viewPrg.setUniformValue("texCoordOffsetX", texCoordOffsetX);
     _viewPrg.setUniformValue("texCoordOffsetY", texCoordOffsetY);
+    gl->glBindVertexArray(_vao);
+    ASSERT_GLCHECK();
+}
+
+void QV::renderQuad(Frame* frame, int quadTreeLevel, int qx, int qy,
+        float quadFactorX, float quadFactorY,
+        float quadOffsetX, float quadOffsetY)
+{
+    ASSERT_GLCHECK();
+    auto gl = getGlFunctionsFromCurrentContext();
+    _viewPrg.setUniformValue("quadFactorX", quadFactorX);
+    _viewPrg.setUniformValue("quadFactorY", quadFactorY);
+    _viewPrg.setUniformValue("quadOffsetX", quadOffsetX);
+    _viewPrg.setUniformValue("quadOffsetY", quadOffsetY);
+    bool showColor = (frame->channelIndex() == ColorChannelIndex);
+    unsigned int t0 = showColor ?
+          frame->quadTexture(quadTreeLevel, qx, qy, frame->colorChannelIndex(0), _fbo, _vao, _quadTreePrg)
+        : frame->quadTexture(quadTreeLevel, qx, qy, frame->channelIndex(), _fbo, _vao, _quadTreePrg);
+    unsigned int t1 = showColor ?
+        frame->quadTexture(quadTreeLevel, qx, qy, frame->colorChannelIndex(1), _fbo, _vao, _quadTreePrg) : 0;
+    unsigned int t2 = showColor ?
+        frame->quadTexture(quadTreeLevel, qx, qy, frame->colorChannelIndex(2), _fbo, _vao, _quadTreePrg) : 0;
+    unsigned int t3 = (showColor && frame->hasAlpha()) ?
+        frame->quadTexture(quadTreeLevel, qx, qy, frame->alphaChannelIndex(), _fbo, _vao, _quadTreePrg) : 0;
+    gl->glActiveTexture(GL_TEXTURE0);
+    gl->glBindTexture(GL_TEXTURE_2D, t0);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glActiveTexture(GL_TEXTURE1);
+    gl->glBindTexture(GL_TEXTURE_2D, t1);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glActiveTexture(GL_TEXTURE2);
+    gl->glBindTexture(GL_TEXTURE_2D, t2);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glActiveTexture(GL_TEXTURE3);
+    gl->glBindTexture(GL_TEXTURE_2D, t3);
+    gl->glActiveTexture(GL_TEXTURE4);
+    gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
+    ASSERT_GLCHECK();
+}
+
+void QV::renderFrame(Frame* frame, int quadTreeLevel,
+        float xFactor, float yFactor,
+        float xOffset, float yOffset)
+{
+    prepareQuadRendering(frame, quadTreeLevel, xFactor, yFactor, xOffset, yOffset);
     // Loop over the quads on the requested level
     int maxQuadTreeLevelSize = 1;
     for (int l = frame->quadTreeLevels() - 1; l > quadTreeLevel; l--)
@@ -278,7 +324,6 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
     }
     float quadCompensationFactorX = 1.0f / (float(frame->width()) / coveredWidth);
     float quadCompensationFactorY = 1.0f / (float(frame->height()) / coveredHeight);
-    gl->glBindVertexArray(_vao);
     const QRectF frustum2D(-1.0f, -1.0f, 2.0f, 2.0f);
     for (int qy = 0; qy < frame->quadTreeLevelHeight(quadTreeLevel); qy++) {
         for (int qx = 0; qx < frame->quadTreeLevelWidth(quadTreeLevel); qx++) {
@@ -294,69 +339,50 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
             const QRectF quadRect(quadVertexMinX, quadVertexMinY, quadVertexMaxX - quadVertexMinX, quadVertexMaxY - quadVertexMinY);
             if (!quadRect.intersects(frustum2D))
                 continue;
-            // render quad
-            _viewPrg.setUniformValue("quadFactorX", quadFactorX);
-            _viewPrg.setUniformValue("quadFactorY", quadFactorY);
-            _viewPrg.setUniformValue("quadOffsetX", quadOffsetX);
-            _viewPrg.setUniformValue("quadOffsetY", quadOffsetY);
-            unsigned int t0 = showColor ?
-                  frame->quadTexture(quadTreeLevel, qx, qy, frame->colorChannelIndex(0), _fbo, _vao, _quadTreePrg)
-                : frame->quadTexture(quadTreeLevel, qx, qy, frame->channelIndex(), _fbo, _vao, _quadTreePrg);
-            unsigned int t1 = showColor ?
-                frame->quadTexture(quadTreeLevel, qx, qy, frame->colorChannelIndex(1), _fbo, _vao, _quadTreePrg) : 0;
-            unsigned int t2 = showColor ?
-                frame->quadTexture(quadTreeLevel, qx, qy, frame->colorChannelIndex(2), _fbo, _vao, _quadTreePrg) : 0;
-            unsigned int t3 = (showColor && frame->hasAlpha()) ?
-                frame->quadTexture(quadTreeLevel, qx, qy, frame->alphaChannelIndex(), _fbo, _vao, _quadTreePrg) : 0;
-            gl->glActiveTexture(GL_TEXTURE0);
-            gl->glBindTexture(GL_TEXTURE_2D, t0);
-            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-            gl->glActiveTexture(GL_TEXTURE1);
-            gl->glBindTexture(GL_TEXTURE_2D, t1);
-            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-            gl->glActiveTexture(GL_TEXTURE2);
-            gl->glBindTexture(GL_TEXTURE_2D, t2);
-            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-            gl->glActiveTexture(GL_TEXTURE3);
-            gl->glBindTexture(GL_TEXTURE_2D, t3);
-            gl->glActiveTexture(GL_TEXTURE4);
-            gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
-            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
-            gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-            ASSERT_GLCHECK();
+            renderQuad(frame, quadTreeLevel, qx, qy, quadFactorX, quadFactorY, quadOffsetX, quadOffsetY);
         }
     }
 }
 
 QImage QV::renderFrameToImage(Frame* frame)
 {
+    makeCurrent();
+    // We render into tiles that have the same size as the frame's quads,
+    // and then combine the tiles into a QImage.
     ASSERT_GLCHECK();
     auto gl = getGlFunctionsFromCurrentContext();
     int _fboBak;
     gl->glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &_fboBak);
     gl->glBindFramebuffer(GL_FRAMEBUFFER, _fbo);
     gl->glBindTexture(GL_TEXTURE_2D, _fboTex);
-    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frame->width(), frame->height(), 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, frame->quadWidth(), frame->quadHeight(), 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
     gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _fboTex, 0);
-    gl->glViewport(0, 0, frame->width(), frame->height());
-    renderFrame(frame, 0, 1.0f, 1.0f, 0.0f, 0.0f);
-    QImage rawImg(frame->width(), frame->height(), QImage::Format_RGB32);
-    gl->glReadPixels(0, 0, frame->width(), frame->height(), GL_RGBA, GL_UNSIGNED_BYTE, rawImg.bits());
-    gl->glBindFramebuffer(GL_FRAMEBUFFER, _fboBak);
-    ASSERT_GLCHECK();
-    QImage img(frame->width(), frame->height(), QImage::Format_RGB32);
-    for (int l = 0; l < img.height(); l++) {
-        const unsigned char* srcLine = rawImg.scanLine(img.height() - 1 - l);
-        unsigned char* dstLine = img.scanLine(l);
-        for (int c = 0; c < img.width(); c++) {
-            unsigned char v0 = srcLine[4 * c + 0];
-            unsigned char v1 = srcLine[4 * c + 1];
-            unsigned char v2 = srcLine[4 * c + 2];
-            dstLine[4 * c + 0] = v2;
-            dstLine[4 * c + 1] = v1;
-            dstLine[4 * c + 2] = v0;
+    gl->glViewport(0, 0, frame->quadWidth(), frame->quadHeight());
+    QImage img(frame->width(), frame->height(), QImage::Format_RGB888);
+    TAD::Array<uint8_t> tmpArray({ size_t(frame->quadWidth()), size_t(frame->quadHeight()) }, 3);
+    prepareQuadRendering(frame, 0, 1.0f, 1.0f, 0.0f, 0.0f);
+    for (int tileY = 0; tileY < frame->quadTreeLevelHeight(0); tileY++) {
+        for (int tileX = 0; tileX < frame->quadTreeLevelWidth(0); tileX++) {
+            renderQuad(frame, 0, tileX, tileY, 1.0f, 1.0f, 0.0f, 0.0f);
+            gl->glReadPixels(0, 0, frame->quadWidth(), frame->quadHeight(), GL_RGB, GL_UNSIGNED_BYTE, tmpArray.data());
+            int copyableLines = frame->quadHeight();
+            if (tileY * frame->quadHeight() + copyableLines > frame->height())
+                copyableLines = frame->height() - tileY * frame->quadHeight();
+            int copyableColumns = frame->quadWidth();
+            if (tileX * frame->quadWidth() + copyableColumns > frame->width())
+                copyableColumns = frame->width() - tileX * frame->quadWidth();
+            for (int y = 0; y < copyableLines; y++) {
+                const uint8_t* src = tmpArray.get<uint8_t>({ 0, size_t(y) });
+                int dstX = tileX * frame->quadWidth();
+                int dstY = tileY * frame->quadHeight() + y;
+                dstY = frame->height() - 1 - dstY; // reverse y!
+                uint8_t* dst = img.scanLine(dstY) + dstX * tmpArray.elementSize();
+                std::memcpy(dst, src, copyableColumns * tmpArray.elementSize());
+            }
         }
     }
+    gl->glBindFramebuffer(GL_FRAMEBUFFER, _fboBak);
+    ASSERT_GLCHECK();
     return img;
 }
 

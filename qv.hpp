@@ -77,6 +77,12 @@ private:
             int frameWidth, int frameHeight,
             float xFactor, float yFactor,
             float xOffset, float yOffset);
+    void prepareQuadRendering(Frame* frame, int quadTreeLevel,
+            float xFactor, float yFactor,
+            float xOffset, float yOffset);
+    void renderQuad(Frame* frame, int quadTreeLevel, int qx, int qy,
+            float quadFactorX, float quadFactorY,
+            float quadOffsetX, float quadOffsetY);
     void renderFrame(Frame* frame, int quadTreeLevel,
             float xFactor, float yFactor,
             float xOffset, float yOffset);

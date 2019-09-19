@@ -49,6 +49,11 @@ QOpenGLExtraFunctions* getGlFunctionsFromCurrentContext()
 void glCheck(const char* callingFunction, const char* file, int line)
 {
     auto gl = getGlFunctionsFromCurrentContext();
+    if (!gl) {
+        qCritical("%s:%d: no OpenGL context in the following function", file, line);
+        qCritical("%s", callingFunction);
+        std::exit(1);
+    }
     GLenum err = gl->glGetError();
     if (err != GL_NO_ERROR) {
         qCritical("%s:%d: OpenGL error 0x%04X in the following function:", file, line, err);

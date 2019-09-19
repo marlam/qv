@@ -178,7 +178,7 @@ void Frame::init(const TAD::ArrayContainer& a)
         _texType = GL_FLOAT;
     }
     _quadLevel0BorderSize = 1;
-    std::vector<size_t> quadDims(2, 1024 + 2 * quadBorderSize(0));
+    std::vector<size_t> quadDims(2, 1022 + 2 * quadBorderSize(0));
     if (width() <= 4096 && height() <= 4096) {
         // optimization for frames that fit into a single texture (covers 4K resolution)
         _quadLevel0BorderSize = 0;
@@ -205,13 +205,6 @@ void Frame::reset()
     if (_textureHolder.get())
         _textureHolder->clear();
     *this = Frame();
-}
-
-const TAD::Array<float>& Frame::floatArray()
-{
-    if (_floatArray.elementCount() == 0)
-        _floatArray = _originalArray.convert(TAD::float32);
-    return _floatArray;
 }
 
 std::string Frame::channelName(int channelIndex) const
@@ -267,75 +260,311 @@ std::string Frame::channelName(int channelIndex) const
     return channelName;
 }
 
-const TAD::Array<float>& Frame::lumArray(int& lumArrayChannel)
+const TAD::Array<float>& Frame::lumArray()
 {
     if (_lumArray.elementCount() == 0) {
+        _lumArray = TAD::Array<float>(_originalArray.dimensions(), 1);
         if (colorSpace() == ColorSpaceLinearGray) {
-            _lumArray = TAD::Array<float>(_originalArray.dimensions(), 1);
-            for (size_t e = 0; e < _lumArray.elementCount(); e++) {
-                const float* elem = floatArray().get<float>(e);
-                float gray = elem[colorChannelIndex(0)];
-                float y = rgbToY(gray, gray, gray);
-                _lumArray.set<float>(e, 0, y);
+            size_t c = colorChannelIndex(0);
+            switch (type()) {
+            case TAD::int8:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float g = _originalArray.get<int8_t>(e, c);
+                    _lumArray[e][0] = rgbToY(g, g, g);
+                }
+                break;
+            case TAD::uint8:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float g = _originalArray.get<uint8_t>(e, c);
+                    _lumArray[e][0] = rgbToY(g, g, g);
+                }
+                break;
+            case TAD::int16:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float g = _originalArray.get<int16_t>(e, c);
+                    _lumArray[e][0] = rgbToY(g, g, g);
+                }
+                break;
+            case TAD::uint16:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float g = _originalArray.get<uint16_t>(e, c);
+                    _lumArray[e][0] = rgbToY(g, g, g);
+                }
+                break;
+            case TAD::int32:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float g = _originalArray.get<int32_t>(e, c);
+                    _lumArray[e][0] = rgbToY(g, g, g);
+                }
+                break;
+            case TAD::uint32:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float g = _originalArray.get<uint32_t>(e, c);
+                    _lumArray[e][0] = rgbToY(g, g, g);
+                }
+                break;
+            case TAD::int64:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float g = _originalArray.get<int64_t>(e, c);
+                    _lumArray[e][0] = rgbToY(g, g, g);
+                }
+                break;
+            case TAD::uint64:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float g = _originalArray.get<uint64_t>(e, c);
+                    _lumArray[e][0] = rgbToY(g, g, g);
+                }
+                break;
+            case TAD::float32:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float g = _originalArray.get<float>(e, c);
+                    _lumArray[e][0] = rgbToY(g, g, g);
+                }
+                break;
+            case TAD::float64:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float g = _originalArray.get<double>(e, c);
+                    _lumArray[e][0] = rgbToY(g, g, g);
+                }
+                break;
             }
-            _lumArrayChannel = 0;
         } else if (colorSpace() == ColorSpaceLinearRGB) {
-            _lumArray = TAD::Array<float>(_originalArray.dimensions(), 1);
-            for (size_t e = 0; e < _lumArray.elementCount(); e++) {
-                const float* elem = floatArray().get<float>(e);
-                float r = elem[colorChannelIndex(0)];
-                float g = elem[colorChannelIndex(1)];
-                float b = elem[colorChannelIndex(1)];
-                float y = rgbToY(r, g, b);
-                _lumArray.set<float>(e, 0, y);
+            size_t cr = colorChannelIndex(0);
+            size_t cg = colorChannelIndex(1);
+            size_t cb = colorChannelIndex(2);
+            switch (type()) {
+            case TAD::int8:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float r = _originalArray.get<int8_t>(e, cr);
+                    float g = _originalArray.get<int8_t>(e, cg);
+                    float b = _originalArray.get<int8_t>(e, cb);
+                    _lumArray[e][0] = rgbToY(r, g, b);
+                }
+                break;
+            case TAD::uint8:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float r = _originalArray.get<uint8_t>(e, cr);
+                    float g = _originalArray.get<uint8_t>(e, cg);
+                    float b = _originalArray.get<uint8_t>(e, cb);
+                    _lumArray[e][0] = rgbToY(r, g, b);
+                }
+                break;
+            case TAD::int16:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float r = _originalArray.get<int16_t>(e, cr);
+                    float g = _originalArray.get<int16_t>(e, cg);
+                    float b = _originalArray.get<int16_t>(e, cb);
+                    _lumArray[e][0] = rgbToY(r, g, b);
+                }
+                break;
+            case TAD::uint16:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float r = _originalArray.get<uint16_t>(e, cr);
+                    float g = _originalArray.get<uint16_t>(e, cg);
+                    float b = _originalArray.get<uint16_t>(e, cb);
+                    _lumArray[e][0] = rgbToY(r, g, b);
+                }
+                break;
+            case TAD::int32:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float r = _originalArray.get<int32_t>(e, cr);
+                    float g = _originalArray.get<int32_t>(e, cg);
+                    float b = _originalArray.get<int32_t>(e, cb);
+                    _lumArray[e][0] = rgbToY(r, g, b);
+                }
+                break;
+            case TAD::uint32:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float r = _originalArray.get<uint32_t>(e, cr);
+                    float g = _originalArray.get<uint32_t>(e, cg);
+                    float b = _originalArray.get<uint32_t>(e, cb);
+                    _lumArray[e][0] = rgbToY(r, g, b);
+                }
+                break;
+            case TAD::int64:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float r = _originalArray.get<int64_t>(e, cr);
+                    float g = _originalArray.get<int64_t>(e, cg);
+                    float b = _originalArray.get<int64_t>(e, cb);
+                    _lumArray[e][0] = rgbToY(r, g, b);
+                }
+                break;
+            case TAD::uint64:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float r = _originalArray.get<uint64_t>(e, cr);
+                    float g = _originalArray.get<uint64_t>(e, cg);
+                    float b = _originalArray.get<uint64_t>(e, cb);
+                    _lumArray[e][0] = rgbToY(r, g, b);
+                }
+                break;
+            case TAD::float32:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float r = _originalArray.get<float>(e, cr);
+                    float g = _originalArray.get<float>(e, cg);
+                    float b = _originalArray.get<float>(e, cb);
+                    _lumArray[e][0] = rgbToY(r, g, b);
+                }
+                break;
+            case TAD::float64:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++) {
+                    float r = _originalArray.get<double>(e, cr);
+                    float g = _originalArray.get<double>(e, cg);
+                    float b = _originalArray.get<double>(e, cb);
+                    _lumArray[e][0] = rgbToY(r, g, b);
+                }
+                break;
             }
-            _lumArrayChannel = 0;
         } else if (colorSpace() == ColorSpaceSGray) {
-            _lumArray = TAD::Array<float>(_originalArray.dimensions(), 1);
+            assert(type() == TAD::uint8);
+            size_t c = colorChannelIndex(0);
             for (size_t e = 0; e < _lumArray.elementCount(); e++) {
-                uint8_t lum = _originalArray.get<uint8_t>(e, colorChannelIndex(0));
-                float y = toLinear(lum / 255.0f) * 100.0f;
-                _lumArray.set<float>(e, 0, y);
+                float g = toLinear(_originalArray.get<uint8_t>(e, c) / 255.0f);
+                _lumArray[e][0] = rgbToY(g, g, g);
             }
-            _lumArrayChannel = 0;
         } else if (colorSpace() == ColorSpaceSRGB) {
-            _lumArray = TAD::Array<float>(_originalArray.dimensions(), 1);
+            assert(type() == TAD::uint8);
+            size_t cr = colorChannelIndex(0);
+            size_t cg = colorChannelIndex(1);
+            size_t cb = colorChannelIndex(2);
             for (size_t e = 0; e < _lumArray.elementCount(); e++) {
-                const uint8_t* elem = _originalArray.get<uint8_t>(e);
-                float r = toLinear(elem[colorChannelIndex(0)] / 255.0f);
-                float g = toLinear(elem[colorChannelIndex(1)] / 255.0f);
-                float b = toLinear(elem[colorChannelIndex(1)] / 255.0f);
-                float y = rgbToY(r, g, b);
-                _lumArray.set<float>(e, 0, y);
+                float r = toLinear(_originalArray.get<uint8_t>(e, cr) / 255.0f);
+                float g = toLinear(_originalArray.get<uint8_t>(e, cg) / 255.0f);
+                float b = toLinear(_originalArray.get<uint8_t>(e, cb) / 255.0f);
+                _lumArray[e][0] = rgbToY(r, g, b);
             }
-            _lumArrayChannel = 0;
         } else if (colorSpace() == ColorSpaceY) {
-            _lumArray = floatArray();
-            _lumArrayChannel = colorChannelIndex(0);
+            size_t c = colorChannelIndex(0);
+            switch (type()) {
+            case TAD::int8:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<int8_t>(e, c);
+                break;
+            case TAD::uint8:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<uint8_t>(e, c);
+                break;
+            case TAD::int16:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<int16_t>(e, c);
+                break;
+            case TAD::uint16:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<uint16_t>(e, c);
+                break;
+            case TAD::int32:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<int32_t>(e, c);
+                break;
+            case TAD::uint32:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<uint32_t>(e, c);
+                break;
+            case TAD::int64:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<int64_t>(e, c);
+                break;
+            case TAD::uint64:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<uint64_t>(e, c);
+                break;
+            case TAD::float32:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<float>(e, c);
+                break;
+            case TAD::float64:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<double>(e, c);
+                break;
+            }
         } else if (colorSpace() == ColorSpaceXYZ) {
-            _lumArray = floatArray();
-            _lumArrayChannel = colorChannelIndex(1);
+            size_t c = colorChannelIndex(1);
+            switch (type()) {
+            case TAD::int8:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<int8_t>(e, c);
+                break;
+            case TAD::uint8:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<uint8_t>(e, c);
+                break;
+            case TAD::int16:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<int16_t>(e, c);
+                break;
+            case TAD::uint16:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<uint16_t>(e, c);
+                break;
+            case TAD::int32:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<int32_t>(e, c);
+                break;
+            case TAD::uint32:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<uint32_t>(e, c);
+                break;
+            case TAD::int64:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<int64_t>(e, c);
+                break;
+            case TAD::uint64:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<uint64_t>(e, c);
+                break;
+            case TAD::float32:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<float>(e, c);
+                break;
+            case TAD::float64:
+                for (size_t e = 0; e < _lumArray.elementCount(); e++)
+                    _lumArray[e][0] = _originalArray.get<double>(e, c);
+                break;
+            }
         }
     }
-    lumArrayChannel = _lumArrayChannel;
     return _lumArray;
 }
 
 float Frame::value(int x, int y, int channelIndex)
 {
-    float v;
+    float v = std::numeric_limits<float>::quiet_NaN();
     if (x >= 0 && x < width() && y >= 0 && y < height()) {
         if (channelIndex == ColorChannelIndex) {
-            int lc;
-            const TAD::Array<float>& l = lumArray(lc);
-            v = l.get<float>({ size_t(x), size_t(y) }, size_t(lc));
-        } else if (type() == TAD::uint8) {
-            v = _originalArray.get<uint8_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
+            v = lumArray()[{ size_t(x), size_t(y) }][0];
         } else {
-            v = floatArray().get<float>({ size_t(x), size_t(y) }, size_t(channelIndex));
+            switch (type()) {
+            case TAD::int8:
+                v = _originalArray.get<int8_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
+                break;
+            case TAD::uint8:
+                v = _originalArray.get<uint8_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
+                break;
+            case TAD::int16:
+                v = _originalArray.get<int16_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
+                break;
+            case TAD::uint16:
+                v = _originalArray.get<uint16_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
+                break;
+            case TAD::int32:
+                v = _originalArray.get<int32_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
+                break;
+            case TAD::uint32:
+                v = _originalArray.get<uint32_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
+                break;
+            case TAD::int64:
+                v = _originalArray.get<int64_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
+                break;
+            case TAD::uint64:
+                v = _originalArray.get<uint64_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
+                break;
+            case TAD::float32:
+                v = _originalArray.get<float>({ size_t(x), size_t(y) }, size_t(channelIndex));
+                break;
+            case TAD::float64:
+                v = _originalArray.get<double>({ size_t(x), size_t(y) }, size_t(channelIndex));
+                break;
+            }
         }
-    } else {
-        v = std::numeric_limits<float>::quiet_NaN();
     }
     return v;
 }
@@ -386,18 +615,12 @@ const Statistic& Frame::statistic(int channelIndex)
 {
     if (channelIndex == ColorChannelIndex) {
         if (_colorStatistic.finiteValues() < 0) {
-            int lc;
-            const TAD::Array<float>& l = lumArray(lc);
-            _colorStatistic.init(l, lc);
+            _colorStatistic.init(lumArray(), 0);
         }
         return _colorStatistic;
     } else {
         if (_statistics[channelIndex].finiteValues() < 0) {
-            if (type() == TAD::uint8) {
-                _statistics[channelIndex].init(TAD::Array<uint8_t>(_originalArray), channelIndex);
-            } else {
-                _statistics[channelIndex].init(floatArray(), channelIndex);
-            }
+            _statistics[channelIndex].init(_originalArray, channelIndex);
         }
         return _statistics[channelIndex];
     }
@@ -407,19 +630,14 @@ const Histogram& Frame::histogram(int channelIndex)
 {
     if (channelIndex == ColorChannelIndex) {
         if (_colorHistogram.binCount() == 0) {
-            int lc;
-            const TAD::Array<float>& l = lumArray(lc);
-            _colorHistogram.init(l, lc, visMinVal(ColorChannelIndex), visMaxVal(ColorChannelIndex));
+            _colorHistogram.init(lumArray(), 0, visMinVal(ColorChannelIndex), visMaxVal(ColorChannelIndex));
         }
         return _colorHistogram;
     } else {
         if (_histograms[channelIndex].binCount() == 0) {
-            if (type() == TAD::uint8) {
-                _histograms[channelIndex].init(TAD::Array<uint8_t>(_originalArray), channelIndex);
-            } else {
-                _histograms[channelIndex].init(floatArray(), channelIndex,
-                        minVal(channelIndex), maxVal(channelIndex));
-            }
+            _histograms[channelIndex].init(_originalArray, channelIndex,
+                    type() == TAD::uint8 ?   0.0f : minVal(channelIndex),
+                    type() == TAD::uint8 ? 255.0f : maxVal(channelIndex));
         }
         return _histograms[channelIndex];
     }
@@ -439,12 +657,10 @@ TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
     assert(qx >= 0 && qx < quadTreeLevelWidth(0));
     assert(qy >= 0 && qy < quadTreeLevelHeight(0));
 
-    TAD::ArrayContainer q(_quadLevel0Description);
-    TAD::ArrayContainer src;
-    if (q.componentType() == type())
-        src = _originalArray;
-    else
-        src = floatArray();
+    /* First create quad using original data type */
+    TAD::ArrayContainer q(_quadLevel0Description.dimensions(),
+            _quadLevel0Description.componentCount(), type());
+    const TAD::ArrayContainer& src = _originalArray;
     int srcX = qx * quadWidth() - quadBorderSize(0);
     int srcY = qy * quadHeight() - quadBorderSize(0);
 
@@ -539,7 +755,9 @@ TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
         }
     }
 #endif
-    return q;
+
+    /* Then convert if necessary */
+    return q.convert(_quadLevel0Description.componentType());
 }
 
 bool Frame::textureChannelIsS(int texChannel)

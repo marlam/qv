@@ -28,7 +28,7 @@
 
 class Statistic {
 private:
-    int _finiteValues;
+    long long _finiteValues;
     float _minVal;
     float _maxVal;
     float _sampleMean;
@@ -38,10 +38,9 @@ private:
 public:
     Statistic();
 
-    void init(const TAD::Array<uint8_t>& array, size_t componentIndex);
-    void init(const TAD::Array<float>& array, size_t componentIndex);
+    void init(const TAD::ArrayContainer& array, size_t componentIndex);
 
-    int finiteValues() const { return _finiteValues; }
+    long long finiteValues() const { return _finiteValues; }
     float minVal() const { return _minVal; }
     float maxVal() const { return _maxVal; }
     float sampleMean() const { return _sampleMean; }

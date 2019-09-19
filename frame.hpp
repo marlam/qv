@@ -41,9 +41,7 @@ class Frame {
 private:
     /* data: */
     TAD::ArrayContainer _originalArray;
-    TAD::Array<float> _floatArray;
     TAD::Array<float> _lumArray;
-    int _lumArrayChannel;
     /* per channel: */
     std::vector<float> _minVals, _maxVals;
     std::vector<Statistic> _statistics;
@@ -70,8 +68,7 @@ private:
     std::shared_ptr<TextureHolder> _textureHolder;
     TAD::Array<float> _textureTransferArray;
 
-    const TAD::Array<float>& floatArray();
-    const TAD::Array<float>& lumArray(int& lumArrayChannel);
+    const TAD::Array<float>& lumArray();
     TAD::ArrayContainer quadFromLevel0(int qx, int qy);
     bool textureChannelIsS(int index);
 

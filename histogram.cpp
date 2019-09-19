@@ -31,25 +31,33 @@ Histogram::Histogram()
 {
 }
 
-int Histogram::binIndex(float v) const
+static int binIndexHelper(float v, float minVal, float maxVal,
+        const std::vector<unsigned long long>& bins)
 {
-    long b = (v - _minVal) / (_maxVal - _minVal) * binCount();
+    int b = (v - minVal) / (maxVal - minVal) * bins.size();
     if (b < 0)
         b = 0;
-    else if (b >= binCount())
-        b = binCount() - 1;
+    else if (b >= int(bins.size()))
+        b = bins.size() - 1;
     return b;
 }
 
-void Histogram::init(const TAD::Array<uint8_t>& array, size_t componentIndex)
+int Histogram::binIndex(float v) const
 {
-    assert(_bins.size() == 0);
-    _bins.resize(256);
-    _minVal = 0.0;
-    _maxVal = 255.0f;
+    return binIndexHelper(v, _minVal, _maxVal, _bins);
+}
+
+template<typename T>
+static void initHelper(const TAD::Array<T> array, size_t componentIndex, size_t bins,
+        float _minVal, float _maxVal,
+        std::vector<unsigned long long>& _bins, unsigned long long& _maxBinVal)
+{
+    _bins.resize(bins);
     for (size_t e = 0; e < array.elementCount(); e++) {
-        uint8_t val = array.get<uint8_t>(e, componentIndex);
-        _bins[val]++;
+        T val = array[e][componentIndex];
+        if (std::is_floating_point<T>::value && !std::isfinite(val))
+            continue;
+        _bins[binIndexHelper(val, _minVal, _maxVal, _bins)]++;
     }
     _maxBinVal = 0;
     for (size_t i = 0; i < _bins.size(); i++)
@@ -57,20 +65,41 @@ void Histogram::init(const TAD::Array<uint8_t>& array, size_t componentIndex)
             _maxBinVal = _bins[i];
 }
 
-void Histogram::init(const TAD::Array<float>& array, size_t componentIndex, float minVal, float maxVal)
+void Histogram::init(const TAD::ArrayContainer& array, size_t componentIndex, float minVal, float maxVal)
 {
     assert(_bins.size() == 0);
-    _bins.resize(1024);
     _minVal = minVal;
     _maxVal = maxVal;
-    for (size_t e = 0; e < array.elementCount(); e++) {
-        float val = array.get<float>(e, componentIndex);
-        if (std::isfinite(val)) {
-            _bins[binIndex(val)]++;
-        }
+    switch (array.componentType()) {
+    case TAD::int8:
+        initHelper(TAD::Array<int8_t>(array), componentIndex, 256, _minVal, _maxVal, _bins, _maxBinVal);
+        break;
+    case TAD::uint8:
+        initHelper(TAD::Array<uint8_t>(array), componentIndex, 256, _minVal, _maxVal, _bins, _maxBinVal);
+        break;
+    case TAD::int16:
+        initHelper(TAD::Array<int16_t>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        break;
+    case TAD::uint16:
+        initHelper(TAD::Array<uint16_t>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        break;
+    case TAD::int32:
+        initHelper(TAD::Array<int32_t>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        break;
+    case TAD::uint32:
+        initHelper(TAD::Array<uint32_t>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        break;
+    case TAD::int64:
+        initHelper(TAD::Array<int64_t>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        break;
+    case TAD::uint64:
+        initHelper(TAD::Array<uint64_t>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        break;
+    case TAD::float32:
+        initHelper(TAD::Array<float>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        break;
+    case TAD::float64:
+        initHelper(TAD::Array<double>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        break;
     }
-    _maxBinVal = 0;
-    for (size_t i = 0; i < _bins.size(); i++)
-        if (_bins[i] > _maxBinVal)
-            _maxBinVal = _bins[i];
 }

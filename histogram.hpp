@@ -31,13 +31,12 @@
 class Histogram {
 private:
     float _minVal, _maxVal;
-    std::vector<unsigned int> _bins;
-    unsigned int _maxBinVal;
+    std::vector<unsigned long long> _bins;
+    unsigned long long _maxBinVal;
 
 public:
     Histogram();
-    void init(const TAD::Array<uint8_t>& array, size_t componentIndex);
-    void init(const TAD::Array<float>& array, size_t componentIndex, float minVal, float maxVal);
+    void init(const TAD::ArrayContainer& array, size_t componentIndex, float minVal, float maxVal);
     float minVal() const { return _minVal; }
     float maxVal() const { return _maxVal; }
     float maxBinVal() const { return _maxBinVal; }

@@ -53,5 +53,6 @@ win32 {
 	# For building a static qv.exe using MXE, we need to explicitly link in
 	# all the libraries required by libtad
 	LIBS += -lgta -lpfs -lpng -lz -ljpeg -lhdf5_cpp -lhdf5 \
-		-lIlmImf -lImath -lHalf -lIex -lIexMath -lIlmThread
+		-lIlmImf -lImath -lHalf -lIex -lIexMath -lIlmThread \
+		-ltiff -lwebp -lzstd -llzma -ljpeg -lz
 }

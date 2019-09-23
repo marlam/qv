@@ -29,6 +29,28 @@
 #include "overlay-info.hpp"
 
 
+static std::string humanReadableMemsize(unsigned long long size)
+{
+    const double dsize = size;
+    const unsigned long long u1024 = 1024;
+    char s[32];
+
+    if (size >= u1024 * u1024 * u1024 * u1024) {
+        std::snprintf(s, sizeof(s), "%.2f TiB", dsize / (u1024 * u1024 * u1024 * u1024));
+    } else if (size >= u1024 * u1024 * u1024) {
+        std::snprintf(s, sizeof(s), "%.2f GiB", dsize / (u1024 * u1024 * u1024));
+    } else if (size >= u1024 * u1024) {
+        std::snprintf(s, sizeof(s), "%.2f MiB", dsize / (u1024 * u1024));
+    } else if (size >= u1024) {
+        std::snprintf(s, sizeof(s), "%.2f KiB", dsize / u1024);
+    } else if (size > 1 || size == 0) {
+        std::snprintf(s, sizeof(s), "%d bytes", int(size));
+    } else {
+        std::strcpy(s, "1 byte");
+    }
+    return s;
+}
+
 static void addTagList(const TAD::TagList& tl, QString& line)
 {
     QStringList list;
@@ -60,8 +82,9 @@ void OverlayInfo::update(int widthInPixels, Set& set)
     if (set.fileCount() > 1)
         line.prepend(QString(" file %1/%2:").arg(set.fileIndex()).arg(set.fileCount()));
     sl << line;
-    line = QString(" %1x%2, %3 x %4").arg(frame->width()).arg(frame->height())
-        .arg(frame->channelCount()).arg(TAD::typeToString(frame->type()));
+    line = QString(" %1x%2, %3 x %4 (%5)").arg(frame->width()).arg(frame->height())
+        .arg(frame->channelCount()).arg(TAD::typeToString(frame->type()))
+        .arg(humanReadableMemsize(frame->array().dataSize()).c_str());
     if (file->frameCount(errMsg) > 1) {
         line.prepend(QString(" frame %1/%2:").arg(file->frameIndex()).arg(file->frameCount(errMsg)));
     }

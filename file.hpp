@@ -38,7 +38,7 @@ private:
     Frame _frame;
     int _frameIndex;
 
-    TAD::Importer importer();
+    TAD::Importer& importer();
 
 public:
     File();

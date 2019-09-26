@@ -30,7 +30,7 @@ File::File() : _frameIndex(-1)
 {
 }
 
-TAD::Importer File::importer()
+TAD::Importer& File::importer()
 {
     if (_importer.fileName().size() == 0) {
         _importer.initialize(fileName());

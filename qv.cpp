@@ -600,7 +600,9 @@ void QV::adjustFrameIndex(int offset)
     std::string errMsg;
     int fc = file->frameCount(errMsg);
     if (fc < 1) {
-        QMessageBox::critical(this, "Error", errMsg.c_str());
+        QMessageBox::critical(this, "Error", (errMsg
+                    + ".\n\nClosing this file.").c_str());
+        _set.removeFile(_set.fileIndex());
         return;
     }
 
@@ -615,7 +617,10 @@ void QV::adjustFrameIndex(int offset)
             this->updateTitle();
             this->update();
         } else {
-            QMessageBox::critical(this, "Error", errMsg.c_str());
+            QMessageBox::critical(this, "Error", (errMsg
+                        + ".\n\nClosing this file.").c_str());
+            _set.removeFile(_set.fileIndex());
+            return;
         }
     }
 }

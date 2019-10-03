@@ -162,7 +162,8 @@ bool File::reload(std::string& errorMessage)
         _description = a;
         _frame.init(a);
         _frameIndex = 0;
-        if (channelIndex != ColorChannelIndex && channelIndex >= _frame.channelCount())
+        if ((channelIndex == ColorChannelIndex && _frame.colorSpace() == ColorSpaceNone)
+                || (channelIndex != ColorChannelIndex && channelIndex >= _frame.channelCount()))
             channelIndex = -1;
         if (channelIndex >= 0)
             _frame.setChannelIndex(channelIndex);
@@ -177,7 +178,8 @@ bool File::reload(std::string& errorMessage)
         _description = a;
         _frameIndex = -1;
         if (setFrameIndex(index, errorMessage)) {
-            if (channelIndex != ColorChannelIndex && channelIndex >= _frame.channelCount())
+            if ((channelIndex == ColorChannelIndex && _frame.colorSpace() == ColorSpaceNone)
+                    || (channelIndex != ColorChannelIndex && channelIndex >= _frame.channelCount()))
                 channelIndex = -1;
             if (channelIndex >= 0)
                 _frame.setChannelIndex(channelIndex);

@@ -32,7 +32,7 @@ Parameters::Parameters() :
     _colorVisMaxVal(std::numeric_limits<float>::quiet_NaN()),
     magInterpolation(false), magGrid(false),
     zoom(1.0f), xOffset(0), yOffset(0),
-    dynamicRangeReduction(false), drrBrightness(50.0f)
+    dynamicRangeReduction(false), drrBrightness(64.0f)
 {
 }
 

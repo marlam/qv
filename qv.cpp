@@ -829,10 +829,10 @@ void QV::keyReleaseEvent(QKeyEvent* e)
         _parameters.dynamicRangeReduction = !_parameters.dynamicRangeReduction;
         this->update();
     } else if (e->key() == Qt::Key_Comma) {
-        _parameters.drrBrightness = std::max(1.0f, _parameters.drrBrightness - 1.0f);
+        _parameters.drrBrightness = std::max(2.0f, _parameters.drrBrightness / 2.0f);
         this->update();
     } else if (e->key() == Qt::Key_Period) {
-        _parameters.drrBrightness = _parameters.drrBrightness + 1.0f;
+        _parameters.drrBrightness = _parameters.drrBrightness * 2.0f;
         this->update();
     } else if (e->key() == Qt::Key_Slash) {
         _parameters.drrBrightness = Parameters().drrBrightness;

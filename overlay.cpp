@@ -55,7 +55,7 @@ void Overlay::prepare(int widthInPixels, int heightInPixels)
         _painter = new QPainter(_image);
         QFont font;
         font.setFamily("Monospace");
-        font.setStyleHint(QFont::Monospace, QFont::PreferAntialias);
+        font.setStyleHint(QFont::TypeWriter, QFont::PreferAntialias);
         font.setWeight(QFont::DemiBold);
         _painter->setFont(font);
         _painter->setRenderHint(QPainter::Antialiasing);

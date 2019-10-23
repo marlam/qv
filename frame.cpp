@@ -27,6 +27,8 @@
 #include "frame.hpp"
 #include "gl.hpp"
 
+#include <tad/tools.hpp>
+
 
 Frame::Frame() :
     _colorSpace(ColorSpaceNone), _colorChannels { -1, -1, -1 }, _alphaChannel(-1),
@@ -656,7 +658,7 @@ TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
 #endif
 
     /* Then convert if necessary */
-    return q.convert(_quadLevel0Description.componentType());
+    return convert(q, _quadLevel0Description.componentType());
 }
 
 bool Frame::textureChannelIsS(int texChannel)

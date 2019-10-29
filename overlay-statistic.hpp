@@ -25,13 +25,12 @@
 #define QV_OVERLAY_STATISTIC_HPP
 
 #include "set.hpp"
-#include "parameters.hpp"
 #include "overlay.hpp"
 
 class OverlayStatistic : public Overlay
 {
 public:
-    void update(int widthInPixels, Set& set, Parameters& parameters);
+    void update(int widthInPixels, Set& set);
 };
 
 #endif

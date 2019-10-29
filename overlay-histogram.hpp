@@ -25,14 +25,12 @@
 #define QV_OVERLAY_HISTOGRAM_HPP
 
 #include "set.hpp"
-#include "parameters.hpp"
 #include "overlay.hpp"
 
 class OverlayHistogram: public Overlay
 {
 public:
-    void update(int widthInPixels, const QPoint& arrayCoordinates,
-            Set& set, Parameters& parameters);
+    void update(int widthInPixels, const QPoint& arrayCoordinates, Set& set);
 };
 
 #endif

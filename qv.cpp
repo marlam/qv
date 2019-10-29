@@ -41,8 +41,8 @@
 #include "gl.hpp"
 
 
-QV::QV(Set& set, Parameters& parameters) :
-    _set(set), _parameters(parameters),
+QV::QV(Set& set) :
+    _set(set),
     _dragMode(false),
     _overlayHelpActive(false),
     _overlayInfoActive(false),
@@ -188,10 +188,10 @@ void QV::navigationParameters(Frame* frame,
         arFactorY = windowAR / frameAR;
     }
     // Navigation and zoom
-    xFactor = arFactorX / _parameters.zoom;
-    yFactor = arFactorY / _parameters.zoom;
-    xOffset = 2.0f * _parameters.xOffset / widgetWidth;
-    yOffset = 2.0f * _parameters.yOffset / widgetHeight;
+    xFactor = arFactorX / _set.currentParameters()->zoom;
+    yFactor = arFactorY / _set.currentParameters()->zoom;
+    xOffset = 2.0f * _set.currentParameters()->xOffset / widgetWidth;
+    yOffset = 2.0f * _set.currentParameters()->yOffset / widgetHeight;
 }
 
 QPoint QV::dataCoordinates(QPoint widgetCoordinates,
@@ -227,23 +227,23 @@ void QV::prepareQuadRendering(Frame* frame, int quadTreeLevel,
     _viewPrg.setUniformValue("yFactor", yFactor);
     _viewPrg.setUniformValue("xOffset", xOffset);
     _viewPrg.setUniformValue("yOffset", yOffset);
-    _viewPrg.setUniformValue("magGrid", _parameters.magGrid);
+    _viewPrg.setUniformValue("magGrid", _set.currentParameters()->magGrid);
     // Min/max values
-    float visMinVal = _parameters.visMinVal(frame->channelIndex());
-    float visMaxVal = _parameters.visMaxVal(frame->channelIndex());
+    float visMinVal = _set.currentParameters()->visMinVal(frame->channelIndex());
+    float visMaxVal = _set.currentParameters()->visMaxVal(frame->channelIndex());
     if (!std::isfinite(visMinVal) || !std::isfinite(visMaxVal)) {
         visMinVal = frame->visMinVal(frame->channelIndex());
         visMaxVal = frame->visMaxVal(frame->channelIndex());
-        _parameters.setVisMinVal(frame->channelIndex(), visMinVal);
-        _parameters.setVisMaxVal(frame->channelIndex(), visMaxVal);
+        _set.currentParameters()->setVisMinVal(frame->channelIndex(), visMinVal);
+        _set.currentParameters()->setVisMaxVal(frame->channelIndex(), visMaxVal);
     }
     _viewPrg.setUniformValue("visMinVal", visMinVal);
     _viewPrg.setUniformValue("visMaxVal", visMaxVal);
     // Dynamic Range Reduction
-    _viewPrg.setUniformValue("dynamicRangeReduction", _parameters.dynamicRangeReduction);
-    _viewPrg.setUniformValue("drrBrightness", _parameters.drrBrightness);
+    _viewPrg.setUniformValue("dynamicRangeReduction", _set.currentParameters()->dynamicRangeReduction);
+    _viewPrg.setUniformValue("drrBrightness", _set.currentParameters()->drrBrightness);
     // Color and data information
-    _viewPrg.setUniformValue("colorMap", _parameters.colorMap().type() != ColorMapNone);
+    _viewPrg.setUniformValue("colorMap", _set.currentParameters()->colorMap().type() != ColorMapNone);
     _viewPrg.setUniformValue("showColor", frame->channelIndex() == ColorChannelIndex);
     _viewPrg.setUniformValue("colorSpace", int(frame->colorSpace()));
     _viewPrg.setUniformValue("channelCount", frame->channelCount());
@@ -294,18 +294,18 @@ void QV::renderQuad(Frame* frame, int quadTreeLevel, int qx, int qy,
         frame->quadTexture(quadTreeLevel, qx, qy, frame->alphaChannelIndex(), _fbo, _vao, _quadTreePrg) : 0;
     gl->glActiveTexture(GL_TEXTURE0);
     gl->glBindTexture(GL_TEXTURE_2D, t0);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _set.currentParameters()->magInterpolation ? GL_LINEAR : GL_NEAREST);
     gl->glActiveTexture(GL_TEXTURE1);
     gl->glBindTexture(GL_TEXTURE_2D, t1);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _set.currentParameters()->magInterpolation ? GL_LINEAR : GL_NEAREST);
     gl->glActiveTexture(GL_TEXTURE2);
     gl->glBindTexture(GL_TEXTURE_2D, t2);
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _set.currentParameters()->magInterpolation ? GL_LINEAR : GL_NEAREST);
     gl->glActiveTexture(GL_TEXTURE3);
     gl->glBindTexture(GL_TEXTURE_2D, t3);
     gl->glActiveTexture(GL_TEXTURE4);
-    gl->glBindTexture(GL_TEXTURE_2D, _parameters.colorMap().texture());
-    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _parameters.magInterpolation ? GL_LINEAR : GL_NEAREST);
+    gl->glBindTexture(GL_TEXTURE_2D, _set.currentParameters()->colorMap().texture());
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _set.currentParameters()->magInterpolation ? GL_LINEAR : GL_NEAREST);
     gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     ASSERT_GLCHECK();
 }
@@ -467,7 +467,7 @@ void QV::paintGL()
     gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     int overlayYOffset = 0;
     if (overlayColorMapActive) {
-        _overlayColorMap.update(_w, _parameters);
+        _overlayColorMap.update(_w, *(_set.currentParameters()));
         gl->glViewport(0, overlayYOffset, _w, _overlayColorMap.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
@@ -476,7 +476,7 @@ void QV::paintGL()
         overlayYOffset += _overlayColorMap.heightInPixels();
     }
     if (overlayHistogramActive) {
-        _overlayHistogram.update(_w, dataCoords, _set, _parameters);
+        _overlayHistogram.update(_w, dataCoords, _set);
         gl->glViewport(0, overlayYOffset, _w, _overlayHistogram.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
@@ -485,7 +485,7 @@ void QV::paintGL()
         overlayYOffset += _overlayHistogram.heightInPixels();
     }
     if (overlayStatisticActive) {
-        _overlayStatistic.update(_w, _set, _parameters);
+        _overlayStatistic.update(_w, _set);
         gl->glViewport(0, overlayYOffset, _w, _overlayStatistic.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
@@ -538,10 +538,6 @@ void QV::openFile()
         QMessageBox::critical(this, "Error", (errMsg
                     + ".\n\nClosing this file.").c_str());
         _set.removeFile(previousFileCount);
-    }
-    if (previousFileCount == 0 && _set.fileCount() > 0) {
-        _parameters = Parameters();
-        _parameters.magInterpolation = (_set.currentFile()->currentFrame()->channelIndex() == ColorChannelIndex);
     }
     this->updateTitle();
     this->update();
@@ -644,12 +640,12 @@ void QV::setChannelIndex(int index)
 
 void QV::adjustZoom(int steps)
 {
-    float adjustmentPerStep = std::max(0.000001f, _parameters.zoom * 0.05f);
-    float oldZoom = _parameters.zoom;
-    float newZoom = std::max(0.000001f, _parameters.zoom - steps * adjustmentPerStep);
-    _parameters.xOffset = _parameters.xOffset * oldZoom / newZoom;
-    _parameters.yOffset = _parameters.yOffset * oldZoom / newZoom;
-    _parameters.zoom = newZoom;
+    float adjustmentPerStep = std::max(0.000001f, _set.currentParameters()->zoom * 0.05f);
+    float oldZoom = _set.currentParameters()->zoom;
+    float newZoom = std::max(0.000001f, _set.currentParameters()->zoom - steps * adjustmentPerStep);
+    _set.currentParameters()->xOffset = _set.currentParameters()->xOffset * oldZoom / newZoom;
+    _set.currentParameters()->yOffset = _set.currentParameters()->yOffset * oldZoom / newZoom;
+    _set.currentParameters()->zoom = newZoom;
     this->update();
 }
 
@@ -662,24 +658,24 @@ void QV::adjustVisInterval(int minSteps, int maxSteps)
     float defaultVisMin = frame->currentVisMinVal();
     float defaultVisMax = frame->currentVisMaxVal();
     float adjustment = (defaultVisMax - defaultVisMin) / 100.0f;
-    float oldMinVal = _parameters.visMinVal(frame->channelIndex());
-    float oldMaxVal = _parameters.visMaxVal(frame->channelIndex());
+    float oldMinVal = _set.currentParameters()->visMinVal(frame->channelIndex());
+    float oldMaxVal = _set.currentParameters()->visMaxVal(frame->channelIndex());
     float newMinVal = oldMinVal + minSteps * adjustment;
     float newMaxVal = oldMaxVal + maxSteps * adjustment;
     if (newMinVal < defaultVisMin)
         newMinVal = defaultVisMin;
-    else if (_parameters.visMaxVal(frame->channelIndex()) - newMinVal < adjustment)
-        newMinVal = _parameters.visMaxVal(frame->channelIndex()) - adjustment;
+    else if (_set.currentParameters()->visMaxVal(frame->channelIndex()) - newMinVal < adjustment)
+        newMinVal = _set.currentParameters()->visMaxVal(frame->channelIndex()) - adjustment;
     else if (newMinVal > defaultVisMax - adjustment)
         newMinVal = defaultVisMax - adjustment;
     if (newMaxVal < defaultVisMin + adjustment)
         newMaxVal = defaultVisMin + adjustment;
-    else if (newMaxVal - _parameters.visMinVal(frame->channelIndex()) < adjustment)
-        newMaxVal = _parameters.visMinVal(frame->channelIndex()) + adjustment;
+    else if (newMaxVal - _set.currentParameters()->visMinVal(frame->channelIndex()) < adjustment)
+        newMaxVal = _set.currentParameters()->visMinVal(frame->channelIndex()) + adjustment;
     else if (newMaxVal > defaultVisMax)
         newMaxVal = defaultVisMax;
-    _parameters.setVisMinVal(frame->channelIndex(), newMinVal);
-    _parameters.setVisMaxVal(frame->channelIndex(), newMaxVal);
+    _set.currentParameters()->setVisMinVal(frame->channelIndex(), newMinVal);
+    _set.currentParameters()->setVisMaxVal(frame->channelIndex(), newMaxVal);
     this->update();
 }
 
@@ -689,18 +685,18 @@ void QV::resetVisInterval()
     Frame* frame = (file ? file->currentFrame() : nullptr);
     if (!frame)
         return;
-    _parameters.setVisMinVal(frame->channelIndex(), std::numeric_limits<float>::quiet_NaN());
-    _parameters.setVisMaxVal(frame->channelIndex(), std::numeric_limits<float>::quiet_NaN());
+    _set.currentParameters()->setVisMinVal(frame->channelIndex(), std::numeric_limits<float>::quiet_NaN());
+    _set.currentParameters()->setVisMaxVal(frame->channelIndex(), std::numeric_limits<float>::quiet_NaN());
     this->update();
 }
 
 void QV::changeColorMap(ColorMapType type)
 {
-    ColorMapType oldType = _parameters.colorMap().type();
+    ColorMapType oldType = _set.currentParameters()->colorMap().type();
     if (oldType != type) {
-        _parameters.colorMap().setType(type);
+        _set.currentParameters()->colorMap().setType(type);
     } else {
-        _parameters.colorMap().cycle();
+        _set.currentParameters()->colorMap().cycle();
     }
     this->update();
 }
@@ -795,21 +791,21 @@ void QV::keyReleaseEvent(QKeyEvent* e)
     } else if (e->key() == Qt::Key_9) {
         setChannelIndex(9);
     } else if (e->key() == Qt::Key_L) {
-        _parameters.magInterpolation = !_parameters.magInterpolation;
+        _set.currentParameters()->magInterpolation = !_set.currentParameters()->magInterpolation;
         this->update();
     } else if (e->key() == Qt::Key_G) {
-        _parameters.magGrid = !_parameters.magGrid;
+        _set.currentParameters()->magGrid = !_set.currentParameters()->magGrid;
         this->update();
     } else if (e->key() == Qt::Key_Equal) {
-        _parameters.zoom = 1.0f;
+        _set.currentParameters()->zoom = 1.0f;
         this->update();
     } else if (e->key() == Qt::Key_Minus || e->matches(QKeySequence::ZoomOut)) {
         adjustZoom(-1);
     } else if (e->key() == Qt::Key_Plus || e->matches(QKeySequence::ZoomIn)) {
         adjustZoom(+1);
     } else if (e->key() == Qt::Key_Space) {
-        _parameters.xOffset = 0.0f;
-        _parameters.yOffset = 0.0f;
+        _set.currentParameters()->xOffset = 0.0f;
+        _set.currentParameters()->yOffset = 0.0f;
         this->update();
     } else if (e->key() == Qt::Key_BraceLeft) {
         adjustVisInterval(-1, 0);
@@ -826,16 +822,16 @@ void QV::keyReleaseEvent(QKeyEvent* e)
     } else if (e->key() == Qt::Key_Backslash) {
         resetVisInterval();
     } else if (e->key() == Qt::Key_D) {
-        _parameters.dynamicRangeReduction = !_parameters.dynamicRangeReduction;
+        _set.currentParameters()->dynamicRangeReduction = !_set.currentParameters()->dynamicRangeReduction;
         this->update();
     } else if (e->key() == Qt::Key_Comma) {
-        _parameters.drrBrightness = std::max(2.0f, _parameters.drrBrightness / 2.0f);
+        _set.currentParameters()->drrBrightness = std::max(2.0f, _set.currentParameters()->drrBrightness / 2.0f);
         this->update();
     } else if (e->key() == Qt::Key_Period) {
-        _parameters.drrBrightness = _parameters.drrBrightness * 2.0f;
+        _set.currentParameters()->drrBrightness = _set.currentParameters()->drrBrightness * 2.0f;
         this->update();
     } else if (e->key() == Qt::Key_Slash) {
-        _parameters.drrBrightness = Parameters().drrBrightness;
+        _set.currentParameters()->drrBrightness = Parameters().drrBrightness;
         this->update();
     } else if (e->key() == Qt::Key_F4) {
         changeColorMap(ColorMapNone);
@@ -885,8 +881,8 @@ void QV::mouseMoveEvent(QMouseEvent* e)
         this->update();
     if (_dragMode) {
         QPoint dragEnd = e->pos();
-        _parameters.xOffset += dragEnd.x() - _dragStart.x();
-        _parameters.yOffset -= dragEnd.y() - _dragStart.y();
+        _set.currentParameters()->xOffset += dragEnd.x() - _dragStart.x();
+        _set.currentParameters()->yOffset -= dragEnd.y() - _dragStart.y();
         _dragStart = dragEnd;
         this->update();
     }

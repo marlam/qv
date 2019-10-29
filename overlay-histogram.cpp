@@ -45,8 +45,7 @@ static float logtransf(float x)
     return clamp(std::log(1.0f + x * (base - 1.0f)) / std::log(base), 0.0f, 1.0f);
 }
 
-void OverlayHistogram::update(int widthInPixels, const QPoint& arrayCoordinates,
-        Set& set, Parameters& parameters)
+void OverlayHistogram::update(int widthInPixels, const QPoint& arrayCoordinates, Set& set)
 {
     prepare(widthInPixels, 64);
 
@@ -68,8 +67,8 @@ void OverlayHistogram::update(int widthInPixels, const QPoint& arrayCoordinates,
     _painter->fillRect(borderX1, borderY0, 1, borderHeight + 1 /* Huh?? */, borderColor);
 
     // Vis Interval
-    float visMin = parameters.visMinVal(frame->channelIndex());
-    float visMax = parameters.visMaxVal(frame->channelIndex());
+    float visMin = set.currentParameters()->visMinVal(frame->channelIndex());
+    float visMax = set.currentParameters()->visMaxVal(frame->channelIndex());
     float normalizedVisMin = (visMin - H.minVal()) / (H.maxVal() - H.minVal());
     float normalizedVisMax = (visMax - H.minVal()) / (H.maxVal() - H.minVal());
     int visX0 = borderSize + normalizedVisMin * (widthInPixels - 2 * borderSize);

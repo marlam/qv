@@ -27,7 +27,7 @@
 #include "overlay-statistic.hpp"
 
 
-void OverlayStatistic::update(int widthInPixels, Set& set, Parameters& /* parameters */)
+void OverlayStatistic::update(int widthInPixels, Set& set)
 {
     prepare(widthInPixels, _painter->fontInfo().pixelSize() * 1.5f);
 

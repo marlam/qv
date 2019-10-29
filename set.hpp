@@ -25,10 +25,12 @@
 #define QV_SET_HPP
 
 #include "file.hpp"
+#include "parameters.hpp"
 
 class Set {
 private:
     std::vector<File> _files;
+    std::vector<Parameters> _parameters;
     int _fileIndex;
 
 public:
@@ -43,6 +45,9 @@ public:
 
     File* file(int index) { return &(_files[index]); }
     File* currentFile() { return fileIndex() >= 0 ? file(fileIndex()) : nullptr; }
+
+    Parameters* parameters(int index) { return &(_parameters[index]); }
+    Parameters* currentParameters() { return fileIndex() >= 0 ? parameters(fileIndex()) : nullptr; }
 
     std::string currentDescription();
 };

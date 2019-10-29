@@ -35,6 +35,7 @@ bool Set::addFile(const std::string& fileName, std::string& errorMessage)
     File file;
     if (file.init(fileName, errorMessage)) {
         _files.push_back(file);
+        _parameters.push_back(Parameters());
         return true;
     } else {
         return false;
@@ -52,12 +53,14 @@ void Set::removeFile(int removeIndex)
         if (removeIndex == fileCount() - 1) {
             ret = setFileIndex(fileCount() - 2, tmpErrMsg);
             _files.erase(_files.begin() + removeIndex);
+            _parameters.erase(_parameters.begin() + removeIndex);
             if (!ret)
                 setFileIndex(-1, tmpErrMsg);
         } else {
             std::string tmpErrMsg;
             ret = setFileIndex(fileIndex() + 1, tmpErrMsg);
             _files.erase(_files.begin() + removeIndex);
+            _parameters.erase(_parameters.begin() + removeIndex);
             if (!ret)
                 setFileIndex(-1, tmpErrMsg);
             else
@@ -65,9 +68,11 @@ void Set::removeFile(int removeIndex)
         }
     } else if (removeIndex < fileIndex()) {
         _files.erase(_files.begin() + removeIndex);
+        _parameters.erase(_parameters.begin() + removeIndex);
         _fileIndex--;
     } else { // fileIndex() < removeIndex
         _files.erase(_files.begin() + removeIndex);
+        _parameters.erase(_parameters.begin() + removeIndex);
     }
 }
 

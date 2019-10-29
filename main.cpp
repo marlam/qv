@@ -60,7 +60,6 @@ int main(int argc, char* argv[])
 
     // Build the set of files to view
     Set set;
-    Parameters parameters;
     bool err = false;
     std::string errMsg;
     for (int i = 1; i < argc; i++) {
@@ -99,9 +98,6 @@ int main(int argc, char* argv[])
         }
         return 1;
     }
-    if (set.fileCount() > 0) {
-        parameters.magInterpolation = (set.currentFile()->currentFrame()->channelIndex() == ColorChannelIndex);
-    }
 
     // Set the OpenGL context parameters
     QSurfaceFormat format;
@@ -114,7 +110,7 @@ int main(int argc, char* argv[])
     QSurfaceFormat::setDefaultFormat(format);
 
     // Present window
-    QV qv(set, parameters);
+    QV qv(set);
     qv.show();
 
     return app.exec();

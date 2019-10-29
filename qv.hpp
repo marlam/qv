@@ -28,7 +28,6 @@
 #include <QOpenGLShaderProgram>
 
 #include "set.hpp"
-#include "parameters.hpp"
 #include "overlay-help.hpp"
 #include "overlay-info.hpp"
 #include "overlay-value.hpp"
@@ -43,7 +42,6 @@ Q_OBJECT
 
 private:
     Set& _set;
-    Parameters& _parameters;
     int _w, _h;
     unsigned int _fbo;
     unsigned int _fboTex;
@@ -102,7 +100,7 @@ private:
     void copyView(bool pure);
 
 public:
-    QV(Set& set, Parameters& parameters);
+    QV(Set& set);
 
     virtual void initializeGL() override;
     virtual void paintGL() override;

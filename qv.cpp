@@ -524,6 +524,11 @@ void QV::paintGL()
     ASSERT_GLCHECK();
 }
 
+bool QV::haveCurrentFile() const
+{
+    return (_set.fileIndex() >= 0);
+}
+
 void QV::openFile()
 {
     int previousFileCount = _set.fileCount();
@@ -543,33 +548,9 @@ void QV::openFile()
     this->update();
 }
 
-void QV::closeFile()
-{
-    if (_set.fileIndex() >= 0) {
-        _set.removeFile(_set.fileIndex());
-        this->updateTitle();
-        this->update();
-    }
-}
-
-void QV::reloadFile()
-{
-    File* file = _set.currentFile();
-    if (!file)
-        return;
-    std::string errMsg;
-    if (!file->reload(errMsg)) {
-        QMessageBox::critical(this, "Error", errMsg.c_str());
-    }
-    this->updateTitle();
-    this->update();
-}
-
 void QV::adjustFileIndex(int offset)
 {
     int i = _set.fileIndex();
-    if (i < 0)
-        return;
     int ni = i + offset;
     if (ni < 0)
         ni = 0;
@@ -590,9 +571,6 @@ void QV::adjustFileIndex(int offset)
 void QV::adjustFrameIndex(int offset)
 {
     File* file = _set.currentFile();
-    if (!file)
-        return;
-
     std::string errMsg;
     int fc = file->frameCount(errMsg);
     if (fc < 1) {
@@ -601,7 +579,6 @@ void QV::adjustFrameIndex(int offset)
         _set.removeFile(_set.fileIndex());
         return;
     }
-
     int i = file->frameIndex();
     int ni = i + offset;
     if (ni < 0)
@@ -623,10 +600,7 @@ void QV::adjustFrameIndex(int offset)
 
 void QV::setChannelIndex(int index)
 {
-    File* file = _set.currentFile();
-    Frame* frame = (file ? file->currentFrame() : nullptr);
-    if (!frame)
-        return;
+    Frame* frame = _set.currentFile()->currentFrame();
     if (index == ColorChannelIndex) {
         if (frame->colorSpace() != ColorSpaceNone)
             frame->setChannelIndex(index);
@@ -651,10 +625,7 @@ void QV::adjustZoom(int steps)
 
 void QV::adjustVisInterval(int minSteps, int maxSteps)
 {
-    File* file = _set.currentFile();
-    Frame* frame = (file ? file->currentFrame() : nullptr);
-    if (!frame)
-        return;
+    Frame* frame = _set.currentFile()->currentFrame();
     float defaultVisMin = frame->currentVisMinVal();
     float defaultVisMax = frame->currentVisMaxVal();
     float adjustment = (defaultVisMax - defaultVisMin) / 100.0f;
@@ -681,10 +652,7 @@ void QV::adjustVisInterval(int minSteps, int maxSteps)
 
 void QV::resetVisInterval()
 {
-    File* file = _set.currentFile();
-    Frame* frame = (file ? file->currentFrame() : nullptr);
-    if (!frame)
-        return;
+    Frame* frame = _set.currentFile()->currentFrame();
     _set.currentParameters()->setVisMinVal(frame->channelIndex(), std::numeric_limits<float>::quiet_NaN());
     _set.currentParameters()->setVisMaxVal(frame->channelIndex(), std::numeric_limits<float>::quiet_NaN());
     this->update();
@@ -703,10 +671,7 @@ void QV::changeColorMap(ColorMapType type)
 
 void QV::saveView(bool pure)
 {
-    File* file = _set.currentFile();
-    Frame* frame = (file ? file->currentFrame() : nullptr);
-    if (!frame)
-        return;
+    Frame* frame = _set.currentFile()->currentFrame();
     QString name = QFileDialog::getSaveFileName(this, QString(), QString(), "PNG images (*.png)");
     if (!name.isEmpty()) {
         QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -722,10 +687,7 @@ void QV::saveView(bool pure)
 
 void QV::copyView(bool pure)
 {
-    File* file = _set.currentFile();
-    Frame* frame = (file ? file->currentFrame() : nullptr);
-    if (!frame)
-        return;
+    Frame* frame = _set.currentFile()->currentFrame();
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     QGuiApplication::clipboard()->setImage(
             pure ? renderFrameToImage(frame) : grabFramebuffer());
@@ -748,126 +710,133 @@ void QV::keyReleaseEvent(QKeyEvent* e)
             this->showFullScreen();
     } else if (e->key() == Qt::Key_O || e->matches(QKeySequence::Open)) {
         openFile();
-    } else if (e->key() == Qt::Key_W || e->matches(QKeySequence::Close)) {
-        closeFile();
-    } else if (e->key() == Qt::Key_R) {
-        reloadFile();
-    } else if (e->key() == Qt::Key_Less || e->matches(QKeySequence::PreviousChild)) {
+    } else if (haveCurrentFile() && (e->key() == Qt::Key_W || e->matches(QKeySequence::Close))) {
+        _set.removeFile(_set.fileIndex());
+        this->updateTitle();
+        this->update();
+    } else if (haveCurrentFile() && e->key() == Qt::Key_R) {
+        std::string errMsg;
+        if (!_set.currentFile()->reload(errMsg)) {
+            QMessageBox::critical(this, "Error", errMsg.c_str());
+        }
+        this->updateTitle();
+        this->update();
+    } else if (haveCurrentFile() && (e->key() == Qt::Key_Less || e->matches(QKeySequence::PreviousChild))) {
         adjustFileIndex(-1);
-    } else if (e->key() == Qt::Key_Greater || e->matches(QKeySequence::NextChild)) {
+    } else if (haveCurrentFile() && (e->key() == Qt::Key_Greater || e->matches(QKeySequence::NextChild))) {
         adjustFileIndex(+1);
-    } else if (e->key() == Qt::Key_Left) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_Left) {
         adjustFrameIndex(-1);
-    } else if (e->key() == Qt::Key_Right) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_Right) {
         adjustFrameIndex(+1);
-    } else if (e->key() == Qt::Key_Down) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_Down) {
         adjustFrameIndex(+10);
-    } else if (e->key() == Qt::Key_Up) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_Up) {
         adjustFrameIndex(-10);
-    } else if (e->key() == Qt::Key_PageDown) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_PageDown) {
         adjustFrameIndex(+100);
-    } else if (e->key() == Qt::Key_PageUp) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_PageUp) {
         adjustFrameIndex(-100);
-    } else if (e->key() == Qt::Key_C) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_C) {
         setChannelIndex(ColorChannelIndex);
-    } else if (e->key() == Qt::Key_0) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_0) {
         setChannelIndex(0);
-    } else if (e->key() == Qt::Key_1) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_1) {
         setChannelIndex(1);
-    } else if (e->key() == Qt::Key_2) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_2) {
         setChannelIndex(2);
-    } else if (e->key() == Qt::Key_3) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_3) {
         setChannelIndex(3);
-    } else if (e->key() == Qt::Key_4) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_4) {
         setChannelIndex(4);
-    } else if (e->key() == Qt::Key_5) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_5) {
         setChannelIndex(5);
-    } else if (e->key() == Qt::Key_6) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_6) {
         setChannelIndex(6);
-    } else if (e->key() == Qt::Key_7) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_7) {
         setChannelIndex(7);
-    } else if (e->key() == Qt::Key_8) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_8) {
         setChannelIndex(8);
-    } else if (e->key() == Qt::Key_9) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_9) {
         setChannelIndex(9);
-    } else if (e->key() == Qt::Key_L) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_L) {
         _set.currentParameters()->magInterpolation = !_set.currentParameters()->magInterpolation;
         this->update();
-    } else if (e->key() == Qt::Key_G) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_G) {
         _set.currentParameters()->magGrid = !_set.currentParameters()->magGrid;
         this->update();
-    } else if (e->key() == Qt::Key_Equal) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_Equal) {
         _set.currentParameters()->zoom = 1.0f;
         this->update();
-    } else if (e->key() == Qt::Key_Minus || e->matches(QKeySequence::ZoomOut)) {
+    } else if (haveCurrentFile() && (e->key() == Qt::Key_Minus || e->matches(QKeySequence::ZoomOut))) {
         adjustZoom(-1);
-    } else if (e->key() == Qt::Key_Plus || e->matches(QKeySequence::ZoomIn)) {
+    } else if (haveCurrentFile() && (e->key() == Qt::Key_Plus || e->matches(QKeySequence::ZoomIn))) {
         adjustZoom(+1);
-    } else if (e->key() == Qt::Key_Space) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_Space) {
         _set.currentParameters()->xOffset = 0.0f;
         _set.currentParameters()->yOffset = 0.0f;
         this->update();
-    } else if (e->key() == Qt::Key_BraceLeft) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_BraceLeft) {
         adjustVisInterval(-1, 0);
-    } else if (e->key() == Qt::Key_BraceRight) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_BraceRight) {
         adjustVisInterval(+1, 0);
-    } else if (e->key() == Qt::Key_BracketLeft) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_BracketLeft) {
         adjustVisInterval(0, -1);
-    } else if (e->key() == Qt::Key_BracketRight) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_BracketRight) {
         adjustVisInterval(0, +1);
-    } else if (e->key() == Qt::Key_ParenLeft) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_ParenLeft) {
         adjustVisInterval(-1, -1);
-    } else if (e->key() == Qt::Key_ParenRight) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_ParenRight) {
         adjustVisInterval(+1, +1);
-    } else if (e->key() == Qt::Key_Backslash) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_Backslash) {
         resetVisInterval();
-    } else if (e->key() == Qt::Key_D) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_D) {
         _set.currentParameters()->dynamicRangeReduction = !_set.currentParameters()->dynamicRangeReduction;
         this->update();
-    } else if (e->key() == Qt::Key_Comma) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_Comma) {
         _set.currentParameters()->drrBrightness = std::max(2.0f, _set.currentParameters()->drrBrightness / 2.0f);
         this->update();
-    } else if (e->key() == Qt::Key_Period) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_Period) {
         _set.currentParameters()->drrBrightness = _set.currentParameters()->drrBrightness * 2.0f;
         this->update();
-    } else if (e->key() == Qt::Key_Slash) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_Slash) {
         _set.currentParameters()->drrBrightness = Parameters().drrBrightness;
         this->update();
-    } else if (e->key() == Qt::Key_F4) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_F4) {
         changeColorMap(ColorMapNone);
-    } else if (e->key() == Qt::Key_F5) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_F5) {
         changeColorMap(ColorMapSequential);
-    } else if (e->key() == Qt::Key_F6) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_F6) {
         changeColorMap(ColorMapDiverging);
-    } else if (e->key() == Qt::Key_F7) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_F7) {
         changeColorMap(ColorMapQualitative);
-    } else if (e->key() == Qt::Key_F8) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_F8) {
         changeColorMap(ColorMapCustom);
-    } else if (e->key() == Qt::Key_F1 || e->matches(QKeySequence::HelpContents)) {
+    } else if (haveCurrentFile() && (e->key() == Qt::Key_F1 || e->matches(QKeySequence::HelpContents))) {
         _overlayHelpActive = !_overlayHelpActive;
         this->update();
-    } else if (e->key() == Qt::Key_I) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_I) {
         _overlayInfoActive = !_overlayInfoActive;
         this->update();
-    } else if (e->key() == Qt::Key_V) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_V) {
         _overlayValueActive = !_overlayValueActive;
         this->update();
-    } else if (e->key() == Qt::Key_S) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_S) {
         _overlayStatisticActive = !_overlayStatisticActive;
         this->update();
-    } else if (e->key() == Qt::Key_H) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_H) {
         _overlayHistogramActive = !_overlayHistogramActive;
         this->update();
-    } else if (e->key() == Qt::Key_M) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_M) {
         _overlayColorMapActive = !_overlayColorMapActive;
         this->update();
-    } else if (e->key() == Qt::Key_F2) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_F2) {
         saveView(false);
-    } else if (e->key() == Qt::Key_F3) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_F3) {
         saveView(true);
-    } else if (e->key() == Qt::Key_F9) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_F9) {
         copyView(false);
-    } else if (e->key() == Qt::Key_F10) {
+    } else if (haveCurrentFile() && e->key() == Qt::Key_F10) {
         copyView(true);
     } else {
         QOpenGLWidget::keyPressEvent(e);
@@ -876,21 +845,23 @@ void QV::keyReleaseEvent(QKeyEvent* e)
 
 void QV::mouseMoveEvent(QMouseEvent* e)
 {
-    _mousePos = e->pos();
-    if (_overlayValueActive || _overlayHistogramActive)
-        this->update();
-    if (_dragMode) {
-        QPoint dragEnd = e->pos();
-        _set.currentParameters()->xOffset += dragEnd.x() - _dragStart.x();
-        _set.currentParameters()->yOffset -= dragEnd.y() - _dragStart.y();
-        _dragStart = dragEnd;
-        this->update();
+    if (haveCurrentFile()) {
+        _mousePos = e->pos();
+        if (_overlayValueActive || _overlayHistogramActive)
+            this->update();
+        if (_dragMode) {
+            QPoint dragEnd = e->pos();
+            _set.currentParameters()->xOffset += dragEnd.x() - _dragStart.x();
+            _set.currentParameters()->yOffset -= dragEnd.y() - _dragStart.y();
+            _dragStart = dragEnd;
+            this->update();
+        }
     }
 }
 
 void QV::mousePressEvent(QMouseEvent* e)
 {
-    if (e->button() == Qt::LeftButton) {
+    if (haveCurrentFile() && e->button() == Qt::LeftButton) {
         _dragMode = true;
         _dragStart = e->pos();
     }
@@ -898,12 +869,14 @@ void QV::mousePressEvent(QMouseEvent* e)
 
 void QV::mouseReleaseEvent(QMouseEvent* e)
 {
-    if (e->button() == Qt::LeftButton) {
+    if (haveCurrentFile() && e->button() == Qt::LeftButton) {
         _dragMode = false;
     }
 }
 
 void QV::wheelEvent(QWheelEvent* e)
 {
-    adjustZoom(e->delta() / 120);
+    if (haveCurrentFile()) {
+        adjustZoom(e->delta() / 120);
+    }
 }

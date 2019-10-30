@@ -86,9 +86,9 @@ private:
             float xOffset, float yOffset);
     QImage renderFrameToImage(Frame* frame);
 
+    bool haveCurrentFile() const;
+
     void openFile();
-    void closeFile();
-    void reloadFile();
     void adjustFileIndex(int offset);
     void adjustFrameIndex(int offset);
     void setChannelIndex(int index);

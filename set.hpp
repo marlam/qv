@@ -32,6 +32,8 @@ private:
     std::vector<File> _files;
     std::vector<Parameters> _parameters;
     int _fileIndex;
+    bool _keepParameterIndex;
+    int _parameterIndex;
 
 public:
     Set();
@@ -46,8 +48,12 @@ public:
     File* file(int index) { return &(_files[index]); }
     File* currentFile() { return fileIndex() >= 0 ? file(fileIndex()) : nullptr; }
 
+    bool applyCurrentParametersToAllFiles() const { return _keepParameterIndex; }
+    void setApplyCurrentParametersToAllFiles(bool flag);
+    void toggleApplyCurrentParametersToAllFiles() { setApplyCurrentParametersToAllFiles(!applyCurrentParametersToAllFiles()); }
+    int parameterIndex() const { return _parameterIndex; }
     Parameters* parameters(int index) { return &(_parameters[index]); }
-    Parameters* currentParameters() { return fileIndex() >= 0 ? parameters(fileIndex()) : nullptr; }
+    Parameters* currentParameters() { return parameterIndex() >= 0 ? parameters(parameterIndex()) : nullptr; }
 
     std::string currentDescription();
 };

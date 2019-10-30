@@ -26,7 +26,7 @@
 #include "set.hpp"
 
 
-Set::Set() : _fileIndex(-1)
+Set::Set() : _fileIndex(-1), _keepParameterIndex(false), _parameterIndex(-1)
 {
 }
 
@@ -57,7 +57,6 @@ void Set::removeFile(int removeIndex)
             if (!ret)
                 setFileIndex(-1, tmpErrMsg);
         } else {
-            std::string tmpErrMsg;
             ret = setFileIndex(fileIndex() + 1, tmpErrMsg);
             _files.erase(_files.begin() + removeIndex);
             _parameters.erase(_parameters.begin() + removeIndex);
@@ -74,11 +73,20 @@ void Set::removeFile(int removeIndex)
         _files.erase(_files.begin() + removeIndex);
         _parameters.erase(_parameters.begin() + removeIndex);
     }
+    if (removeIndex == parameterIndex()) {
+        _parameterIndex = _fileIndex;
+    } else if (removeIndex < parameterIndex()) {
+        _parameterIndex--;
+    } else { // parameterIndex() < removeIndex
+        // nothing to be done
+    }
 }
 
 bool Set::setFileIndex(int index, std::string& errorMessage)
 {
     if (_fileIndex == index) {
+        if (!_keepParameterIndex)
+            _parameterIndex = _fileIndex;
         return true;
     }
 
@@ -86,6 +94,7 @@ bool Set::setFileIndex(int index, std::string& errorMessage)
         if (currentFile())
             currentFile()->setFrameIndex(-1, errorMessage); // cannot fail
         _fileIndex = -1;
+        _parameterIndex = -1;
         return true;
     }
 
@@ -125,7 +134,16 @@ bool Set::setFileIndex(int index, std::string& errorMessage)
         _files[_fileIndex].setFrameIndex(-1, errorMessage);
 
     _fileIndex = index;
+    if (!_keepParameterIndex || _parameterIndex < 0)
+        _parameterIndex = index;
     return true;
+}
+
+void Set::setApplyCurrentParametersToAllFiles(bool flag)
+{
+    _keepParameterIndex = flag;
+    if (!_keepParameterIndex)
+        _parameterIndex = fileIndex();
 }
 
 std::string Set::currentDescription()

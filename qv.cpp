@@ -812,6 +812,9 @@ void QV::keyReleaseEvent(QKeyEvent* e)
         changeColorMap(ColorMapQualitative);
     } else if (haveCurrentFile() && e->key() == Qt::Key_F8) {
         changeColorMap(ColorMapCustom);
+    } else if (haveCurrentFile() && e->key() == Qt::Key_A) {
+        _set.toggleApplyCurrentParametersToAllFiles();
+        this->update();
     } else if (haveCurrentFile() && (e->key() == Qt::Key_F1 || e->matches(QKeySequence::HelpContents))) {
         _overlayHelpActive = !_overlayHelpActive;
         this->update();

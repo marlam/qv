@@ -57,6 +57,8 @@ OverlayHelp::OverlayHelp()
     _helpText << " F7: use qualitative color map";
     _helpText << " F8: use color map from clipboard in CSV format";
     _helpText << "";
+    _helpText << " a: apply current view parameters to all files (toggle)";
+    _helpText << "";
     _helpText << " Save results:             Copy results:";
     _helpText << " F2: save current view     F9: copy current view";
     _helpText << " F3: save 1:1 view         F10: copy 1:1 view";

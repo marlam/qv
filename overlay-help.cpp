@@ -79,3 +79,16 @@ void OverlayHelp::update(int widthInPixels)
     fixFormat();
     uploadImageToTexture();
 }
+
+QSize OverlayHelp::size() const
+{
+    int heightInPixels = _painter->fontInfo().pixelSize() * (_helpText.size() + 0.5f);
+    int longestLineLength = -1;
+    for (int i = 0; i < _helpText.size(); i++) {
+        if (_helpText[i].length() > longestLineLength)
+            longestLineLength = _helpText[i].length();
+    }
+    QFontMetricsF fontMetrics(_painter->font(), _painter->device());
+    int widthInPixels = fontMetrics.horizontalAdvance(' ') * (longestLineLength + 1 + 0.5f);
+    return QSize(widthInPixels, heightInPixels);
+}

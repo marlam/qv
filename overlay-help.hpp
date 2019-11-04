@@ -37,6 +37,8 @@ public:
     OverlayHelp();
 
     void update(int widthInPixels);
+
+    QSize size() const;
 };
 
 #endif

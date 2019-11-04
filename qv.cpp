@@ -53,7 +53,7 @@ QV::QV(Set& set) :
 {
     setMouseTracking(true);
     setWindowIcon(QIcon(":cg-logo.png"));
-    setMinimumSize(QSize(500, 500));
+    setMinimumSize(_overlayHelp.size());
     File* file = _set.currentFile();
     Frame* frame = (file ? file->currentFrame() : nullptr);
     if (frame) {

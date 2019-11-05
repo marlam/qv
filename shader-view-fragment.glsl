@@ -42,6 +42,9 @@ uniform int colorChannel1Index;
 uniform int colorChannel2Index;
 uniform int alphaChannelIndex;
 
+uniform bool srgbWas8Bit;
+uniform bool srgbWas16Bit;
+
 uniform float visMinVal;
 uniform float visMaxVal;
 
@@ -103,6 +106,11 @@ vec3 xyz_to_rgb(vec3 xyz)
             (+0.0557101 * xyz.x - 0.2040211 * xyz.y + 1.0569959 * xyz.z));
 }
 
+float s_to_linear(float x)
+{
+    return (x <= 0.04045 ? (x / 12.92) : pow((x + 0.055) / 1.055, 2.4));
+}
+
 float linear_to_s(float x)
 {
     return (x <= 0.0031308 ? (x * 12.92) : (1.055 * pow(x, 1.0 / 2.4) - 0.055));
@@ -132,8 +140,8 @@ void main(void)
     if (!showColor) {
         // Get value
         float v = texture(tex0, vTexCoord)[dataChannelIndex];
-        if (colorSpace == ColorSpaceSGray || colorSpace == ColorSpaceSRGB)
-            v *= 255.0f;
+        if ((colorSpace == ColorSpaceSGray || colorSpace == ColorSpaceSRGB) && srgbWas8Bit)
+            v = linear_to_s(v) * 255.0f;
         // Apply range selection
         v = (v - visMinVal) / (visMaxVal - visMinVal);
         v = clamp(v, 0.0, 1.0);
@@ -166,6 +174,13 @@ void main(void)
             if (alphaChannelIndex >= 0) {
                 data[3] = texture(alphaTex, vTexCoord).r;
             }
+        }
+        if (colorSpace == ColorSpaceSGray || colorSpace == ColorSpaceSRGB) {
+            if (srgbWas16Bit)
+                data /= 65535.0f;
+            if (!srgbWas8Bit)
+                for (int i = 0; i < 4; i++)
+                    data[i] = s_to_linear(data[i]);
         }
         // Get color
         vec3 xyz;

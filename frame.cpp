@@ -80,7 +80,7 @@ void Frame::init(const TAD::ArrayContainer& a)
         }
     }
     if (_colorSpace == ColorSpaceNone
-            && type() == TAD::uint8 && (channelCount() == 1 || channelCount() == 2)) {
+            && (channelCount() == 1 || channelCount() == 2)) {
         _colorChannels[0] = componentIndex(_originalArray, "SRGB/GRAY");
         if (_colorChannels[0] >= 0) {
             _colorSpace = ColorSpaceSGray;
@@ -89,7 +89,7 @@ void Frame::init(const TAD::ArrayContainer& a)
         }
     }
     if (_colorSpace == ColorSpaceNone
-            && type() == TAD::uint8 && (channelCount() == 3 || channelCount() == 4)) {
+            && (channelCount() == 3 || channelCount() == 4)) {
         _colorChannels[0] = componentIndex(_originalArray, "SRGB/R");
         _colorChannels[1] = componentIndex(_originalArray, "SRGB/G");
         _colorChannels[2] = componentIndex(_originalArray, "SRGB/B");
@@ -132,16 +132,28 @@ void Frame::init(const TAD::ArrayContainer& a)
         _colorMaxVal = std::max(std::max(maxVal(colorChannelIndex(0)), maxVal(colorChannelIndex(1))), maxVal(colorChannelIndex(2)));
         _colorVisMinVal = statistic(ColorChannelIndex).minVal();
         _colorVisMaxVal = statistic(ColorChannelIndex).maxVal();
-    } else if (_colorSpace == ColorSpaceSGray) {
-        _colorMinVal = 0.0f;
-        _colorMaxVal = 255.0f;
-        _colorVisMinVal = 0.0f;
-        _colorVisMaxVal = 100.0f;
-    } else if (_colorSpace == ColorSpaceSRGB) {
-        _colorMinVal = 0.0f;
-        _colorMaxVal = 255.0f;
-        _colorVisMinVal = 0.0f;
-        _colorVisMaxVal = 100.0f;
+    } else if (_colorSpace == ColorSpaceSGray || _colorSpace == ColorSpaceSRGB) {
+        if (type() == TAD::uint8) {
+            _colorMinVal = 0.0f;
+            _colorMaxVal = 255.0f;
+            _colorVisMinVal = 0.0f;
+            _colorVisMaxVal = 100.0f;
+        } else if (type() == TAD::uint16) {
+            _colorMinVal = 0.0f;
+            _colorMaxVal = 65535.0f;
+            _colorVisMinVal = 0.0f;
+            _colorVisMaxVal = 100.0f;
+        } else {
+            if (_colorSpace == ColorSpaceSGray) {
+                _colorMinVal = minVal(colorChannelIndex(0));
+                _colorMaxVal = maxVal(colorChannelIndex(0));
+            } else {
+                _colorMinVal = std::min(std::min(minVal(colorChannelIndex(0)), minVal(colorChannelIndex(1))), minVal(colorChannelIndex(2)));
+                _colorMaxVal = std::max(std::max(maxVal(colorChannelIndex(0)), maxVal(colorChannelIndex(1))), maxVal(colorChannelIndex(2)));
+            }
+            _colorVisMinVal = statistic(ColorChannelIndex).minVal();
+            _colorVisMaxVal = statistic(ColorChannelIndex).maxVal();
+        }
     } else if (_colorSpace == ColorSpaceY) {
         _colorMinVal = minVal(colorChannelIndex(0));
         _colorMaxVal = maxVal(colorChannelIndex(0));
@@ -162,7 +174,7 @@ void Frame::init(const TAD::ArrayContainer& a)
         // single texture
         GLenum formats[4] = { GL_RED, GL_RG, GL_RGB, GL_RGBA };
         _texFormat = formats[channelCount() - 1];
-        if (colorSpace() == ColorSpaceSGray || colorSpace() == ColorSpaceSRGB) {
+        if (type() == TAD::uint8 && (colorSpace() == ColorSpaceSGray || colorSpace() == ColorSpaceSRGB)) {
             _texInternalFormat = (colorSpace() == ColorSpaceSGray ? GL_SRGB8
                     : colorSpace() == ColorSpaceSRGB && !hasAlpha() ? GL_SRGB8
                     : GL_SRGB8_ALPHA8);
@@ -283,6 +295,26 @@ static void lumArrayHelperLinearRGB(float* lum, size_t n, const T* src, int cc, 
 }
 
 template<typename T>
+static void lumArrayHelperSGray(float* lum, size_t n, const T* src, int cc, int c, float normalizationFactor)
+{
+    for (size_t e = 0; e < n; e++) {
+        float g = toLinear(src[e * cc + c] * normalizationFactor);
+        lum[e] = rgbToY(g, g, g);
+    }
+}
+
+template<typename T>
+static void lumArrayHelperSRGB(float* lum, size_t n, const T* src, int cc, int cr, int cg, int cb, float normalizationFactor)
+{
+    for (size_t e = 0; e < n; e++) {
+        float r = toLinear(src[e * cc + cr] * normalizationFactor);
+        float g = toLinear(src[e * cc + cg] * normalizationFactor);
+        float b = toLinear(src[e * cc + cb] * normalizationFactor);
+        lum[e] = rgbToY(r, g, b);
+    }
+}
+
+template<typename T>
 static void lumArrayHelperY(float* lum, size_t n, const T* src, int cc, int c)
 {
     for (size_t e = 0; e < n; e++) {
@@ -368,24 +400,76 @@ const TAD::Array<float>& Frame::lumArray()
                 break;
             }
         } else if (colorSpace() == ColorSpaceSGray) {
-            assert(type() == TAD::uint8);
             int c = colorChannelIndex(0);
-            const uint8_t* src = static_cast<const uint8_t*>(_originalArray.data());
-            for (size_t e = 0; e < n; e++) {
-                float g = toLinear(src[e * cc + c] / 255.0f);
-                lum[e] = rgbToY(g, g, g);
+            float normalizationFactor = 1.0f / maxVal(ColorChannelIndex);
+            switch (type()) {
+            case TAD::int8:
+                lumArrayHelperSGray(lum, n, static_cast<const int8_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                break;
+            case TAD::uint8:
+                lumArrayHelperSGray(lum, n, static_cast<const uint8_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                break;
+            case TAD::int16:
+                lumArrayHelperSGray(lum, n, static_cast<const int16_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                break;
+            case TAD::uint16:
+                lumArrayHelperSGray(lum, n, static_cast<const uint16_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                break;
+            case TAD::int32:
+                lumArrayHelperSGray(lum, n, static_cast<const int32_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                break;
+            case TAD::uint32:
+                lumArrayHelperSGray(lum, n, static_cast<const uint32_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                break;
+            case TAD::int64:
+                lumArrayHelperSGray(lum, n, static_cast<const int64_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                break;
+            case TAD::uint64:
+                lumArrayHelperSGray(lum, n, static_cast<const uint64_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                break;
+            case TAD::float32:
+                lumArrayHelperSGray(lum, n, static_cast<const float*>(_originalArray.data()), cc, c, normalizationFactor);
+                break;
+            case TAD::float64:
+                lumArrayHelperSGray(lum, n, static_cast<const double*>(_originalArray.data()), cc, c, normalizationFactor);
+                break;
             }
         } else if (colorSpace() == ColorSpaceSRGB) {
-            assert(type() == TAD::uint8);
             int cr = colorChannelIndex(0);
             int cg = colorChannelIndex(1);
             int cb = colorChannelIndex(2);
-            const uint8_t* src = static_cast<const uint8_t*>(_originalArray.data());
-            for (size_t e = 0; e < n; e++) {
-                float r = toLinear(src[e * cc + cr] / 255.0f);
-                float g = toLinear(src[e * cc + cg] / 255.0f);
-                float b = toLinear(src[e * cc + cb] / 255.0f);
-                lum[e] = rgbToY(r, g, b);
+            float normalizationFactor = 1.0f / maxVal(ColorChannelIndex);
+            switch (type()) {
+            case TAD::int8:
+                lumArrayHelperSRGB(lum, n, static_cast<const int8_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                break;
+            case TAD::uint8:
+                lumArrayHelperSRGB(lum, n, static_cast<const uint8_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                break;
+            case TAD::int16:
+                lumArrayHelperSRGB(lum, n, static_cast<const int16_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                break;
+            case TAD::uint16:
+                lumArrayHelperSRGB(lum, n, static_cast<const uint16_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                break;
+            case TAD::int32:
+                lumArrayHelperSRGB(lum, n, static_cast<const int32_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                break;
+            case TAD::uint32:
+                lumArrayHelperSRGB(lum, n, static_cast<const uint32_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                break;
+            case TAD::int64:
+                lumArrayHelperSRGB(lum, n, static_cast<const int64_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                break;
+            case TAD::uint64:
+                lumArrayHelperSRGB(lum, n, static_cast<const uint64_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                break;
+            case TAD::float32:
+                lumArrayHelperSRGB(lum, n, static_cast<const float*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                break;
+            case TAD::float64:
+                lumArrayHelperSRGB(lum, n, static_cast<const double*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                break;
             }
         } else if (colorSpace() == ColorSpaceY || colorSpace() == ColorSpaceXYZ) {
             int c = colorChannelIndex(colorSpace() == ColorSpaceY ? 0 : 1);
@@ -663,7 +747,7 @@ TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
 
 bool Frame::textureChannelIsS(int texChannel)
 {
-    return (channelCount() <= 4
+    return (channelCount() <= 4 && type() == TAD::uint8
             && ((colorSpace() == ColorSpaceSGray && colorChannelIndex(0) == texChannel)
                 || (colorSpace() == ColorSpaceSRGB &&
                     (colorChannelIndex(0) == texChannel

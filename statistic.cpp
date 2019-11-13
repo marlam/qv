@@ -59,7 +59,7 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
         _finiteValues++;
         if (fval < minVal)
             minVal = fval;
-        else if (fval > maxVal)
+        if (fval > maxVal)
             maxVal = fval;
         sum += fval;
         sumOfSquares += fval * fval;

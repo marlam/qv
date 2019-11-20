@@ -723,22 +723,36 @@ void QV::keyReleaseEvent(QKeyEvent* e)
         }
         this->updateTitle();
         this->update();
-    } else if (haveCurrentFile() && (e->key() == Qt::Key_Less || e->matches(QKeySequence::PreviousChild))) {
-        adjustFileIndex(-1);
-    } else if (haveCurrentFile() && (e->key() == Qt::Key_Greater || e->matches(QKeySequence::NextChild))) {
-        adjustFileIndex(+1);
     } else if (haveCurrentFile() && e->key() == Qt::Key_Left) {
-        adjustFrameIndex(-1);
+        if (e->modifiers() == Qt::ShiftModifier)
+            adjustFileIndex(-1);
+        else
+            adjustFrameIndex(-1);
     } else if (haveCurrentFile() && e->key() == Qt::Key_Right) {
-        adjustFrameIndex(+1);
+        if (e->modifiers() == Qt::ShiftModifier)
+            adjustFileIndex(+1);
+        else
+            adjustFrameIndex(+1);
     } else if (haveCurrentFile() && e->key() == Qt::Key_Down) {
-        adjustFrameIndex(+10);
+        if (e->modifiers() == Qt::ShiftModifier)
+            adjustFileIndex(+10);
+        else
+            adjustFrameIndex(+10);
     } else if (haveCurrentFile() && e->key() == Qt::Key_Up) {
-        adjustFrameIndex(-10);
+        if (e->modifiers() == Qt::ShiftModifier)
+            adjustFileIndex(-10);
+        else
+            adjustFrameIndex(-10);
     } else if (haveCurrentFile() && e->key() == Qt::Key_PageDown) {
-        adjustFrameIndex(+100);
+        if (e->modifiers() == Qt::ShiftModifier)
+            adjustFileIndex(+100);
+        else
+            adjustFrameIndex(+100);
     } else if (haveCurrentFile() && e->key() == Qt::Key_PageUp) {
-        adjustFrameIndex(-100);
+        if (e->modifiers() == Qt::ShiftModifier)
+            adjustFileIndex(-100);
+        else
+            adjustFrameIndex(-100);
     } else if (haveCurrentFile() && e->key() == Qt::Key_C) {
         setChannelIndex(ColorChannelIndex);
     } else if (haveCurrentFile() && e->key() == Qt::Key_0) {

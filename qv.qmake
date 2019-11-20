@@ -57,5 +57,6 @@ win32 {
 		-lavformat -lavcodec -lavutil -lswscale -lswresample -lbcrypt -lsecur32 \
 		-lgdal -lxml2 -llzma -liconv -lgta -lgif -lmfhdf -ldf -lportablexdr -lhdf5_cpp -lhdf5 -lgeos_c -lgeos -ljson-c -lexpat -lpsapi \
 		-ltiff -lwebp -lzstd -llzma -ljpeg -lz \
+		-lexiv2 -lmman \
 		-lcfitsio
 }

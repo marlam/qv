@@ -707,7 +707,7 @@ void QV::copyView(bool pure)
     QGuiApplication::restoreOverrideCursor();
 }
 
-void QV::keyReleaseEvent(QKeyEvent* e)
+void QV::keyPressEvent(QKeyEvent* e)
 {
     if (e->key() == Qt::Key_Q || e->matches(QKeySequence::Quit)) {
         this->close();

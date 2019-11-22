@@ -106,7 +106,7 @@ public:
     virtual void paintGL() override;
     virtual void resizeGL(int w, int h) override;
 
-    virtual void keyReleaseEvent(QKeyEvent* e) override;
+    virtual void keyPressEvent(QKeyEvent* e) override;
     virtual void mouseMoveEvent(QMouseEvent* e) override;
     virtual void mousePressEvent(QMouseEvent* e) override;
     virtual void mouseReleaseEvent(QMouseEvent* e) override;

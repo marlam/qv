@@ -642,6 +642,14 @@ TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
     assert(qx >= 0 && qx < quadTreeLevelWidth(0));
     assert(qy >= 0 && qy < quadTreeLevelHeight(0));
 
+    /* Optimization for the case of only a single quad */
+    if (_quadLevel0BorderSize == 0
+            && _quadLevel0Description.dimension(0) == _originalArray.dimension(0)
+            && _quadLevel0Description.dimension(1) == _originalArray.dimension(1)
+            && _quadLevel0Description.componentCount() == _originalArray.componentCount()) {
+        return convert(_originalArray, _quadLevel0Description.componentType());
+    }
+
     /* First create quad using original data type */
     TAD::ArrayContainer q(_quadLevel0Description.dimensions(),
             _quadLevel0Description.componentCount(), type());

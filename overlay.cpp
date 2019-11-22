@@ -116,17 +116,9 @@ void Overlay::uploadImageToTexture()
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     }
-    size_t size = _image->width() * _image->height() * 4;
     gl->glBindTexture(GL_TEXTURE_2D, texture());
-    gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glGetGlobalPBO());
-    gl->glBufferData(GL_PIXEL_UNPACK_BUFFER, size, nullptr, GL_STREAM_DRAW);
-    void* ptr = gl->glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, size,
-            GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-    std::memcpy(ptr, _image->constBits(), size);
-    gl->glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8,
             _image->width(), _image->height(), 0,
-            GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
-    gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+            GL_RGBA, GL_UNSIGNED_BYTE, _image->constBits());
     ASSERT_GLCHECK();
 }

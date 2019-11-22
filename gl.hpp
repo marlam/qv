@@ -39,6 +39,4 @@ void glCheck(const char* callingFunction, const char* file, int line);
 # define ASSERT_GLCHECK() glCheck(Q_FUNC_INFO, __FILE__, __LINE__)
 #endif
 
-unsigned int glGetGlobalPBO();
-
 #endif

@@ -61,14 +61,3 @@ void glCheck(const char* callingFunction, const char* file, int line)
         std::exit(1);
     }
 }
-
-static unsigned int pbo = 0;
-
-unsigned int glGetGlobalPBO()
-{
-    if (pbo == 0) {
-        auto gl = getGlFunctionsFromCurrentContext();
-        gl->glGenBuffers(1, &pbo);
-    }
-    return pbo;
-}

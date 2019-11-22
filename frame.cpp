@@ -777,16 +777,9 @@ static void uploadArrayToTexture(const TAD::ArrayContainer& array,
     else
         gl->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     gl->glBindTexture(GL_TEXTURE_2D, texture);
-    gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glGetGlobalPBO());
-    gl->glBufferData(GL_PIXEL_UNPACK_BUFFER, array.dataSize(), nullptr, GL_STREAM_DRAW);
-    void* ptr = gl->glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, array.dataSize(),
-            GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-    std::memcpy(ptr, array.data(), array.dataSize());
-    gl->glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, internalFormat,
             array.dimension(0), array.dimension(1), 0,
-            format, type, nullptr);
-    gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+            format, type, array.data());
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

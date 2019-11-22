@@ -116,14 +116,7 @@ unsigned int ColorMap::texture()
         ASSERT_GLCHECK();
         auto gl = getGlFunctionsFromCurrentContext();
         gl->glBindTexture(GL_TEXTURE_2D, _textureHolder->texture(0));
-        gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glGetGlobalPBO());
-        gl->glBufferData(GL_PIXEL_UNPACK_BUFFER, _sRgbData.size(), nullptr, GL_STREAM_DRAW);
-        void* ptr = gl->glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, _sRgbData.size(),
-                GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT | GL_MAP_UNSYNCHRONIZED_BIT);
-        std::memcpy(ptr, _sRgbData.data(), _sRgbData.size());
-        gl->glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-        gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, _sRgbData.size() / 3, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-        gl->glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+        gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, _sRgbData.size() / 3, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, _sRgbData.data());
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

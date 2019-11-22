@@ -193,7 +193,7 @@ void Frame::init(const TAD::ArrayContainer& a)
     }
     _quadLevel0BorderSize = 1;
     std::vector<size_t> quadDims(2, 1022 + 2 * quadBorderSize(0));
-    if (width() <= 4096 && height() <= 4096) {
+    if (width() <= requiredMaxTextureSize && height() <= requiredMaxTextureSize) {
         // optimization for frames that fit into a single texture (covers 4K resolution)
         _quadLevel0BorderSize = 0;
         quadDims[0] = width();

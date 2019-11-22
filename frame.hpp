@@ -73,6 +73,9 @@ private:
     bool textureChannelIsS(int index);
 
 public:
+    // OpenGL is required to support at least the following as GL_MAX_TEXTURE_SIZE:
+    static constexpr int requiredMaxTextureSize = 8192;
+
     Frame();
 
     void init(const TAD::ArrayContainer& a);

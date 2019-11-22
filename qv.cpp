@@ -86,6 +86,17 @@ void QV::initializeGL()
 
     auto gl = getGlFunctionsFromCurrentContext();
 
+    bool contextIsOk = (context()->isValid() && context()->format().majorVersion() >= 3);
+    if (contextIsOk) {
+        GLint maxTexSize = 0;
+        gl->glGetIntegerv(GL_MAX_TEXTURE_SIZE, &maxTexSize);
+        contextIsOk = (maxTexSize >= Frame::requiredMaxTextureSize);
+    }
+    if (!contextIsOk) {
+        QMessageBox::critical(this, "Error", "Insufficient OpenGL capabilities.");
+        std::exit(1);
+    }
+
     gl->glGenFramebuffers(1, &_fbo);
     gl->glGenTextures(1, &_fboTex);
 

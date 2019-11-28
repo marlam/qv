@@ -560,7 +560,7 @@ float Frame::minVal(int channelIndex)
         return _colorMinVal;
     } else {
         if (!std::isfinite(_minVals[channelIndex])) {
-            if (type() == TAD::uint8)
+            if (type() == TAD::uint8 && colorSpace() != ColorSpaceNone)
                 _minVals[channelIndex] = 0.0f;
             _originalArray.componentTagList(channelIndex).value("MINVAL", &(_minVals[channelIndex]));
             if (!std::isfinite(_minVals[channelIndex]))
@@ -576,7 +576,7 @@ float Frame::maxVal(int channelIndex)
         return _colorMaxVal;
     } else {
         if (!std::isfinite(_maxVals[channelIndex])) {
-            if (type() == TAD::uint8)
+            if (type() == TAD::uint8 && colorSpace() != ColorSpaceNone)
                 _maxVals[channelIndex] = 255.0f;
             _originalArray.componentTagList(channelIndex).value("MAXVAL", &(_maxVals[channelIndex]));
             if (!std::isfinite(_maxVals[channelIndex]))

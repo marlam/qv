@@ -69,7 +69,7 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
         _maxVal = maxVal;
         _sampleMean = sum / _finiteValues;
         if (_finiteValues > 1) {
-            _sampleVariance = (sumOfSquares - sum / array.elementCount() * sum) / (_finiteValues - 1);
+            _sampleVariance = (sumOfSquares - sum / _finiteValues * sum) / (_finiteValues - 1);
             if (_sampleVariance < 0.0f)
                 _sampleVariance = 0.0f;
             _sampleDeviation = std::sqrt(_sampleVariance);

@@ -53,20 +53,20 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
     const T* data = array[0];
     for (size_t e = 0; e < n; e++) {
         T val = data[e * cc + componentIndex];
-        if (!std::isfinite(val))
-            continue;
-        float fval = val;
-        _finiteValues++;
-        if (_finiteValues == 1) {
-            minVal = fval;
-            maxVal = fval;
-        } else if (fval < minVal) {
-            minVal = fval;
-        } else if (fval > maxVal) {
-            maxVal = fval;
+        if (std::isfinite(val)) {
+            float fval = val;
+            _finiteValues++;
+            if (_finiteValues == 1) {
+                minVal = fval;
+                maxVal = fval;
+            } else if (fval < minVal) {
+                minVal = fval;
+            } else if (fval > maxVal) {
+                maxVal = fval;
+            }
+            sum += fval;
+            sumOfSquares += fval * fval;
         }
-        sum += fval;
-        sumOfSquares += fval * fval;
     }
     if (_finiteValues > 0) {
         _minVal = minVal;

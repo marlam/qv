@@ -43,8 +43,8 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
         long long& _finiteValues, float& _minVal, float& _maxVal,
         float& _sampleMean, float& _sampleVariance, float& _sampleDeviation)
 {
-    float minVal = +std::numeric_limits<float>::max();
-    float maxVal = -std::numeric_limits<float>::max();
+    float minVal = 0.0f;
+    float maxVal = 0.0f;
     double sum = 0.0;
     double sumOfSquares = 0.0;
     _finiteValues = 0;
@@ -57,10 +57,14 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
             continue;
         float fval = val;
         _finiteValues++;
-        if (fval < minVal)
+        if (_finiteValues == 1) {
             minVal = fval;
-        if (fval > maxVal)
             maxVal = fval;
+        } else if (fval < minVal) {
+            minVal = fval;
+        } else if (fval > maxVal) {
+            maxVal = fval;
+        }
         sum += fval;
         sumOfSquares += fval * fval;
     }

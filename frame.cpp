@@ -277,6 +277,7 @@ std::string Frame::channelName(int channelIndex) const
 template<typename T>
 static void lumArrayHelperLinearGray(float* lum, size_t n, const T* src, int cc, int c)
 {
+    #pragma omp parallel for
     for (size_t e = 0; e < n; e++) {
         float g = src[e * cc + c];
         lum[e] = rgbToY(g, g, g);
@@ -286,6 +287,7 @@ static void lumArrayHelperLinearGray(float* lum, size_t n, const T* src, int cc,
 template<typename T>
 static void lumArrayHelperLinearRGB(float* lum, size_t n, const T* src, int cc, int cr, int cg, int cb)
 {
+    #pragma omp parallel for
     for (size_t e = 0; e < n; e++) {
         float r = src[e * cc + cr];
         float g = src[e * cc + cg];
@@ -297,6 +299,7 @@ static void lumArrayHelperLinearRGB(float* lum, size_t n, const T* src, int cc, 
 template<typename T>
 static void lumArrayHelperSGray(float* lum, size_t n, const T* src, int cc, int c, float normalizationFactor)
 {
+    #pragma omp parallel for
     for (size_t e = 0; e < n; e++) {
         float g = toLinear(src[e * cc + c] * normalizationFactor);
         lum[e] = rgbToY(g, g, g);
@@ -306,6 +309,7 @@ static void lumArrayHelperSGray(float* lum, size_t n, const T* src, int cc, int 
 template<typename T>
 static void lumArrayHelperSRGB(float* lum, size_t n, const T* src, int cc, int cr, int cg, int cb, float normalizationFactor)
 {
+    #pragma omp parallel for
     for (size_t e = 0; e < n; e++) {
         float r = toLinear(src[e * cc + cr] * normalizationFactor);
         float g = toLinear(src[e * cc + cg] * normalizationFactor);
@@ -317,6 +321,7 @@ static void lumArrayHelperSRGB(float* lum, size_t n, const T* src, int cc, int c
 template<typename T>
 static void lumArrayHelperY(float* lum, size_t n, const T* src, int cc, int c)
 {
+    #pragma omp parallel for
     for (size_t e = 0; e < n; e++) {
         lum[e] = src[e * cc + c];
     }

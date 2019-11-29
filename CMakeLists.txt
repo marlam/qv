@@ -15,6 +15,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 find_package(libtad 0.5 REQUIRED)
 find_package(Qt5 5.11.0 COMPONENTS Widgets)
+find_package(OpenMP)
 
 include_directories(${TAD_INCLUDE_DIRS})
 link_directories(${TAD_LIBRARY_DIRS})
@@ -42,5 +43,5 @@ add_executable(qv
     overlay-colormap.hpp overlay-colormap.cpp
     qv.hpp qv.cpp
     ${RESOURCES})
-target_link_libraries(qv -lstdc++fs ${TAD_LIBRARIES} Qt5::Widgets)
+target_link_libraries(qv -lstdc++fs ${TAD_LIBRARIES} Qt5::Widgets OpenMP::OpenMP_CXX)
 install(TARGETS qv RUNTIME DESTINATION bin)

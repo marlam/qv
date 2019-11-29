@@ -547,6 +547,7 @@ void QV::openFile()
     int previousFileCount = _set.fileCount();
     std::string errMsg;
     QStringList names = QFileDialog::getOpenFileNames(this);
+    QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     for (int i = 0; i < names.size(); i++) {
         if (!_set.addFile(qPrintable(names[i]), errMsg)) {
             QMessageBox::critical(this, "Error", errMsg.c_str());
@@ -557,6 +558,7 @@ void QV::openFile()
                     + ".\n\nClosing this file.").c_str());
         _set.removeFile(previousFileCount);
     }
+    QGuiApplication::restoreOverrideCursor();
     this->updateTitle();
     this->update();
 }
@@ -571,11 +573,13 @@ void QV::adjustFileIndex(int offset)
         ni = _set.fileCount() - 1;
     if (ni != i) {
         std::string errMsg;
+        QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         if (!_set.setFileIndex(ni, errMsg)) {
             QMessageBox::critical(this, "Error", (errMsg
                         + ".\n\nClosing this file.").c_str());
             _set.removeFile(ni);
         }
+        QGuiApplication::restoreOverrideCursor();
         this->updateTitle();
         this->update();
     }
@@ -690,11 +694,9 @@ void QV::saveView(bool pure)
         QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         QImage img = (pure ? renderFrameToImage(frame) : grabFramebuffer());
         if (!img.save(name, "png")) {
-            QGuiApplication::restoreOverrideCursor();
             QMessageBox::critical(this, "Error", "Saving failed.");
-        } else {
-            QGuiApplication::restoreOverrideCursor();
         }
+        QGuiApplication::restoreOverrideCursor();
     }
 }
 
@@ -724,14 +726,18 @@ void QV::keyPressEvent(QKeyEvent* e)
     } else if (e->key() == Qt::Key_O || e->matches(QKeySequence::Open)) {
         openFile();
     } else if (haveCurrentFile() && (e->key() == Qt::Key_W || e->matches(QKeySequence::Close))) {
+        QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         _set.removeFile(_set.fileIndex());
+        QGuiApplication::restoreOverrideCursor();
         this->updateTitle();
         this->update();
     } else if (haveCurrentFile() && e->key() == Qt::Key_R) {
         std::string errMsg;
+        QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         if (!_set.currentFile()->reload(errMsg)) {
             QMessageBox::critical(this, "Error", errMsg.c_str());
         }
+        QGuiApplication::restoreOverrideCursor();
         this->updateTitle();
         this->update();
     } else if (haveCurrentFile() && e->key() == Qt::Key_Left) {

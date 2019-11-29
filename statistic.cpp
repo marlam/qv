@@ -73,6 +73,9 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
             if (_sampleVariance < 0.0f)
                 _sampleVariance = 0.0f;
             _sampleDeviation = std::sqrt(_sampleVariance);
+        } else if (_finiteValues == 1) {
+            _sampleVariance = 0.0f;
+            _sampleDeviation = 0.0f;
         }
     }
 }

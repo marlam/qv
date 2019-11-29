@@ -39,9 +39,9 @@ static float clamp(float v, float lo, float hi)
     return v;
 }
 
-static float logtransf(float x)
+static float logtransf(float B, float x)
 {
-    const float base = 100.0f;
+    const float base = std::max(B, 1.0f);
     return clamp(std::log(1.0f + x * (base - 1.0f)) / std::log(base), 0.0f, 1.0f);
 }
 
@@ -95,9 +95,7 @@ void OverlayHistogram::update(int widthInPixels, const QPoint& arrayCoordinates,
         if (thisBinWidth < 1 || binX == borderX1 - 1)
             thisBinWidth = 1;
         float normalizedBinHeight = float(H.binVal(bin)) / H.maxBinVal();
-        if (frame->type() != TAD::int8 && frame->type() != TAD::uint8) {
-            normalizedBinHeight = logtransf(normalizedBinHeight);
-        }
+        normalizedBinHeight = logtransf(H.maxVal() - H.minVal(), normalizedBinHeight);
         int binHeight = std::round(normalizedBinHeight * availableHeight);
         if (!outside && H.binIndex(value) == bin) {
             _painter->fillRect(binX, borderSize, thisBinWidth, availableHeight, QColor(Qt::green));

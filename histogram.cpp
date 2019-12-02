@@ -24,8 +24,6 @@
 #include <cassert>
 #include <cmath>
 
-#include <omp.h>
-
 #include "histogram.hpp"
 
 
@@ -58,28 +56,16 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex, size_t 
     size_t n = array.elementCount();
     size_t cc = array.componentCount();
     const T* data = array[0];
-
-    unsigned int parts = omp_get_num_procs();
-    std::vector<std::vector<unsigned long long>> partBins(parts);
-    for (size_t i = 0; i < parts; i++)
-        partBins[i].resize(bins, 0);
-
-    #pragma omp parallel for num_threads(parts)
     for (size_t e = 0; e < n; e++) {
         T val = data[e * cc + componentIndex];
-        if (std::isfinite(val))
-            partBins[omp_get_thread_num()][binIndexHelper(val, _minVal, _maxVal, _bins)]++;
+        if (!std::isfinite(val))
+            continue;
+        _bins[binIndexHelper(val, _minVal, _maxVal, _bins)]++;
     }
-
     _maxBinVal = 0;
-    for (size_t b = 0; b < bins; b++) {
-        unsigned long long binEntry = 0;
-        for (size_t i = 0; i < parts; i++)
-            binEntry += partBins[i][b];
-        _bins[b] = binEntry;
-        if (binEntry > _maxBinVal)
-            _maxBinVal = binEntry;
-    }
+    for (size_t i = 0; i < _bins.size(); i++)
+        if (_bins[i] > _maxBinVal)
+            _maxBinVal = _bins[i];
 }
 
 void Histogram::init(const TAD::ArrayContainer& array, size_t componentIndex, float minVal, float maxVal)

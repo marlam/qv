@@ -534,6 +534,7 @@ void QV::paintGL()
         overlayYOffset += _overlayHelp.heightInPixels();
     }
     gl->glDisable(GL_BLEND);
+    QGuiApplication::restoreOverrideCursor();
     ASSERT_GLCHECK();
 }
 
@@ -709,6 +710,11 @@ void QV::copyView(bool pure)
     QGuiApplication::restoreOverrideCursor();
 }
 
+static bool frameIsPrettyBig(const Frame* frame)
+{
+    return frame->quadTreeLevels() > 1;
+}
+
 void QV::keyPressEvent(QKeyEvent* e)
 {
     if (e->key() == Qt::Key_Q || e->matches(QKeySequence::Quit)) {
@@ -856,12 +862,28 @@ void QV::keyPressEvent(QKeyEvent* e)
         this->update();
     } else if (haveCurrentFile() && e->key() == Qt::Key_V) {
         _overlayValueActive = !_overlayValueActive;
+        Frame* frame = _set.currentFile()->currentFrame();
+        if (_overlayValueActive && frameIsPrettyBig(frame)
+                && frame->colorSpace() != ColorSpaceNone
+                && !frame->haveLuminance()) {
+            QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+        }
         this->update();
     } else if (haveCurrentFile() && e->key() == Qt::Key_S) {
         _overlayStatisticActive = !_overlayStatisticActive;
+        Frame* frame = _set.currentFile()->currentFrame();
+        if (_overlayStatisticActive && frameIsPrettyBig(frame)
+                && !frame->haveStatistic(frame->channelIndex())) {
+            QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+        }
         this->update();
     } else if (haveCurrentFile() && e->key() == Qt::Key_H) {
         _overlayHistogramActive = !_overlayHistogramActive;
+        Frame* frame = _set.currentFile()->currentFrame();
+        if (_overlayHistogramActive && frameIsPrettyBig(frame)
+                && !frame->haveHistogram(frame->channelIndex())) {
+            QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+        }
         this->update();
     } else if (haveCurrentFile() && e->key() == Qt::Key_M) {
         _overlayColorMapActive = !_overlayColorMapActive;

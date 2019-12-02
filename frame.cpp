@@ -918,3 +918,26 @@ unsigned int Frame::quadTexture(int level, int qx, int qy, int channelIndex,
     }
     return _textureHolder->texture(textureIndex);
 }
+
+bool Frame::haveLuminance() const
+{
+    return _lumArray.elementCount() > 0;
+}
+
+bool Frame::haveStatistic(int channelIndex) const
+{
+    if (channelIndex == ColorChannelIndex) {
+        return _colorStatistic.finiteValues() >= 0;
+    } else {
+        return _statistics[channelIndex].finiteValues() >= 0;
+    }
+}
+
+bool Frame::haveHistogram(int channelIndex) const
+{
+    if (channelIndex == ColorChannelIndex) {
+        return _colorHistogram.binCount() > 0;
+    } else {
+        return _histograms[channelIndex].binCount() > 0;
+    }
+}

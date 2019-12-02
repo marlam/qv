@@ -123,6 +123,11 @@ public:
     int quadTreeLevelHeight(int level) const { return _quadTreeHeights[level]; }
     unsigned int quadTexture(int level, int qx, int qy, int channelIndex,
             unsigned int fbo, unsigned int vao, QOpenGLShaderProgram& quadTreePrg);
+
+    // Query whether some information is already computed or not yet
+    bool haveLuminance() const;
+    bool haveStatistic(int channelIndex) const;
+    bool haveHistogram(int channelIndex) const;
 };
 
 #endif

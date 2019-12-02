@@ -93,18 +93,20 @@ vec3 l_to_xyz(float l) // l from Luv color space (perceptually linear)
 
 vec3 rgb_to_xyz(vec3 rgb)
 {
+    // values from http://terathon.com/blog/rgb-xyz-conversion-matrix-accuracy/
     return 100.0 * vec3(
-            (0.4124 * rgb.r + 0.3576 * rgb.g + 0.1805 * rgb.b),
-            (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b),
-            (0.0193 * rgb.r + 0.1192 * rgb.g + 0.9505 * rgb.b));
+            (0.412391 * rgb.r + 0.357584 * rgb.b + 0.180481 * rgb.b),
+            (0.212639 * rgb.r + 0.715169 * rgb.b + 0.072192 * rgb.b),
+            (0.019331 * rgb.r + 0.119195 * rgb.b + 0.950532 * rgb.b));
 }
 
 vec3 xyz_to_rgb(vec3 xyz)
 {
-    return 0.01f * vec3(
-            (+3.2406255 * xyz.x - 1.5372080 * xyz.y - 0.4986286 * xyz.z),
-            (-0.9689307 * xyz.x + 1.8757561 * xyz.y + 0.0415175 * xyz.z),
-            (+0.0557101 * xyz.x - 0.2040211 * xyz.y + 1.0569959 * xyz.z));
+    // values from http://terathon.com/blog/rgb-xyz-conversion-matrix-accuracy/
+    return 0.01 * vec3(
+            (+3.240970 * xyz.x - 1.537383 * xyz.y - 0.498611 * xyz.z),
+            (-0.969244 * xyz.x + 1.875968 * xyz.y + 0.041555 * xyz.z),
+            (+0.055630 * xyz.x - 0.203977 * xyz.y + 1.056972 * xyz.z));
 }
 
 float s_to_linear(float x)

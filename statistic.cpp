@@ -25,6 +25,8 @@
 #include <limits>
 #include <cmath>
 
+#include <omp.h>
+
 #include "statistic.hpp"
 
 
@@ -43,34 +45,58 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
         long long& _finiteValues, float& _minVal, float& _maxVal,
         float& _sampleMean, float& _sampleVariance, float& _sampleDeviation)
 {
-    float minVal = 0.0f;
-    float maxVal = 0.0f;
-    double sum = 0.0;
-    double sumOfSquares = 0.0;
-    _finiteValues = 0;
     size_t n = array.elementCount();
     size_t cc = array.componentCount();
     const T* data = array[0];
-    for (size_t e = 0; e < n; e++) {
-        T val = data[e * cc + componentIndex];
-        if (std::isfinite(val)) {
-            float fval = val;
-            _finiteValues++;
-            if (_finiteValues == 1) {
-                minVal = fval;
-                maxVal = fval;
-            } else if (fval < minVal) {
-                minVal = fval;
-            } else if (fval > maxVal) {
-                maxVal = fval;
+
+    double sum = 0.0;
+    double sumOfSquares = 0.0;
+    _finiteValues = 0;
+    #pragma omp parallel
+    {
+        int parts = omp_get_num_threads();
+        int p = omp_get_thread_num();
+        float partMinVal = std::numeric_limits<float>::quiet_NaN();
+        float partMaxVal = std::numeric_limits<float>::quiet_NaN();
+        double partSum = 0.0;
+        double partSumOfSquares = 0.0;
+        long long partFiniteValues = 0;
+        for (size_t e = p; e < n; e += parts) {
+            T val = data[e * cc + componentIndex];
+            if (std::isfinite(val)) {
+                float fval = val;
+                partFiniteValues++;;
+                if (partFiniteValues == 1) {
+                    partMinVal = fval;
+                    partMaxVal = fval;
+                } else if (fval < partMinVal) {
+                    partMinVal = fval;
+                } else if (fval > partMaxVal) {
+                    partMaxVal = fval;
+                }
+                partSum += fval;
+                partSumOfSquares += fval * fval;
             }
-            sum += fval;
-            sumOfSquares += fval * fval;
+        }
+        #pragma omp critical
+        {
+            if (partFiniteValues > 0) {
+                if (_finiteValues == 0) {
+                    _minVal = partMinVal;
+                    _maxVal = partMaxVal;
+                } else if (partMinVal < _minVal) {
+                    _minVal = partMinVal;
+                } else if (partMaxVal > _maxVal) {
+                    _maxVal = partMaxVal;
+                }
+                _finiteValues += partFiniteValues;
+                sum += partSum;
+                sumOfSquares += partSumOfSquares;
+            }
         }
     }
+
     if (_finiteValues > 0) {
-        _minVal = minVal;
-        _maxVal = maxVal;
         _sampleMean = sum / _finiteValues;
         if (_finiteValues > 1) {
             _sampleVariance = (sumOfSquares - sum / _finiteValues * sum) / (_finiteValues - 1);

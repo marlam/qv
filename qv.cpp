@@ -712,7 +712,11 @@ void QV::copyView(bool pure)
 
 static bool frameIsPrettyBig(const Frame* frame)
 {
-    return frame->quadTreeLevels() > 1;
+    // This is of course just a heuristic since we cannot know how fast the machine
+    // really is. I checked with my not entirely new laptop.
+    return frame->quadTreeLevels() > 1
+        || (size_t(frame->width()) * size_t(frame->height()) >
+                size_t(Frame::requiredMaxTextureSize) * size_t(Frame::requiredMaxTextureSize) / 4);
 }
 
 void QV::keyPressEvent(QKeyEvent* e)

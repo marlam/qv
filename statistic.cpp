@@ -55,13 +55,19 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
     #pragma omp parallel
     {
         int parts = omp_get_num_threads();
+        size_t partSize = n / parts + (n % parts == 0 ? 0 : 1);
         int p = omp_get_thread_num();
+
         float partMinVal = std::numeric_limits<float>::quiet_NaN();
         float partMaxVal = std::numeric_limits<float>::quiet_NaN();
         double partSum = 0.0;
         double partSumOfSquares = 0.0;
         long long partFiniteValues = 0;
-        for (size_t e = p; e < n; e += parts) {
+
+        for (size_t pe = 0; pe < partSize; pe++) {
+            size_t e = p * partSize + pe;
+            if (e >= n)
+                break;
             T val = data[e * cc + componentIndex];
             if (std::isfinite(val)) {
                 float fval = val;
@@ -78,9 +84,10 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
                 partSumOfSquares += fval * fval;
             }
         }
-        #pragma omp critical
-        {
-            if (partFiniteValues > 0) {
+
+        if (partFiniteValues > 0) {
+            #pragma omp critical
+            {
                 if (_finiteValues == 0) {
                     _minVal = partMinVal;
                     _maxVal = partMaxVal;

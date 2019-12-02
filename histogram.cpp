@@ -61,18 +61,25 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
     #pragma omp parallel
     {
         int parts = omp_get_num_threads();
+        size_t partSize = n / parts + (n % parts == 0 ? 0 : 1);
         int p = omp_get_thread_num();
+
         unsigned long long partBins[BINS];
         for (size_t b = 0; b < BINS; b++)
             partBins[b] = 0;
-        for (size_t e = p; e < n; e += parts) {
+
+        for (size_t pe = 0; pe < partSize; pe++) {
+            size_t e = p * partSize + pe;
+            if (e >= n)
+                break;
             T val = data[e * cc + componentIndex];
             if (std::isfinite(val)) {
                 partBins[binIndexHelper(val, _minVal, _maxVal, BINS)]++;
             }
         }
+
+        #pragma omp critical
         for (size_t b = 0; b < BINS; b++) {
-            #pragma omp critical
             _bins[b] += partBins[b];
         }
     }

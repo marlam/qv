@@ -42,7 +42,9 @@ const int ColorChannelIndex = std::numeric_limits<int>::max();
 
 inline float toLinear(float x)
 {
-    return (x <= 0.04045f ? (x / 12.92f) : std::pow((x + 0.055f) / 1.055f, 2.4f));
+    constexpr float c0 = 0.077399380805f; // 1.0f / 12.92f;
+    constexpr float c1 = 0.947867298578f; // 1.0f / 1.055f;
+    return (x <= 0.04045f ? (x * c0) : std::pow((x + 0.055f) * c1, 2.4f));
 }
 
 inline float rgbToY(float r, float g, float b)

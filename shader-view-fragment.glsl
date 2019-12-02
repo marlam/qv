@@ -80,7 +80,8 @@ vec3 l_to_xyz(float l) // l from Luv color space (perceptually linear)
 {
     vec3 xyz;
     if (l <= 8.0) {
-        xyz.y = d65_xyz.y * l * (3.0f * 3.0f * 3.0f / (29.0f * 29.0f * 29.0f));
+        const float c0 = 0.00110705645988; // 3.0f * 3.0f * 3.0f / (29.0f * 29.0f * 29.0f);
+        xyz.y = d65_xyz.y * l * c0;
     } else {
         float tmp = (l + 16.0f) / 116.0f;
         xyz.y = d65_xyz.y * tmp * tmp * tmp;
@@ -108,12 +109,15 @@ vec3 xyz_to_rgb(vec3 xyz)
 
 float s_to_linear(float x)
 {
-    return (x <= 0.04045 ? (x / 12.92) : pow((x + 0.055) / 1.055, 2.4));
+    const float c0 = 0.077399380805; // 1.0 / 12.92
+    const float c1 = 0.947867298578; // 1.0 / 1.055;
+    return (x <= 0.04045 ? (x * c0) : pow((x + 0.055) * c1, 2.4));
 }
 
 float linear_to_s(float x)
 {
-    return (x <= 0.0031308 ? (x * 12.92) : (1.055 * pow(x, 1.0 / 2.4) - 0.055));
+    const float c0 = 0.416666666667; // 1.0 / 2.4
+    return (x <= 0.0031308 ? (x * 12.92) : (1.055 * pow(x, c0) - 0.055));
 }
 
 vec3 rgb_to_srgb(vec3 rgb)

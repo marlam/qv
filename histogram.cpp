@@ -33,52 +33,54 @@ Histogram::Histogram()
 {
 }
 
-static int binIndexHelper(float v, float minVal, float maxVal,
-        const std::vector<unsigned long long>& bins)
+static int binIndexHelper(float v, float minVal, float maxVal, int bins)
 {
-    int b = (v - minVal) / (maxVal - minVal) * bins.size();
+    int b = (v - minVal) / (maxVal - minVal) * bins;
     if (b < 0)
         b = 0;
-    else if (b >= int(bins.size()))
-        b = bins.size() - 1;
+    else if (b >= bins)
+        b = bins - 1;
     return b;
 }
 
 int Histogram::binIndex(float v) const
 {
-    return binIndexHelper(v, _minVal, _maxVal, _bins);
+    return binIndexHelper(v, _minVal, _maxVal, _bins.size());
 }
 
-template<typename T>
-static void initHelper(const TAD::Array<T> array, size_t componentIndex, size_t bins,
+template<typename T, size_t BINS>
+static void initHelper(const TAD::Array<T> array, size_t componentIndex,
         float _minVal, float _maxVal,
         std::vector<unsigned long long>& _bins, unsigned long long& _maxBinVal)
 {
-    _bins.resize(bins);
+    _bins.resize(BINS, 0);
     size_t n = array.elementCount();
     size_t cc = array.componentCount();
     const T* data = array[0];
 
-    unsigned int parts = omp_get_num_procs();
-    std::vector<std::vector<unsigned long long>> partBins(parts);
-    for (size_t i = 0; i < parts; i++)
-        partBins[i].resize(bins, 0);
-
-    #pragma omp parallel for num_threads(parts)
-    for (size_t e = 0; e < n; e++) {
-        T val = data[e * cc + componentIndex];
-        if (std::isfinite(val))
-            partBins[omp_get_thread_num()][binIndexHelper(val, _minVal, _maxVal, _bins)]++;
+    #pragma omp parallel
+    {
+        int parts = omp_get_num_threads();
+        int p = omp_get_thread_num();
+        unsigned long long partBins[BINS];
+        for (size_t b = 0; b < BINS; b++)
+            partBins[b] = 0;
+        for (size_t e = p; e < n; e += parts) {
+            T val = data[e * cc + componentIndex];
+            if (std::isfinite(val)) {
+                partBins[binIndexHelper(val, _minVal, _maxVal, BINS)]++;
+            }
+        }
+        for (size_t b = 0; b < BINS; b++) {
+            #pragma omp critical
+            _bins[b] += partBins[b];
+        }
     }
 
-    _maxBinVal = 0;
-    for (size_t b = 0; b < bins; b++) {
-        unsigned long long binEntry = 0;
-        for (size_t i = 0; i < parts; i++)
-            binEntry += partBins[i][b];
-        _bins[b] = binEntry;
-        if (binEntry > _maxBinVal)
-            _maxBinVal = binEntry;
+    _maxBinVal = _bins[0];
+    for (size_t b = 1; b < BINS; b++) {
+        if (_bins[b] > _maxBinVal)
+            _maxBinVal = _bins[b];
     }
 }
 
@@ -89,34 +91,34 @@ void Histogram::init(const TAD::ArrayContainer& array, size_t componentIndex, fl
     _maxVal = maxVal;
     switch (array.componentType()) {
     case TAD::int8:
-        initHelper(TAD::Array<int8_t>(array), componentIndex, 256, _minVal, _maxVal, _bins, _maxBinVal);
+        initHelper<int8_t, 256>(TAD::Array<int8_t>(array), componentIndex, _minVal, _maxVal, _bins, _maxBinVal);
         break;
     case TAD::uint8:
-        initHelper(TAD::Array<uint8_t>(array), componentIndex, 256, _minVal, _maxVal, _bins, _maxBinVal);
+        initHelper<uint8_t, 256>(TAD::Array<uint8_t>(array), componentIndex, _minVal, _maxVal, _bins, _maxBinVal);
         break;
     case TAD::int16:
-        initHelper(TAD::Array<int16_t>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        initHelper<int16_t, 1024>(TAD::Array<int16_t>(array), componentIndex, _minVal, _maxVal, _bins, _maxBinVal);
         break;
     case TAD::uint16:
-        initHelper(TAD::Array<uint16_t>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        initHelper<uint16_t, 1024>(TAD::Array<uint16_t>(array), componentIndex, _minVal, _maxVal, _bins, _maxBinVal);
         break;
     case TAD::int32:
-        initHelper(TAD::Array<int32_t>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        initHelper<int32_t, 1024>(TAD::Array<int32_t>(array), componentIndex, _minVal, _maxVal, _bins, _maxBinVal);
         break;
     case TAD::uint32:
-        initHelper(TAD::Array<uint32_t>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        initHelper<uint32_t, 1024>(TAD::Array<uint32_t>(array), componentIndex, _minVal, _maxVal, _bins, _maxBinVal);
         break;
     case TAD::int64:
-        initHelper(TAD::Array<int64_t>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        initHelper<int64_t, 1024>(TAD::Array<int64_t>(array), componentIndex, _minVal, _maxVal, _bins, _maxBinVal);
         break;
     case TAD::uint64:
-        initHelper(TAD::Array<uint64_t>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        initHelper<uint64_t, 1024>(TAD::Array<uint64_t>(array), componentIndex, _minVal, _maxVal, _bins, _maxBinVal);
         break;
     case TAD::float32:
-        initHelper(TAD::Array<float>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        initHelper<float, 1024>(TAD::Array<float>(array), componentIndex, _minVal, _maxVal, _bins, _maxBinVal);
         break;
     case TAD::float64:
-        initHelper(TAD::Array<double>(array), componentIndex, 1024, _minVal, _maxVal, _bins, _maxBinVal);
+        initHelper<double, 1024>(TAD::Array<double>(array), componentIndex, _minVal, _maxVal, _bins, _maxBinVal);
         break;
     }
 }

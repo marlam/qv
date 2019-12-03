@@ -41,7 +41,7 @@ static float clamp(float v, float lo, float hi)
 
 static float logtransf(float x)
 {
-    const float base = 100.0f;
+    const float base = 1000.0f;
     return clamp(std::log(1.0f + x * (base - 1.0f)) / std::log(base), 0.0f, 1.0f);
 }
 

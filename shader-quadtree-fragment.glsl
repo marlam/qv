@@ -41,7 +41,8 @@ layout(location = 0) out vec4 fcolor;
 
 float linear_to_s(float x)
 {
-    return (x <= 0.0031308 ? (x * 12.92) : (1.055 * pow(x, 1.0 / 2.4) - 0.055));
+    const float c0 = 0.416666666667;
+    return (x <= 0.0031308 ? (x * 12.92) : (1.055 * pow(x, c0) - 0.055));
 }
 
 void main(void)

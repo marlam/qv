@@ -80,7 +80,8 @@ vec3 l_to_xyz(float l) // l from Luv color space (perceptually linear)
 {
     vec3 xyz;
     if (l <= 8.0) {
-        xyz.y = d65_xyz.y * l * (3.0f * 3.0f * 3.0f / (29.0f * 29.0f * 29.0f));
+        const float c0 = 0.00110705645988; // 3.0f * 3.0f * 3.0f / (29.0f * 29.0f * 29.0f);
+        xyz.y = d65_xyz.y * l * c0;
     } else {
         float tmp = (l + 16.0f) / 116.0f;
         xyz.y = d65_xyz.y * tmp * tmp * tmp;
@@ -92,28 +93,33 @@ vec3 l_to_xyz(float l) // l from Luv color space (perceptually linear)
 
 vec3 rgb_to_xyz(vec3 rgb)
 {
+    // values from http://terathon.com/blog/rgb-xyz-conversion-matrix-accuracy/
     return 100.0 * vec3(
-            (0.4124 * rgb.r + 0.3576 * rgb.g + 0.1805 * rgb.b),
-            (0.2126 * rgb.r + 0.7152 * rgb.g + 0.0722 * rgb.b),
-            (0.0193 * rgb.r + 0.1192 * rgb.g + 0.9505 * rgb.b));
+            (0.412391 * rgb.r + 0.357584 * rgb.b + 0.180481 * rgb.b),
+            (0.212639 * rgb.r + 0.715169 * rgb.b + 0.072192 * rgb.b),
+            (0.019331 * rgb.r + 0.119195 * rgb.b + 0.950532 * rgb.b));
 }
 
 vec3 xyz_to_rgb(vec3 xyz)
 {
-    return 0.01f * vec3(
-            (+3.2406255 * xyz.x - 1.5372080 * xyz.y - 0.4986286 * xyz.z),
-            (-0.9689307 * xyz.x + 1.8757561 * xyz.y + 0.0415175 * xyz.z),
-            (+0.0557101 * xyz.x - 0.2040211 * xyz.y + 1.0569959 * xyz.z));
+    // values from http://terathon.com/blog/rgb-xyz-conversion-matrix-accuracy/
+    return 0.01 * vec3(
+            (+3.240970 * xyz.x - 1.537383 * xyz.y - 0.498611 * xyz.z),
+            (-0.969244 * xyz.x + 1.875968 * xyz.y + 0.041555 * xyz.z),
+            (+0.055630 * xyz.x - 0.203977 * xyz.y + 1.056972 * xyz.z));
 }
 
 float s_to_linear(float x)
 {
-    return (x <= 0.04045 ? (x / 12.92) : pow((x + 0.055) / 1.055, 2.4));
+    const float c0 = 0.077399380805; // 1.0 / 12.92
+    const float c1 = 0.947867298578; // 1.0 / 1.055;
+    return (x <= 0.04045 ? (x * c0) : pow((x + 0.055) * c1, 2.4));
 }
 
 float linear_to_s(float x)
 {
-    return (x <= 0.0031308 ? (x * 12.92) : (1.055 * pow(x, 1.0 / 2.4) - 0.055));
+    const float c0 = 0.416666666667; // 1.0 / 2.4
+    return (x <= 0.0031308 ? (x * 12.92) : (1.055 * pow(x, c0) - 0.055));
 }
 
 vec3 rgb_to_srgb(vec3 rgb)

@@ -95,9 +95,9 @@ vec3 rgb_to_xyz(vec3 rgb)
 {
     // values from http://terathon.com/blog/rgb-xyz-conversion-matrix-accuracy/
     return 100.0 * vec3(
-            (0.412391 * rgb.r + 0.357584 * rgb.b + 0.180481 * rgb.b),
-            (0.212639 * rgb.r + 0.715169 * rgb.b + 0.072192 * rgb.b),
-            (0.019331 * rgb.r + 0.119195 * rgb.b + 0.950532 * rgb.b));
+            (0.412391 * rgb.r + 0.357584 * rgb.g + 0.180481 * rgb.b),
+            (0.212639 * rgb.r + 0.715169 * rgb.g + 0.072192 * rgb.b),
+            (0.019331 * rgb.r + 0.119195 * rgb.g + 0.950532 * rgb.b));
 }
 
 vec3 xyz_to_rgb(vec3 xyz)

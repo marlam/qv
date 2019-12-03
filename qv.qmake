@@ -45,9 +45,9 @@ CONFIG += release
 
 QT += widgets
 
-QMAKE_CXXFLAGS += -std=c++17
+QMAKE_CXXFLAGS += -std=c++17 -fopenmp
 
-LIBS += -ltad
+LIBS += -ltad -fopenmp
 
 win32 {
 	# For building a static qv.exe using MXE, we need to explicitly link in

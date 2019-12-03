@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
-find_package(libtad 0.5 REQUIRED)
+find_package(libtad 0.6 REQUIRED)
 find_package(Qt5 5.11.0 COMPONENTS Widgets)
 find_package(OpenMP)
 

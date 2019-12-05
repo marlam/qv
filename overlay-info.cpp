@@ -51,21 +51,17 @@ static std::string humanReadableMemsize(unsigned long long size)
     return s;
 }
 
-static void addTagList(const TAD::TagList& tl, QString& line)
+static QStringList createList(const TAD::TagList& tl, QString& interpretation)
 {
     QStringList list;
     for (auto it = tl.cbegin(); it != tl.cend(); it++) {
         if (QString(it->first.c_str()) == "INTERPRETATION") {
-            list.prepend(it->second.c_str());
+            interpretation = it->second.c_str();
         } else {
-            list.append(QString("%1=%2").arg(it->first.c_str()).arg(it->second.c_str()));
+            list.append(QString("  %1=%2").arg(it->first.c_str()).arg(it->second.c_str()));
         }
     }
-    for (int i = 0; i < list.size(); i++) {
-        if (i != 0)
-            line += ", ";
-        line += list[i];
-    }
+    return list;
 }
 
 void OverlayInfo::update(int widthInPixels, Set& set)
@@ -91,22 +87,37 @@ void OverlayInfo::update(int widthInPixels, Set& set)
     sl << line;
     sl << QString(" current channel: %1").arg(frame->currentChannelName().c_str());
     if (array.globalTagList().size() > 0) {
-        QString line(" global: ");
-        addTagList(array.globalTagList(), line);
-        sl << line;
+        QString line = " global: ";
+        QString interpretation;
+        QStringList list = createList(array.globalTagList(), interpretation);
+        if (interpretation.length() > 0) {
+            line.append(QString("INTERPRETATION="));
+            line.append(interpretation);
+        }
+        sl << line << list;
     }
     for (size_t i = 0; i < 2; i++) {
         if (array.dimensionTagList(i).size() > 0) {
             QString line = QString(" %1 axis: ").arg(i == 0 ? 'x' : 'y');
-            addTagList(array.dimensionTagList(i), line);
-            sl << line;
+            QString interpretation;
+            QStringList list = createList(array.dimensionTagList(i), interpretation);
+            if (interpretation.length() > 0) {
+                line.append(QString("INTERPRETATION="));
+                line.append(interpretation);
+            }
+            sl << line << list;
         }
     }
     for (size_t i = 0; i < array.componentCount(); i++) {
         if (array.componentTagList(i).size() > 0) {
             QString line = QString(" channel %1: ").arg(i);
-            addTagList(array.componentTagList(i), line);
-            sl << line;
+            QString interpretation;
+            QStringList list = createList(array.componentTagList(i), interpretation);
+            if (interpretation.length() > 0) {
+                line.append(QString("INTERPRETATION="));
+                line.append(interpretation);
+            }
+            sl << line << list;
         }
     }
 

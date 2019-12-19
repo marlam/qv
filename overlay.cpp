@@ -60,7 +60,6 @@ void Overlay::prepare(int widthInPixels, int heightInPixels)
         _painter->setFont(font);
         _painter->setRenderHint(QPainter::Antialiasing);
         _painter->setRenderHint(QPainter::TextAntialiasing);
-        _painter->setRenderHint(QPainter::HighQualityAntialiasing);
         QPen pen;
         pen.setColor(QColor(Qt::white));
         pen.setStyle(Qt::SolidLine);

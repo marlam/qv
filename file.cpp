@@ -33,14 +33,15 @@ File::File() : _frameIndex(-1)
 TAD::Importer& File::importer()
 {
     if (_importer.fileName().size() == 0) {
-        _importer.initialize(fileName());
+        _importer.initialize(fileName(), _importerHints);
     }
     return _importer;
 }
 
-bool File::init(const std::string& fileName, std::string& errorMessage)
+bool File::init(const std::string& fileName, const TAD::TagList& importerHints, std::string& errorMessage)
 {
     _fileName = fileName;
+    _importerHints = importerHints;
     TAD::Error tadError = importer().checkAccess();
     if (tadError != TAD::ErrorNone) {
         errorMessage = fileName + ": " + TAD::strerror(tadError);
@@ -138,7 +139,7 @@ bool File::reload(std::string& errorMessage)
     }
 
     TAD::ArrayDescription origDescription = _description;
-    TAD::Importer newImporter(fileName());
+    TAD::Importer newImporter(fileName(), _importerHints);
     TAD::Error tadError = newImporter.checkAccess();
     if (tadError != TAD::ErrorNone) {
         errorMessage = fileName() + ": " + TAD::strerror(tadError);

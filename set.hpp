@@ -29,6 +29,7 @@
 
 class Set {
 private:
+    TAD::TagList _importerHints;
     std::vector<File> _files;
     std::vector<Parameters> _parameters;
     int _fileIndex;
@@ -37,6 +38,8 @@ private:
 
 public:
     Set();
+
+    void setImporterHints(const TAD::TagList& importerHints) { _importerHints = importerHints; }
 
     bool addFile(const std::string& fileName, std::string& errorMessage);
     void removeFile(int fileIndex);

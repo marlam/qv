@@ -33,6 +33,7 @@
 class File {
 private:
     std::string _fileName;
+    TAD::TagList _importerHints;
     TAD::Importer _importer;
     TAD::ArrayDescription _description;
     Frame _frame;
@@ -43,7 +44,7 @@ private:
 public:
     File();
 
-    bool init(const std::string& fileName, std::string& errorMessage);
+    bool init(const std::string& fileName, const TAD::TagList& importerHints, std::string& errorMessage);
 
     const std::string& fileName() const { return _fileName; }
     int frameCount(std::string& errorMessage); // returns < 1 on error

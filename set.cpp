@@ -33,7 +33,7 @@ Set::Set() : _fileIndex(-1), _keepParameterIndex(false), _parameterIndex(-1)
 bool Set::addFile(const std::string& fileName, std::string& errorMessage)
 {
     File file;
-    if (file.init(fileName, errorMessage)) {
+    if (file.init(fileName, _importerHints, errorMessage)) {
         _files.push_back(file);
         _parameters.push_back(Parameters());
         return true;

@@ -23,7 +23,6 @@
 
 #include <unistd.h> // for isatty()
 
-#include <cerrno>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -32,6 +31,7 @@
 #include <algorithm>
 
 #include <QApplication>
+#include <QCommandLineParser>
 #include <QMessageBox>
 #include <QSurfaceFormat>
 #include <QOpenGLContext>
@@ -44,26 +44,41 @@
 
 int main(int argc, char* argv[])
 {
-    // Default options
-    if (argc == 2 && std::strcmp(argv[1], "--help") == 0) {
-        printf("Usage: %s [<directory|file...>]\n", argv[0]);
-        printf("See https://marlam.de/qv\n");
-        return 0;
-    } else if (argc == 2 && std::strcmp(argv[1], "--version") == 0) {
-        printf("qv version " QV_VERSION "\n");
-        printf("See https://marlam.de/qv\n");
-        return 0;
-    }
-
     // Initialize Qt
     QApplication app(argc, argv);
+    QApplication::setApplicationName("qv");
+    QApplication::setApplicationVersion(QV_VERSION);
+    QCommandLineParser parser;
+    parser.setApplicationDescription("A quick viewer for 2D data -- see https://marlam.de/qv");
+    parser.addHelpOption();
+    parser.addVersionOption();
+    parser.addPositionalArgument("[directory|file...]", "Data to display.");
+    parser.addOptions({
+            { { "i", "input" }, "Set tag for import (can be given more than once).", "KEY=VALUE" },
+    });
+    parser.process(app);
+    QStringList posArgs = parser.positionalArguments();
+
+    // Evaluate the -i|--input option
+    TAD::TagList importerHints;
+    QStringList tags = parser.values("input");
+    for (int i = 0; i < tags.size(); i++) {
+        std::string tag = qPrintable(tags[i]);
+        size_t j = tag.find('=', 1);
+        if (j == std::string::npos) {
+            importerHints.set(tag, "");
+        } else {
+            importerHints.set(tag.substr(0, j), tag.substr(j + 1));
+        }
+    }
 
     // Build the set of files to view
     Set set;
+    set.setImporterHints(importerHints);
     bool err = false;
     std::string errMsg;
-    for (int i = 1; i < argc; i++) {
-        std::string name = argv[i];
+    for (int i = 0; i < posArgs.size(); i++) {
+        std::string name = qPrintable(posArgs[i]);
         if (std::filesystem::exists(name)) {
             if (std::filesystem::is_directory(name)) {
                 std::vector<std::string> paths;

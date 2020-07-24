@@ -36,10 +36,10 @@ OverlayHelp::OverlayHelp()
     _helpText << " F11: toggle fullscreen    r: reload current file";
     _helpText << " ESC: end fullscreen/quit";
     _helpText << "";
-    _helpText << " Switch frames:            Switch files:";
-    _helpText << " ←,→: 1 frame back/fwd     ⇧←,⇧→: 1 file back/fwd";
-    _helpText << " ↑,↓: 10 frames back/fwd   ⇧↑,⇧↓: 10 files back/fwd";
-    _helpText << " ⇞,⇟: 100 frames back/fwd  ⇧⇞,⇧⇟: 100 files back/fwd";
+    _helpText << " Switch files:             Switch frames:";
+    _helpText << " ←,→: 1 file back/fwd      ⇧←,⇧→: 1 frame back/fwd";
+    _helpText << " ↑,↓: 10 files back/fwd    ⇧↑,⇧↓: 10 frames back/fwd";
+    _helpText << " ⇞,⇟: 100 files back/fwd   ⇧⇞,⇧⇟: 100 frames back/fwd";
     _helpText << "";
     _helpText << " Switch channels:          Zoom, move:";
     _helpText << " c: color channel          -,+,=: zoom out/in/reset";

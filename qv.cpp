@@ -752,34 +752,34 @@ void QV::keyPressEvent(QKeyEvent* e)
         this->update();
     } else if (haveCurrentFile() && e->key() == Qt::Key_Left) {
         if (e->modifiers() == Qt::ShiftModifier)
-            adjustFileIndex(-1);
-        else
             adjustFrameIndex(-1);
+        else
+            adjustFileIndex(-1);
     } else if (haveCurrentFile() && e->key() == Qt::Key_Right) {
         if (e->modifiers() == Qt::ShiftModifier)
-            adjustFileIndex(+1);
-        else
             adjustFrameIndex(+1);
+        else
+            adjustFileIndex(+1);
     } else if (haveCurrentFile() && e->key() == Qt::Key_Down) {
         if (e->modifiers() == Qt::ShiftModifier)
-            adjustFileIndex(+10);
-        else
             adjustFrameIndex(+10);
+        else
+            adjustFileIndex(+10);
     } else if (haveCurrentFile() && e->key() == Qt::Key_Up) {
         if (e->modifiers() == Qt::ShiftModifier)
-            adjustFileIndex(-10);
-        else
             adjustFrameIndex(-10);
+        else
+            adjustFileIndex(-10);
     } else if (haveCurrentFile() && e->key() == Qt::Key_PageDown) {
         if (e->modifiers() == Qt::ShiftModifier)
-            adjustFileIndex(+100);
-        else
             adjustFrameIndex(+100);
+        else
+            adjustFileIndex(+100);
     } else if (haveCurrentFile() && e->key() == Qt::Key_PageUp) {
         if (e->modifiers() == Qt::ShiftModifier)
-            adjustFileIndex(-100);
-        else
             adjustFrameIndex(-100);
+        else
+            adjustFileIndex(-100);
     } else if (haveCurrentFile() && e->key() == Qt::Key_C) {
         setChannelIndex(ColorChannelIndex);
     } else if (haveCurrentFile() && e->key() == Qt::Key_0) {

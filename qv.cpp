@@ -939,6 +939,6 @@ void QV::mouseReleaseEvent(QMouseEvent* e)
 void QV::wheelEvent(QWheelEvent* e)
 {
     if (haveCurrentFile()) {
-        adjustZoom(e->delta() / 120);
+        adjustZoom(e->angleDelta().y() / 120);
     }
 }

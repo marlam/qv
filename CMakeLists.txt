@@ -1,10 +1,12 @@
-# Copyright (C) 2019 Martin Lambers <marlam@marlam.de>
+# Copyright (C) 2019, 2020 Martin Lambers <marlam@marlam.de>
 #
 # Copying and distribution of this file, with or without modification, are
 # permitted in any medium without royalty provided the copyright notice and this
 # notice are preserved. This file is offered as-is, without any warranty.
 
 cmake_minimum_required(VERSION 3.12)
+set(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
+set(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
 set(CMAKE_AUTOMOC ON)
 
 project(qv)

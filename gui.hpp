@@ -43,6 +43,8 @@ private slots:
     void fileReload();
     void fileSaveCurrentView();
     void fileSaveView();
+    void fileCopyCurrentView();
+    void fileCopyView();
     void fileNext();
     void filePrev();
     void fileNext10();

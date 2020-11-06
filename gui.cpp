@@ -55,6 +55,15 @@ Gui::Gui(Set& set) : QMainWindow(),
     connect(fileSaveViewAction, SIGNAL(triggered()), this, SLOT(fileSaveView()));
     fileMenu->addAction(fileSaveViewAction);
     fileMenu->addSeparator();
+    QAction* fileCopyCurrentViewAction = new QAction("Copy current view...", this);
+    //fileCopyCurrentViewAction->setShortcut(QKeySequence::Copy);
+    connect(fileCopyCurrentViewAction, SIGNAL(triggered()), this, SLOT(fileCopyCurrentView()));
+    fileMenu->addAction(fileCopyCurrentViewAction);
+    QAction* fileCopyViewAction = new QAction("&Copy 1:1 view...", this);
+    fileCopyViewAction->setShortcut(QKeySequence::Copy);
+    connect(fileCopyViewAction, SIGNAL(triggered()), this, SLOT(fileCopyView()));
+    fileMenu->addAction(fileCopyViewAction);
+    fileMenu->addSeparator();
     QAction* fileNextAction = new QAction("Jump to next file", this);
     connect(fileNextAction, SIGNAL(triggered()), this, SLOT(fileNext()));
     fileMenu->addAction(fileNextAction);
@@ -106,6 +115,16 @@ void Gui::fileSaveCurrentView()
 void Gui::fileSaveView()
 {
     _qv->saveView(true);
+}
+
+void Gui::fileCopyCurrentView()
+{
+    _qv->copyView(false);
+}
+
+void Gui::fileCopyView()
+{
+    _qv->copyView(true);
 }
 
 void Gui::fileNext()

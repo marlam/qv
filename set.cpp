@@ -152,13 +152,13 @@ std::string Set::currentDescription()
     std::string dummyErrorMsg;
     if (currentFile()) {
         if (fileCount() > 1) {
-            desc = std::to_string(fileIndex())
+            desc = std::to_string(fileIndex() + 1)
                 + '/' + std::to_string(fileCount()) + ' ';
         }
         std::string fileName = std::filesystem::path(currentFile()->fileName()).filename().string();
         desc += fileName + ' ';
         if (currentFile()->frameCount(dummyErrorMsg) > 1) {
-            desc += std::to_string(currentFile()->frameIndex())
+            desc += std::to_string(currentFile()->frameIndex() + 1)
                 + '/' + std::to_string(currentFile()->frameCount(dummyErrorMsg)) + ' ';
         }
         if (currentFile()->currentFrame()->channelCount() > 1) {

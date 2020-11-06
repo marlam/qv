@@ -34,18 +34,18 @@ Gui::Gui(Set& set) : QMainWindow(),
     _qv(new QV(_set, this))
 {
     QMenu* fileMenu = menuBar()->addMenu("&File");
-    QAction* fileOpenAction = new QAction("&Open...", this);
+    QAction* fileOpenAction = new QAction("&Open file(s)...", this);
     fileOpenAction->setShortcuts({ Qt::Key_O, QKeySequence::Open });
     connect(fileOpenAction, SIGNAL(triggered()), this, SLOT(fileOpen()));
     fileMenu->addAction(fileOpenAction);
-    QAction* fileReloadAction = new QAction("&Reload", this);
+    QAction* fileReloadAction = new QAction("&Reload current file", this);
     if (QKeySequence(QKeySequence::Refresh) != QKeySequence(Qt::Key_F5))
         fileReloadAction->setShortcuts({ Qt::Key_R, QKeySequence::Refresh });
     else
         fileReloadAction->setShortcuts({ Qt::Key_R });
     connect(fileReloadAction, SIGNAL(triggered()), this, SLOT(fileReload()));
     fileMenu->addAction(fileReloadAction);
-    QAction* fileCloseAction = new QAction("&Close", this);
+    QAction* fileCloseAction = new QAction("&Close current file", this);
     fileCloseAction->setShortcuts({ Qt::Key_W, QKeySequence::Close });
     connect(fileCloseAction, SIGNAL(triggered()), this, SLOT(fileClose()));
     fileMenu->addAction(fileCloseAction);

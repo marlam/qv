@@ -40,6 +40,7 @@ private:
     QV* _qv;
     QAction* _viewToggleLinearInterpolationAction;
     QAction* _viewToggleGridAction;
+    QAction* _rangeDRRToggleAction;
 
 private slots:
     void fileOpen();
@@ -79,6 +80,17 @@ private slots:
     void viewRecenter();
     void viewToggleLinearInterpolation();
     void viewToggleGrid();
+    void rangeDecLo();
+    void rangeIncLo();
+    void rangeDecHi();
+    void rangeIncHi();
+    void rangeShiftLeft();
+    void rangeShiftRight();
+    void rangeReset();
+    void rangeDRRToggle();
+    void rangeDRRDecBrightness();
+    void rangeDRRIncBrightness();
+    void rangeDRRResetBrightness();
 
     void updateFromParameters();
 

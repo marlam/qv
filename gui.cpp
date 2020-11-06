@@ -169,6 +169,43 @@ Gui::Gui(Set& set) : QMainWindow(),
     connect(_viewToggleGridAction, SIGNAL(triggered()), this, SLOT(viewToggleGrid()));
     viewMenu->addAction(_viewToggleGridAction);
 
+    QMenu* rangeMenu = menuBar()->addMenu("&Range");
+    QAction* rangeDecLoAction = new QAction("Decrease lower bound of visible range", this);
+    connect(rangeDecLoAction, SIGNAL(triggered()), this, SLOT(rangeDecLo()));
+    rangeMenu->addAction(rangeDecLoAction);
+    QAction* rangeIncLoAction = new QAction("Increase lower bound of visible range", this);
+    connect(rangeIncLoAction, SIGNAL(triggered()), this, SLOT(rangeIncLo()));
+    rangeMenu->addAction(rangeIncLoAction);
+    QAction* rangeDecHiAction = new QAction("Decrease upper bound of visible range", this);
+    connect(rangeDecHiAction, SIGNAL(triggered()), this, SLOT(rangeDecHi()));
+    rangeMenu->addAction(rangeDecHiAction);
+    QAction* rangeIncHiAction = new QAction("Increase upper bound of visible range", this);
+    connect(rangeIncHiAction, SIGNAL(triggered()), this, SLOT(rangeIncHi()));
+    rangeMenu->addAction(rangeIncHiAction);
+    QAction* rangeShiftLeftAction = new QAction("Shift visible range to lower values", this);
+    connect(rangeShiftLeftAction, SIGNAL(triggered()), this, SLOT(rangeShiftLeft()));
+    rangeMenu->addAction(rangeShiftLeftAction);
+    QAction* rangeShiftRightAction = new QAction("Shift visible range to higher values", this);
+    connect(rangeShiftRightAction, SIGNAL(triggered()), this, SLOT(rangeShiftRight()));
+    rangeMenu->addAction(rangeShiftRightAction);
+    QAction* rangeResetAction = new QAction("Reset visible range", this);
+    connect(rangeResetAction, SIGNAL(triggered()), this, SLOT(rangeReset()));
+    rangeMenu->addAction(rangeResetAction);
+    rangeMenu->addSeparator();
+    _rangeDRRToggleAction = new QAction("Toggle Dynamic Range Reduction (DRR; simple tone mapping)", this);
+    _rangeDRRToggleAction->setCheckable(true);
+    connect(_rangeDRRToggleAction, SIGNAL(triggered()), this, SLOT(rangeDRRToggle()));
+    rangeMenu->addAction(_rangeDRRToggleAction);
+    QAction* rangeDRRDecBrightnessAction = new QAction("Decrease DRR brightness", this);
+    connect(rangeDRRDecBrightnessAction, SIGNAL(triggered()), this, SLOT(rangeDRRDecBrightness()));
+    rangeMenu->addAction(rangeDRRDecBrightnessAction);
+    QAction* rangeDRRIncBrightnessAction = new QAction("Increase DRR brightness", this);
+    connect(rangeDRRIncBrightnessAction, SIGNAL(triggered()), this, SLOT(rangeDRRIncBrightness()));
+    rangeMenu->addAction(rangeDRRIncBrightnessAction);
+    QAction* rangeDRRResetBrightnessAction = new QAction("Reset DRR brightness", this);
+    connect(rangeDRRResetBrightnessAction, SIGNAL(triggered()), this, SLOT(rangeDRRResetBrightness()));
+    rangeMenu->addAction(rangeDRRResetBrightnessAction);
+
     connect(_qv, SIGNAL(toggleFullscreen()), this, SLOT(viewToggleFullscreen()));
     connect(_qv, SIGNAL(parametersChanged()), this, SLOT(updateFromParameters()));
     updateFromParameters();
@@ -368,6 +405,61 @@ void Gui::viewToggleGrid()
     _qv->toggleGrid();
 }
 
+void Gui::rangeDecLo()
+{
+    _qv->adjustVisInterval(-1, 0);
+}
+
+void Gui::rangeIncLo()
+{
+    _qv->adjustVisInterval(+1, 0);
+}
+
+void Gui::rangeDecHi()
+{
+    _qv->adjustVisInterval(0, -1);
+}
+
+void Gui::rangeIncHi()
+{
+    _qv->adjustVisInterval(0, +1);
+}
+
+void Gui::rangeShiftLeft()
+{
+    _qv->adjustVisInterval(-1, -1);
+}
+
+void Gui::rangeShiftRight()
+{
+    _qv->adjustVisInterval(+1, +1);
+}
+
+void Gui::rangeReset()
+{
+    _qv->resetVisInterval();
+}
+
+void Gui::rangeDRRToggle()
+{
+    _qv->toggleDRR();
+}
+
+void Gui::rangeDRRDecBrightness()
+{
+    _qv->adjustDRRBrightness(-1);
+}
+
+void Gui::rangeDRRIncBrightness()
+{
+    _qv->adjustDRRBrightness(+1);
+}
+
+void Gui::rangeDRRResetBrightness()
+{
+    _qv->adjustDRRBrightness(0);
+}
+
 void Gui::updateFromParameters()
 {
     Parameters p;
@@ -376,4 +468,5 @@ void Gui::updateFromParameters()
     }
     _viewToggleLinearInterpolationAction->setChecked(p.magInterpolation);
     _viewToggleGridAction->setChecked(p.magGrid);
+    _rangeDRRToggleAction->setChecked(p.dynamicRangeReduction);
 }

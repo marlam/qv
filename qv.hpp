@@ -118,6 +118,8 @@ public:
     void toggleGrid();
     void resetZoom();
     void recenter();
+    void toggleDRR();
+    void adjustDRRBrightness(int direction);
 
 signals:
     void toggleFullscreen();

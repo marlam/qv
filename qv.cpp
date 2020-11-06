@@ -687,6 +687,9 @@ void QV::adjustZoom(int steps)
 
 void QV::adjustVisInterval(int minSteps, int maxSteps)
 {
+    if (!haveCurrentFile())
+        return;
+
     Frame* frame = _set.currentFile()->currentFrame();
     float defaultVisMin = frame->currentVisMinVal();
     float defaultVisMax = frame->currentVisMaxVal();
@@ -714,6 +717,9 @@ void QV::adjustVisInterval(int minSteps, int maxSteps)
 
 void QV::resetVisInterval()
 {
+    if (!haveCurrentFile())
+        return;
+
     Frame* frame = _set.currentFile()->currentFrame();
     _set.currentParameters()->setVisMinVal(frame->channelIndex(), std::numeric_limits<float>::quiet_NaN());
     _set.currentParameters()->setVisMaxVal(frame->channelIndex(), std::numeric_limits<float>::quiet_NaN());
@@ -794,6 +800,30 @@ void QV::recenter()
 
     _set.currentParameters()->xOffset = 0.0f;
     _set.currentParameters()->yOffset = 0.0f;
+    this->updateView();
+}
+
+void QV::toggleDRR()
+{
+    if (!haveCurrentFile())
+        return;
+
+    _set.currentParameters()->dynamicRangeReduction = !_set.currentParameters()->dynamicRangeReduction;
+    this->updateView();
+}
+
+void QV::adjustDRRBrightness(int direction)
+{
+    if (!haveCurrentFile())
+        return;
+
+    if (direction == 0) { // reset
+        _set.currentParameters()->drrBrightness = Parameters().drrBrightness;
+    } else if (direction > 0) { // increase
+        _set.currentParameters()->drrBrightness = _set.currentParameters()->drrBrightness * 2.0f;
+    } else { // decrease
+        _set.currentParameters()->drrBrightness = std::max(2.0f, _set.currentParameters()->drrBrightness / 2.0f);
+    }
     this->updateView();
 }
 
@@ -887,32 +917,28 @@ void QV::keyPressEvent(QKeyEvent* e)
         adjustZoom(+1);
     } else if (e->key() == Qt::Key_Space) {
         recenter();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_BraceLeft) {
+    } else if (e->key() == Qt::Key_BraceLeft) {
         adjustVisInterval(-1, 0);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_BraceRight) {
+    } else if (e->key() == Qt::Key_BraceRight) {
         adjustVisInterval(+1, 0);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_BracketLeft) {
+    } else if (e->key() == Qt::Key_BracketLeft) {
         adjustVisInterval(0, -1);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_BracketRight) {
+    } else if (e->key() == Qt::Key_BracketRight) {
         adjustVisInterval(0, +1);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_ParenLeft) {
+    } else if (e->key() == Qt::Key_ParenLeft) {
         adjustVisInterval(-1, -1);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_ParenRight) {
+    } else if (e->key() == Qt::Key_ParenRight) {
         adjustVisInterval(+1, +1);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_Backslash) {
+    } else if (e->key() == Qt::Key_Backslash) {
         resetVisInterval();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_D) {
-        _set.currentParameters()->dynamicRangeReduction = !_set.currentParameters()->dynamicRangeReduction;
-        this->updateView();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_Comma) {
-        _set.currentParameters()->drrBrightness = std::max(2.0f, _set.currentParameters()->drrBrightness / 2.0f);
-        this->updateView();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_Period) {
-        _set.currentParameters()->drrBrightness = _set.currentParameters()->drrBrightness * 2.0f;
-        this->updateView();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_Slash) {
-        _set.currentParameters()->drrBrightness = Parameters().drrBrightness;
-        this->updateView();
+    } else if (e->key() == Qt::Key_D) {
+        toggleDRR();
+    } else if (e->key() == Qt::Key_Comma) {
+        adjustDRRBrightness(-1);
+    } else if (e->key() == Qt::Key_Period) {
+        adjustDRRBrightness(+1);
+    } else if (e->key() == Qt::Key_Slash) {
+        adjustDRRBrightness(0);
     } else if (haveCurrentFile() && e->key() == Qt::Key_F4) {
         changeColorMap(ColorMapNone);
     } else if (haveCurrentFile() && e->key() == Qt::Key_F5) {

@@ -285,7 +285,7 @@ Gui::Gui(Set& set) : QMainWindow(),
     colorMapQualitativeAction->setShortcuts({ Qt::Key_F7 });
     connect(colorMapQualitativeAction, SIGNAL(triggered()), this, SLOT(colorMapQualitative()));
     colorMapMenu->addAction(colorMapQualitativeAction);
-    QAction* colorMapCustomAction = new QAction("Enable &custom color map (import from clipboard in CSV format)", this);
+    QAction* colorMapCustomAction = new QAction("Enable &custom color map (import from clipboard in image or CSV format)", this);
     colorMapCustomAction->setShortcuts({ Qt::Key_F8 });
     connect(colorMapCustomAction, SIGNAL(triggered()), this, SLOT(colorMapCustom()));
     colorMapMenu->addAction(colorMapCustomAction);

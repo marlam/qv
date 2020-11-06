@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020 Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -61,7 +61,7 @@ OverlayHelp::OverlayHelp()
     _helpText << " F5: sequential (cycle)    F3: save 1:1 view";
     _helpText << " F6: diverging (cycle)     F9: copy current view";
     _helpText << " F7: qualitative           F10: copy 1:1 view";
-    _helpText << " F8: from clipboard (CSV)";
+    _helpText << " F8: from clipboard (image or CSV)";
     _helpText << "";
     _helpText << " a: apply current view parameters to all files (toggle)";
     _helpText << "";

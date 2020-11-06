@@ -26,6 +26,7 @@
 #include <QGuiApplication>
 #include <QClipboard>
 #include <QStringList>
+#include <QImage>
 
 #include "colormap.hpp"
 #include "utils.hpp"
@@ -49,7 +50,25 @@ void ColorMap::reload()
     if (_type == ColorMapNone) {
         /* empty */
     } else if (_type == ColorMapCustom) {
-        csvData = QGuiApplication::clipboard()->text();
+        QImage img = QGuiApplication::clipboard()->image();
+        if (!img.isNull()) {
+            QImage cimg = img.convertToFormat(QImage::Format_RGB32);
+            if (cimg.width() >= cimg.height()) {
+                const QRgb* scanline = reinterpret_cast<const QRgb*>(cimg.scanLine(0));
+                for (int i = 0; i < cimg.width(); i++) {
+                    QRgb color = scanline[i];
+                    csvData += QString("%1, %2, %3\n").arg(qRed(color)).arg(qGreen(color)).arg(qBlue(color));
+                }
+            } else {
+                for (int i = 0; i < cimg.height(); i++) {
+                    const QRgb* scanline = reinterpret_cast<const QRgb*>(cimg.scanLine(i));
+                    QRgb color = scanline[0];
+                    csvData += QString("%1, %2, %3\n").arg(qRed(color)).arg(qGreen(color)).arg(qBlue(color));
+                }
+            }
+        } else {
+            csvData = QGuiApplication::clipboard()->text();
+        }
     } else {
         QString fileName = QString(":colormap-%1-%2.csv").arg(
                 _type == ColorMapSequential ? "sequential"

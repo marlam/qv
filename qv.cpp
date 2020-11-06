@@ -45,12 +45,12 @@ QV::QV(Set& set, QWidget* parent) :
     QOpenGLWidget(parent),
     _set(set),
     _dragMode(false),
-    _overlayHelpActive(false),
-    _overlayInfoActive(false),
-    _overlayValueActive(false),
-    _overlayStatisticActive(false),
-    _overlayHistogramActive(false),
-    _overlayColorMapActive(false)
+    overlayHelpActive(false),
+    overlayInfoActive(false),
+    overlayValueActive(false),
+    overlayStatisticActive(false),
+    overlayHistogramActive(false),
+    overlayColorMapActive(false)
 {
     window()->setWindowIcon(QIcon(":cg-logo.png"));
     setMouseTracking(true);
@@ -468,25 +468,25 @@ void QV::paintGL()
     }
 
     // Draw the overlays
-    bool overlayHelpActive = _overlayHelpActive;
-    bool overlayInfoActive = _overlayInfoActive;
-    bool overlayValueActive = _overlayValueActive;
-    bool overlayStatisticActive = _overlayStatisticActive;
-    bool overlayHistogramActive = _overlayHistogramActive;
-    bool overlayColorMapActive = _overlayColorMapActive;
+    bool localOverlayHelpActive = overlayHelpActive;
+    bool localOverlayInfoActive = overlayInfoActive;
+    bool localOverlayValueActive = overlayValueActive;
+    bool localOverlayStatisticActive = overlayStatisticActive;
+    bool localOverlayHistogramActive = overlayHistogramActive;
+    bool localOverlayColorMapActive = overlayColorMapActive;
     if (!frame) {
-        overlayHelpActive = true;
-        overlayInfoActive = false;
-        overlayValueActive = false;
-        overlayStatisticActive = false;
-        overlayHistogramActive = false;
-        overlayColorMapActive = false;
+        localOverlayHelpActive = true;
+        localOverlayInfoActive = false;
+        localOverlayValueActive = false;
+        localOverlayStatisticActive = false;
+        localOverlayHistogramActive = false;
+        localOverlayColorMapActive = false;
     }
     ASSERT_GLCHECK();
     gl->glEnable(GL_BLEND);
     gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     int overlayYOffset = 0;
-    if (overlayColorMapActive) {
+    if (localOverlayColorMapActive) {
         _overlayColorMap.update(_w, *(_set.currentParameters()));
         gl->glViewport(0, overlayYOffset, _w, _overlayColorMap.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
@@ -495,7 +495,7 @@ void QV::paintGL()
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
         overlayYOffset += _overlayColorMap.heightInPixels();
     }
-    if (overlayHistogramActive) {
+    if (localOverlayHistogramActive) {
         _overlayHistogram.update(_w, dataCoords, _set);
         gl->glViewport(0, overlayYOffset, _w, _overlayHistogram.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
@@ -504,7 +504,7 @@ void QV::paintGL()
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
         overlayYOffset += _overlayHistogram.heightInPixels();
     }
-    if (overlayStatisticActive) {
+    if (localOverlayStatisticActive) {
         _overlayStatistic.update(_w, _set);
         gl->glViewport(0, overlayYOffset, _w, _overlayStatistic.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
@@ -513,7 +513,7 @@ void QV::paintGL()
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
         overlayYOffset += _overlayStatistic.heightInPixels();
     }
-    if (overlayValueActive) {
+    if (localOverlayValueActive) {
         _overlayValue.update(_w, dataCoords, _set);
         gl->glViewport(0, overlayYOffset, _w, _overlayValue.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
@@ -522,7 +522,7 @@ void QV::paintGL()
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
         overlayYOffset += _overlayValue.heightInPixels();
     }
-    if (overlayInfoActive) {
+    if (localOverlayInfoActive) {
         _overlayInfo.update(_w, _set);
         gl->glViewport(0, overlayYOffset, _w, _overlayInfo.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
@@ -531,7 +531,7 @@ void QV::paintGL()
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
         overlayYOffset += _overlayInfo.heightInPixels();
     }
-    if (overlayHelpActive) {
+    if (localOverlayHelpActive) {
         _overlayHelp.update(_w);
         gl->glViewport(0, overlayYOffset, _w, _overlayHelp.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
@@ -839,6 +839,67 @@ static bool frameIsPrettyBig(const Frame* frame)
                 size_t(Frame::requiredMaxTextureSize) * size_t(Frame::requiredMaxTextureSize) / 4);
 }
 
+void QV::toggleOverlayInfo()
+{
+    if (!haveCurrentFile())
+        return;
+
+    overlayInfoActive = !overlayInfoActive;
+    this->updateView();
+}
+
+void QV::toggleOverlayStatistics()
+{
+    if (!haveCurrentFile())
+        return;
+
+    overlayStatisticActive = !overlayStatisticActive;
+    Frame* frame = _set.currentFile()->currentFrame();
+    if (overlayStatisticActive && frameIsPrettyBig(frame)
+            && !frame->haveStatistic(frame->channelIndex())) {
+        QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    }
+    this->updateView();
+}
+
+void QV::toggleOverlayValue()
+{
+    if (!haveCurrentFile())
+        return;
+
+    overlayValueActive = !overlayValueActive;
+    Frame* frame = _set.currentFile()->currentFrame();
+    if (overlayValueActive && frameIsPrettyBig(frame)
+            && frame->colorSpace() != ColorSpaceNone
+            && !frame->haveLuminance()) {
+        QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    }
+    this->updateView();
+}
+
+void QV::toggleOverlayHistogram()
+{
+    if (!haveCurrentFile())
+        return;
+
+    overlayHistogramActive = !overlayHistogramActive;
+    Frame* frame = _set.currentFile()->currentFrame();
+    if (overlayHistogramActive && frameIsPrettyBig(frame)
+            && !frame->haveHistogram(frame->channelIndex())) {
+        QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    }
+    this->updateView();
+}
+
+void QV::toggleOverlayColormap()
+{
+    if (!haveCurrentFile())
+        return;
+
+    overlayColorMapActive = !overlayColorMapActive;
+    this->updateView();
+}
+
 void QV::keyPressEvent(QKeyEvent* e)
 {
     if (e->key() == Qt::Key_Q || e->matches(QKeySequence::Quit)) {
@@ -956,39 +1017,18 @@ void QV::keyPressEvent(QKeyEvent* e)
         _set.toggleApplyCurrentParametersToAllFiles();
         this->updateView();
     } else if (haveCurrentFile() && (e->key() == Qt::Key_F1 || e->matches(QKeySequence::HelpContents))) {
-        _overlayHelpActive = !_overlayHelpActive;
+        overlayHelpActive = !overlayHelpActive;
         this->updateView();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_I) {
-        _overlayInfoActive = !_overlayInfoActive;
-        this->updateView();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_V) {
-        _overlayValueActive = !_overlayValueActive;
-        Frame* frame = _set.currentFile()->currentFrame();
-        if (_overlayValueActive && frameIsPrettyBig(frame)
-                && frame->colorSpace() != ColorSpaceNone
-                && !frame->haveLuminance()) {
-            QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-        }
-        this->updateView();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_S) {
-        _overlayStatisticActive = !_overlayStatisticActive;
-        Frame* frame = _set.currentFile()->currentFrame();
-        if (_overlayStatisticActive && frameIsPrettyBig(frame)
-                && !frame->haveStatistic(frame->channelIndex())) {
-            QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-        }
-        this->updateView();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_H) {
-        _overlayHistogramActive = !_overlayHistogramActive;
-        Frame* frame = _set.currentFile()->currentFrame();
-        if (_overlayHistogramActive && frameIsPrettyBig(frame)
-                && !frame->haveHistogram(frame->channelIndex())) {
-            QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-        }
-        this->updateView();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_M) {
-        _overlayColorMapActive = !_overlayColorMapActive;
-        this->updateView();
+    } else if (e->key() == Qt::Key_I) {
+        toggleOverlayInfo();
+    } else if (e->key() == Qt::Key_V) {
+        toggleOverlayValue();
+    } else if (e->key() == Qt::Key_S) {
+        toggleOverlayStatistics();
+    } else if (e->key() == Qt::Key_H) {
+        toggleOverlayHistogram();
+    } else if (e->key() == Qt::Key_M) {
+        toggleOverlayColormap();
     } else if (haveCurrentFile() && e->key() == Qt::Key_F2) {
         saveView(false);
     } else if (haveCurrentFile() && e->key() == Qt::Key_F3) {
@@ -1006,7 +1046,7 @@ void QV::mouseMoveEvent(QMouseEvent* e)
 {
     if (haveCurrentFile()) {
         _mousePos = e->pos();
-        if (_overlayValueActive || _overlayHistogramActive)
+        if (overlayValueActive || overlayHistogramActive)
             this->updateView();
         if (_dragMode) {
             QPoint dragEnd = e->pos();

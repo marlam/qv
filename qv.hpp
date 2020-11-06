@@ -52,17 +52,11 @@ private:
     bool _dragMode;
     QPoint _dragStart;
     QPoint _mousePos;
-    bool _overlayHelpActive;
     OverlayHelp _overlayHelp;
-    bool _overlayInfoActive;
     OverlayInfo _overlayInfo;
-    bool _overlayValueActive;
     OverlayValue _overlayValue;
-    bool _overlayStatisticActive;
     OverlayStatistic _overlayStatistic;
-    bool _overlayHistogramActive;
     OverlayHistogram _overlayHistogram;
-    bool _overlayColorMapActive;
     OverlayColorMap _overlayColorMap;
 
     void updateView();
@@ -92,6 +86,13 @@ private:
 public:
     QV(Set& set, QWidget* parent = nullptr);
 
+    bool overlayHelpActive;
+    bool overlayInfoActive;
+    bool overlayValueActive;
+    bool overlayStatisticActive;
+    bool overlayHistogramActive;
+    bool overlayColorMapActive;
+
     virtual void initializeGL() override;
     virtual void paintGL() override;
     virtual void resizeGL(int w, int h) override;
@@ -120,6 +121,11 @@ public:
     void recenter();
     void toggleDRR();
     void adjustDRRBrightness(int direction);
+    void toggleOverlayInfo();
+    void toggleOverlayStatistics();
+    void toggleOverlayValue();
+    void toggleOverlayHistogram();
+    void toggleOverlayColormap();
 
 signals:
     void toggleFullscreen();

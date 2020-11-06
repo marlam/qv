@@ -170,6 +170,11 @@ Gui::Gui(Set& set) : QMainWindow(),
     viewMenu->addAction(_viewToggleGridAction);
 
     QMenu* rangeMenu = menuBar()->addMenu("&Range");
+    _rangeToggleOverlayAction = new QAction("Toggle histogram and visible range &overlay");
+    _rangeToggleOverlayAction->setCheckable(true);
+    connect(_rangeToggleOverlayAction, SIGNAL(triggered()), this, SLOT(rangeToggleOverlay()));
+    rangeMenu->addAction(_rangeToggleOverlayAction);
+    rangeMenu->addSeparator();
     QAction* rangeDecLoAction = new QAction("Decrease lower bound of visible range", this);
     connect(rangeDecLoAction, SIGNAL(triggered()), this, SLOT(rangeDecLo()));
     rangeMenu->addAction(rangeDecLoAction);
@@ -192,36 +197,55 @@ Gui::Gui(Set& set) : QMainWindow(),
     connect(rangeResetAction, SIGNAL(triggered()), this, SLOT(rangeReset()));
     rangeMenu->addAction(rangeResetAction);
     rangeMenu->addSeparator();
-    _rangeDRRToggleAction = new QAction("Toggle Dynamic Range Reduction (DRR; simple tone mapping)", this);
+    _rangeDRRToggleAction = new QAction("&Toggle Dynamic Range Reduction (DRR; simple tone mapping)", this);
     _rangeDRRToggleAction->setCheckable(true);
     connect(_rangeDRRToggleAction, SIGNAL(triggered()), this, SLOT(rangeDRRToggle()));
     rangeMenu->addAction(_rangeDRRToggleAction);
-    QAction* rangeDRRDecBrightnessAction = new QAction("Decrease DRR brightness", this);
+    QAction* rangeDRRDecBrightnessAction = new QAction("&Decrease DRR brightness", this);
     connect(rangeDRRDecBrightnessAction, SIGNAL(triggered()), this, SLOT(rangeDRRDecBrightness()));
     rangeMenu->addAction(rangeDRRDecBrightnessAction);
-    QAction* rangeDRRIncBrightnessAction = new QAction("Increase DRR brightness", this);
+    QAction* rangeDRRIncBrightnessAction = new QAction("&Increase DRR brightness", this);
     connect(rangeDRRIncBrightnessAction, SIGNAL(triggered()), this, SLOT(rangeDRRIncBrightness()));
     rangeMenu->addAction(rangeDRRIncBrightnessAction);
-    QAction* rangeDRRResetBrightnessAction = new QAction("Reset DRR brightness", this);
+    QAction* rangeDRRResetBrightnessAction = new QAction("&Reset DRR brightness", this);
     connect(rangeDRRResetBrightnessAction, SIGNAL(triggered()), this, SLOT(rangeDRRResetBrightness()));
     rangeMenu->addAction(rangeDRRResetBrightnessAction);
 
     QMenu* colorMapMenu = menuBar()->addMenu("&Colormap");
-    QAction* colorMapDisableAction = new QAction("Disable color map", this);
+    _colorMapToggleOverlayAction = new QAction("Toggle colormap overlay");
+    _colorMapToggleOverlayAction->setCheckable(true);
+    connect(_colorMapToggleOverlayAction, SIGNAL(triggered()), this, SLOT(colorMapToggleOverlay()));
+    colorMapMenu->addAction(_colorMapToggleOverlayAction);
+    colorMapMenu->addSeparator();
+    QAction* colorMapDisableAction = new QAction("Disable color &map", this);
     connect(colorMapDisableAction, SIGNAL(triggered()), this, SLOT(colorMapDisable()));
     colorMapMenu->addAction(colorMapDisableAction);
-    QAction* colorMapCycleSequentialAction = new QAction("Enable next sequential color map", this);
+    QAction* colorMapCycleSequentialAction = new QAction("Enable next &sequential color map", this);
     connect(colorMapCycleSequentialAction, SIGNAL(triggered()), this, SLOT(colorMapCycleSequential()));
     colorMapMenu->addAction(colorMapCycleSequentialAction);
-    QAction* colorMapCycleDivergingAction = new QAction("Enable next diverging color map", this);
+    QAction* colorMapCycleDivergingAction = new QAction("Enable next d&iverging color map", this);
     connect(colorMapCycleDivergingAction, SIGNAL(triggered()), this, SLOT(colorMapCycleDiverging()));
     colorMapMenu->addAction(colorMapCycleDivergingAction);
-    QAction* colorMapQualitativeAction = new QAction("Enable qualitative color map", this);
+    QAction* colorMapQualitativeAction = new QAction("Enable &qualitative color map", this);
     connect(colorMapQualitativeAction, SIGNAL(triggered()), this, SLOT(colorMapQualitative()));
     colorMapMenu->addAction(colorMapQualitativeAction);
-    QAction* colorMapCustomAction = new QAction("Enable custom color map (import from clipboard in CSV format)", this);
+    QAction* colorMapCustomAction = new QAction("Enable &custom color map (import from clipboard in CSV format)", this);
     connect(colorMapCustomAction, SIGNAL(triggered()), this, SLOT(colorMapCustom()));
     colorMapMenu->addAction(colorMapCustomAction);
+
+    QMenu* analysisMenu = menuBar()->addMenu("&Analysis");
+    _analysisToggleInfoAction = new QAction("Toggle &info overlay", this);
+    _analysisToggleInfoAction->setCheckable(true);
+    connect(_analysisToggleInfoAction, SIGNAL(triggered()), this, SLOT(analysisToggleInfo()));
+    analysisMenu->addAction(_analysisToggleInfoAction);
+    _analysisToggleStatisticsAction = new QAction("Toggle &statistics overlay", this);
+    _analysisToggleStatisticsAction->setCheckable(true);
+    connect(_analysisToggleStatisticsAction, SIGNAL(triggered()), this, SLOT(analysisToggleStatistics()));
+    analysisMenu->addAction(_analysisToggleStatisticsAction);
+    _analysisToggleValueAction = new QAction("Toggle &value inspection overlay", this);
+    _analysisToggleValueAction->setCheckable(true);
+    connect(_analysisToggleValueAction, SIGNAL(triggered()), this, SLOT(analysisToggleValue()));
+    analysisMenu->addAction(_analysisToggleValueAction);
 
     connect(_qv, SIGNAL(toggleFullscreen()), this, SLOT(viewToggleFullscreen()));
     connect(_qv, SIGNAL(parametersChanged()), this, SLOT(updateFromParameters()));
@@ -422,6 +446,11 @@ void Gui::viewToggleGrid()
     _qv->toggleGrid();
 }
 
+void Gui::rangeToggleOverlay()
+{
+    _qv->toggleOverlayHistogram();
+}
+
 void Gui::rangeDecLo()
 {
     _qv->adjustVisInterval(-1, 0);
@@ -477,6 +506,11 @@ void Gui::rangeDRRResetBrightness()
     _qv->adjustDRRBrightness(0);
 }
 
+void Gui::colorMapToggleOverlay()
+{
+    _qv->toggleOverlayColormap();
+}
+
 void Gui::colorMapDisable()
 {
     _qv->changeColorMap(ColorMapNone);
@@ -502,6 +536,21 @@ void Gui::colorMapCustom()
     _qv->changeColorMap(ColorMapCustom);
 }
 
+void Gui::analysisToggleInfo()
+{
+    _qv->toggleOverlayInfo();
+}
+
+void Gui::analysisToggleStatistics()
+{
+    _qv->toggleOverlayStatistics();
+}
+
+void Gui::analysisToggleValue()
+{
+    _qv->toggleOverlayValue();
+}
+
 void Gui::updateFromParameters()
 {
     Parameters p;
@@ -510,5 +559,10 @@ void Gui::updateFromParameters()
     }
     _viewToggleLinearInterpolationAction->setChecked(p.magInterpolation);
     _viewToggleGridAction->setChecked(p.magGrid);
+    _rangeToggleOverlayAction->setChecked(_qv->overlayHistogramActive);
     _rangeDRRToggleAction->setChecked(p.dynamicRangeReduction);
+    _colorMapToggleOverlayAction->setChecked(_qv->overlayColorMapActive);
+    _analysisToggleInfoAction->setChecked(_qv->overlayInfoActive);
+    _analysisToggleStatisticsAction->setChecked(_qv->overlayStatisticActive);
+    _analysisToggleValueAction->setChecked(_qv->overlayValueActive);
 }

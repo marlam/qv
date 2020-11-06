@@ -40,7 +40,12 @@ private:
     QV* _qv;
     QAction* _viewToggleLinearInterpolationAction;
     QAction* _viewToggleGridAction;
+    QAction* _rangeToggleOverlayAction;
     QAction* _rangeDRRToggleAction;
+    QAction* _colorMapToggleOverlayAction;
+    QAction* _analysisToggleInfoAction;
+    QAction* _analysisToggleStatisticsAction;
+    QAction* _analysisToggleValueAction;
 
 private slots:
     void fileOpen();
@@ -80,6 +85,7 @@ private slots:
     void viewRecenter();
     void viewToggleLinearInterpolation();
     void viewToggleGrid();
+    void rangeToggleOverlay();
     void rangeDecLo();
     void rangeIncLo();
     void rangeDecHi();
@@ -91,11 +97,15 @@ private slots:
     void rangeDRRDecBrightness();
     void rangeDRRIncBrightness();
     void rangeDRRResetBrightness();
+    void colorMapToggleOverlay();
     void colorMapDisable();
     void colorMapCycleSequential();
     void colorMapCycleDiverging();
     void colorMapQualitative();
     void colorMapCustom();
+    void analysisToggleInfo();
+    void analysisToggleStatistics();
+    void analysisToggleValue();
 
     void updateFromParameters();
 

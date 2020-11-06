@@ -126,6 +126,8 @@ public:
     void toggleOverlayValue();
     void toggleOverlayHistogram();
     void toggleOverlayColormap();
+    void toggleOverlayHelp();
+    void toggleApplyCurrentParametersToAllFiles();
 
 signals:
     void toggleFullscreen();

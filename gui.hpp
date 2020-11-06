@@ -43,9 +43,11 @@ private:
     QAction* _rangeToggleOverlayAction;
     QAction* _rangeDRRToggleAction;
     QAction* _colorMapToggleOverlayAction;
+    QAction* _analysisToggleApplyCurrentParametersToAllFilesAction;
     QAction* _analysisToggleInfoAction;
     QAction* _analysisToggleStatisticsAction;
     QAction* _analysisToggleValueAction;
+    QAction* _helpToggleOverlayAction;
 
 private slots:
     void fileOpen();
@@ -103,9 +105,12 @@ private slots:
     void colorMapCycleDiverging();
     void colorMapQualitative();
     void colorMapCustom();
+    void analysisToggleApplyCurrentParametersToAllFiles();
     void analysisToggleInfo();
     void analysisToggleStatistics();
     void analysisToggleValue();
+    void helpToggleOverlay();
+    void helpAbout();
 
     void updateFromParameters();
 

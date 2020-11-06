@@ -900,6 +900,23 @@ void QV::toggleOverlayColormap()
     this->updateView();
 }
 
+void QV::toggleOverlayHelp()
+{
+    if (!haveCurrentFile())
+        return;
+
+    overlayHelpActive = !overlayHelpActive;
+    this->updateView();
+}
+
+void QV::toggleApplyCurrentParametersToAllFiles()
+{
+    if (!haveCurrentFile())
+        return;
+
+    _set.toggleApplyCurrentParametersToAllFiles();
+}
+
 void QV::keyPressEvent(QKeyEvent* e)
 {
     if (e->key() == Qt::Key_Q || e->matches(QKeySequence::Quit)) {
@@ -1013,12 +1030,10 @@ void QV::keyPressEvent(QKeyEvent* e)
         changeColorMap(ColorMapQualitative);
     } else if (e->key() == Qt::Key_F8) {
         changeColorMap(ColorMapCustom);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_A) {
-        _set.toggleApplyCurrentParametersToAllFiles();
-        this->updateView();
-    } else if (haveCurrentFile() && (e->key() == Qt::Key_F1 || e->matches(QKeySequence::HelpContents))) {
-        overlayHelpActive = !overlayHelpActive;
-        this->updateView();
+    } else if (e->key() == Qt::Key_A) {
+        toggleApplyCurrentParametersToAllFiles();
+    } else if (e->key() == Qt::Key_F1 || e->matches(QKeySequence::HelpContents)) {
+        toggleOverlayHelp();
     } else if (e->key() == Qt::Key_I) {
         toggleOverlayInfo();
     } else if (e->key() == Qt::Key_V) {
@@ -1029,13 +1044,13 @@ void QV::keyPressEvent(QKeyEvent* e)
         toggleOverlayHistogram();
     } else if (e->key() == Qt::Key_M) {
         toggleOverlayColormap();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_F2) {
+    } else if (e->key() == Qt::Key_F2) {
         saveView(false);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_F3) {
+    } else if (e->key() == Qt::Key_F3) {
         saveView(true);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_F9) {
+    } else if ( e->key() == Qt::Key_F9) {
         copyView(false);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_F10) {
+    } else if (e->key() == Qt::Key_F10) {
         copyView(true);
     } else {
         QOpenGLWidget::keyPressEvent(e);

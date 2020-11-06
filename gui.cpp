@@ -23,8 +23,10 @@
 
 #include <QMenu>
 #include <QMenuBar>
+#include <QMessageBox>
 
 #include "gui.hpp"
+#include "version.hpp"
 
 
 Gui::Gui(Set& set) : QMainWindow(),
@@ -234,6 +236,11 @@ Gui::Gui(Set& set) : QMainWindow(),
     colorMapMenu->addAction(colorMapCustomAction);
 
     QMenu* analysisMenu = menuBar()->addMenu("&Analysis");
+    _analysisToggleApplyCurrentParametersToAllFilesAction = new QAction("Toggle &application of current parameters to all files", this);
+    _analysisToggleApplyCurrentParametersToAllFilesAction->setCheckable(true);
+    connect(_analysisToggleApplyCurrentParametersToAllFilesAction, SIGNAL(triggered()), this, SLOT(analysisToggleApplyCurrentParametersToAllFiles()));
+    analysisMenu->addAction(_analysisToggleApplyCurrentParametersToAllFilesAction);
+    analysisMenu->addSeparator();
     _analysisToggleInfoAction = new QAction("Toggle &info overlay", this);
     _analysisToggleInfoAction->setCheckable(true);
     connect(_analysisToggleInfoAction, SIGNAL(triggered()), this, SLOT(analysisToggleInfo()));
@@ -246,6 +253,16 @@ Gui::Gui(Set& set) : QMainWindow(),
     _analysisToggleValueAction->setCheckable(true);
     connect(_analysisToggleValueAction, SIGNAL(triggered()), this, SLOT(analysisToggleValue()));
     analysisMenu->addAction(_analysisToggleValueAction);
+
+    QMenu* helpMenu = menuBar()->addMenu("&Help");
+    _helpToggleOverlayAction = new QAction("Toggle &help overlay", this);
+    _helpToggleOverlayAction->setCheckable(true);
+    connect(_helpToggleOverlayAction, SIGNAL(triggered()), this, SLOT(helpToggleOverlay()));
+    helpMenu->addAction(_helpToggleOverlayAction);
+    helpMenu->addSeparator();
+    QAction* helpAboutAction = new QAction("&About");
+    connect(helpAboutAction, SIGNAL(triggered()), this, SLOT(helpAbout()));
+    helpMenu->addAction(helpAboutAction);
 
     connect(_qv, SIGNAL(toggleFullscreen()), this, SLOT(viewToggleFullscreen()));
     connect(_qv, SIGNAL(parametersChanged()), this, SLOT(updateFromParameters()));
@@ -536,6 +553,11 @@ void Gui::colorMapCustom()
     _qv->changeColorMap(ColorMapCustom);
 }
 
+void Gui::analysisToggleApplyCurrentParametersToAllFiles()
+{
+    _qv->toggleApplyCurrentParametersToAllFiles();
+}
+
 void Gui::analysisToggleInfo()
 {
     _qv->toggleOverlayInfo();
@@ -551,6 +573,26 @@ void Gui::analysisToggleValue()
     _qv->toggleOverlayValue();
 }
 
+void Gui::helpToggleOverlay()
+{
+    _qv->toggleOverlayHelp();
+}
+
+void Gui::helpAbout()
+{
+    QMessageBox::about(this, "About qv",
+                QString("<p>qv version %1<br>"
+                    "   <a href=\"https://marlam.de/qv\">https://marlam.de/qv</a></p>"
+                    "<p>Copyright (C) 2020<br>"
+                    "   <a href=\"https://www.cg.informatik.uni-siegen.de/\">"
+                    "   Computer Graphics Group, University of Siegen</a>.<br>"
+                    "   Written by <a href=\"https://marlam.de/\">Martin Lambers</a>.<br>"
+                    "   This is free software under the terms of the "
+                    "<a href=\"https://www.debian.org/legal/licenses/mit\">MIT/Expat License</a>. "
+                    "   There is NO WARRANTY, to the extent permitted by law."
+                    "</p>").arg(QV_VERSION));
+}
+
 void Gui::updateFromParameters()
 {
     Parameters p;
@@ -562,7 +604,9 @@ void Gui::updateFromParameters()
     _rangeToggleOverlayAction->setChecked(_qv->overlayHistogramActive);
     _rangeDRRToggleAction->setChecked(p.dynamicRangeReduction);
     _colorMapToggleOverlayAction->setChecked(_qv->overlayColorMapActive);
+    _analysisToggleApplyCurrentParametersToAllFilesAction->setChecked(_set.applyCurrentParametersToAllFiles());
     _analysisToggleInfoAction->setChecked(_qv->overlayInfoActive);
     _analysisToggleStatisticsAction->setChecked(_qv->overlayStatisticActive);
     _analysisToggleValueAction->setChecked(_qv->overlayValueActive);
+    _helpToggleOverlayAction->setChecked(_qv->overlayHelpActive);
 }

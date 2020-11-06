@@ -57,6 +57,17 @@ private slots:
     void framePrev10();
     void frameNext100();
     void framePrev100();
+    void channelColor();
+    void channel0();
+    void channel1();
+    void channel2();
+    void channel3();
+    void channel4();
+    void channel5();
+    void channel6();
+    void channel7();
+    void channel8();
+    void channel9();
 
 public:
     Gui(Set& set);

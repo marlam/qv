@@ -106,6 +106,41 @@ Gui::Gui(Set& set) : QMainWindow(),
     connect(framePrev100Action, SIGNAL(triggered()), this, SLOT(framePrev100()));
     frameMenu->addAction(framePrev100Action);
 
+    QMenu* channelMenu = menuBar()->addMenu("Channel");
+    QAction* channelColorAction = new QAction("Show color channels of this frame", this);
+    connect(channelColorAction, SIGNAL(triggered()), this, SLOT(channelColor()));
+    channelMenu->addAction(channelColorAction);
+    QAction* channel0Action = new QAction("Show channel 0 of this frame", this);
+    connect(channel0Action, SIGNAL(triggered()), this, SLOT(channel0()));
+    channelMenu->addAction(channel0Action);
+    QAction* channel1Action = new QAction("Show channel 1 of this frame", this);
+    connect(channel1Action, SIGNAL(triggered()), this, SLOT(channel1()));
+    channelMenu->addAction(channel1Action);
+    QAction* channel2Action = new QAction("Show channel 2 of this frame", this);
+    connect(channel2Action, SIGNAL(triggered()), this, SLOT(channel2()));
+    channelMenu->addAction(channel2Action);
+    QAction* channel3Action = new QAction("Show channel 3 of this frame", this);
+    connect(channel3Action, SIGNAL(triggered()), this, SLOT(channel3()));
+    channelMenu->addAction(channel3Action);
+    QAction* channel4Action = new QAction("Show channel 4 of this frame", this);
+    connect(channel4Action, SIGNAL(triggered()), this, SLOT(channel4()));
+    channelMenu->addAction(channel4Action);
+    QAction* channel5Action = new QAction("Show channel 5 of this frame", this);
+    connect(channel5Action, SIGNAL(triggered()), this, SLOT(channel5()));
+    channelMenu->addAction(channel5Action);
+    QAction* channel6Action = new QAction("Show channel 6 of this frame", this);
+    connect(channel6Action, SIGNAL(triggered()), this, SLOT(channel6()));
+    channelMenu->addAction(channel6Action);
+    QAction* channel7Action = new QAction("Show channel 7 of this frame", this);
+    connect(channel7Action, SIGNAL(triggered()), this, SLOT(channel7()));
+    channelMenu->addAction(channel7Action);
+    QAction* channel8Action = new QAction("Show channel 8 of this frame", this);
+    connect(channel8Action, SIGNAL(triggered()), this, SLOT(channel8()));
+    channelMenu->addAction(channel8Action);
+    QAction* channel9Action = new QAction("Show channel 9 of this frame", this);
+    connect(channel9Action, SIGNAL(triggered()), this, SLOT(channel9()));
+    channelMenu->addAction(channel9Action);
+
     setCentralWidget(_qv);
     _qv->setFocus();
 }
@@ -203,4 +238,59 @@ void Gui::frameNext100()
 void Gui::framePrev100()
 {
     _qv->adjustFrameIndex(-100);
+}
+
+void Gui::channelColor()
+{
+    _qv->setChannelIndex(ColorChannelIndex);
+}
+
+void Gui::channel0()
+{
+    _qv->setChannelIndex(0);
+}
+
+void Gui::channel1()
+{
+    _qv->setChannelIndex(1);
+}
+
+void Gui::channel2()
+{
+    _qv->setChannelIndex(2);
+}
+
+void Gui::channel3()
+{
+    _qv->setChannelIndex(3);
+}
+
+void Gui::channel4()
+{
+    _qv->setChannelIndex(4);
+}
+
+void Gui::channel5()
+{
+    _qv->setChannelIndex(5);
+}
+
+void Gui::channel6()
+{
+    _qv->setChannelIndex(6);
+}
+
+void Gui::channel7()
+{
+    _qv->setChannelIndex(7);
+}
+
+void Gui::channel8()
+{
+    _qv->setChannelIndex(8);
+}
+
+void Gui::channel9()
+{
+    _qv->setChannelIndex(9);
 }

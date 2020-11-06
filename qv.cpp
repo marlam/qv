@@ -650,6 +650,9 @@ void QV::adjustFrameIndex(int offset)
 
 void QV::setChannelIndex(int index)
 {
+    if (!haveCurrentFile())
+        return;
+
     Frame* frame = _set.currentFile()->currentFrame();
     if (index == ColorChannelIndex) {
         if (frame->colorSpace() != ColorSpaceNone)
@@ -801,27 +804,27 @@ void QV::keyPressEvent(QKeyEvent* e)
             adjustFrameIndex(-100);
         else
             adjustFileIndex(-100);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_C) {
+    } else if (e->key() == Qt::Key_C) {
         setChannelIndex(ColorChannelIndex);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_0) {
+    } else if (e->key() == Qt::Key_0) {
         setChannelIndex(0);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_1) {
+    } else if (e->key() == Qt::Key_1) {
         setChannelIndex(1);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_2) {
+    } else if (e->key() == Qt::Key_2) {
         setChannelIndex(2);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_3) {
+    } else if (e->key() == Qt::Key_3) {
         setChannelIndex(3);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_4) {
+    } else if (e->key() == Qt::Key_4) {
         setChannelIndex(4);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_5) {
+    } else if (e->key() == Qt::Key_5) {
         setChannelIndex(5);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_6) {
+    } else if (e->key() == Qt::Key_6) {
         setChannelIndex(6);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_7) {
+    } else if (e->key() == Qt::Key_7) {
         setChannelIndex(7);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_8) {
+    } else if (e->key() == Qt::Key_8) {
         setChannelIndex(8);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_9) {
+    } else if ( e->key() == Qt::Key_9) {
         setChannelIndex(9);
     } else if (haveCurrentFile() && e->key() == Qt::Key_L) {
         _set.currentParameters()->magInterpolation = !_set.currentParameters()->magInterpolation;

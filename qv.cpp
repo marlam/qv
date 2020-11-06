@@ -592,6 +592,9 @@ void QV::reloadFile()
 
 void QV::adjustFileIndex(int offset)
 {
+    if (!haveCurrentFile())
+        return;
+
     int i = _set.fileIndex();
     int ni = i + offset;
     if (ni < 0)
@@ -614,6 +617,9 @@ void QV::adjustFileIndex(int offset)
 
 void QV::adjustFrameIndex(int offset)
 {
+    if (!haveCurrentFile())
+        return;
+
     File* file = _set.currentFile();
     std::string errMsg;
     int fc = file->frameCount(errMsg);
@@ -765,32 +771,32 @@ void QV::keyPressEvent(QKeyEvent* e)
         closeFile();
     } else if (e->key() == Qt::Key_R || e->matches(QKeySequence::Refresh)) {
         reloadFile();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_Left) {
+    } else if (e->key() == Qt::Key_Left) {
         if (e->modifiers() == Qt::ShiftModifier)
             adjustFrameIndex(-1);
         else
             adjustFileIndex(-1);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_Right) {
+    } else if (e->key() == Qt::Key_Right) {
         if (e->modifiers() == Qt::ShiftModifier)
             adjustFrameIndex(+1);
         else
             adjustFileIndex(+1);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_Down) {
+    } else if (e->key() == Qt::Key_Down) {
         if (e->modifiers() == Qt::ShiftModifier)
             adjustFrameIndex(+10);
         else
             adjustFileIndex(+10);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_Up) {
+    } else if (e->key() == Qt::Key_Up) {
         if (e->modifiers() == Qt::ShiftModifier)
             adjustFrameIndex(-10);
         else
             adjustFileIndex(-10);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_PageDown) {
+    } else if (e->key() == Qt::Key_PageDown) {
         if (e->modifiers() == Qt::ShiftModifier)
             adjustFrameIndex(+100);
         else
             adjustFileIndex(+100);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_PageUp) {
+    } else if (e->key() == Qt::Key_PageUp) {
         if (e->modifiers() == Qt::ShiftModifier)
             adjustFrameIndex(-100);
         else

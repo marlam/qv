@@ -51,6 +51,12 @@ private slots:
     void filePrev10();
     void fileNext100();
     void filePrev100();
+    void frameNext();
+    void framePrev();
+    void frameNext10();
+    void framePrev10();
+    void frameNext100();
+    void framePrev100();
 
 public:
     Gui(Set& set);

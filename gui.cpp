@@ -30,8 +30,6 @@
 Gui::Gui(Set& set) : QMainWindow(),
     _qv(new QV(set, this))
 {
-    // TODO: where to put "Copy current view", "Copy 1:1 view"?
-
     QMenu* fileMenu = menuBar()->addMenu("&File");
     QAction* fileOpenAction = new QAction("&Open...", this);
     fileOpenAction->setShortcut(QKeySequence::Open);
@@ -87,6 +85,26 @@ Gui::Gui(Set& set) : QMainWindow(),
     fileQuitAction->setShortcut(QKeySequence::Quit);
     connect(fileQuitAction, SIGNAL(triggered()), this, SLOT(close()));
     fileMenu->addAction(fileQuitAction);
+
+    QMenu* frameMenu = menuBar()->addMenu("Frame");
+    QAction* frameNextAction = new QAction("Jump to next frame in this file", this);
+    connect(frameNextAction, SIGNAL(triggered()), this, SLOT(frameNext()));
+    frameMenu->addAction(frameNextAction);
+    QAction* framePrevAction = new QAction("Jump to previous frame in this file", this);
+    connect(framePrevAction, SIGNAL(triggered()), this, SLOT(framePrev()));
+    frameMenu->addAction(framePrevAction);
+    QAction* frameNext10Action = new QAction("Jump 10 frames forward in this file", this);
+    connect(frameNext10Action, SIGNAL(triggered()), this, SLOT(frameNext10()));
+    frameMenu->addAction(frameNext10Action);
+    QAction* framePrev10Action = new QAction("Jump 10 frames backward in this file", this);
+    connect(framePrev10Action, SIGNAL(triggered()), this, SLOT(framePrev10()));
+    frameMenu->addAction(framePrev10Action);
+    QAction* frameNext100Action = new QAction("Jump 100 frames forward in this file", this);
+    connect(frameNext100Action, SIGNAL(triggered()), this, SLOT(frameNext100()));
+    frameMenu->addAction(frameNext100Action);
+    QAction* framePrev100Action = new QAction("Jump 100 frames backward in this file", this);
+    connect(framePrev100Action, SIGNAL(triggered()), this, SLOT(framePrev100()));
+    frameMenu->addAction(framePrev100Action);
 
     setCentralWidget(_qv);
     _qv->setFocus();
@@ -155,4 +173,34 @@ void Gui::fileNext100()
 void Gui::filePrev100()
 {
     _qv->adjustFileIndex(-100);
+}
+
+void Gui::frameNext()
+{
+    _qv->adjustFrameIndex(+1);
+}
+
+void Gui::framePrev()
+{
+    _qv->adjustFrameIndex(-1);
+}
+
+void Gui::frameNext10()
+{
+    _qv->adjustFrameIndex(+10);
+}
+
+void Gui::framePrev10()
+{
+    _qv->adjustFrameIndex(-10);
+}
+
+void Gui::frameNext100()
+{
+    _qv->adjustFrameIndex(+100);
+}
+
+void Gui::framePrev100()
+{
+    _qv->adjustFrameIndex(-100);
 }

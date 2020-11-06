@@ -37,6 +37,19 @@ Q_OBJECT
 private:
     QV* _qv;
 
+private slots:
+    void fileOpen();
+    void fileClose();
+    void fileReload();
+    void fileSaveCurrentView();
+    void fileSaveView();
+    void fileNext();
+    void filePrev();
+    void fileNext10();
+    void filePrev10();
+    void fileNext100();
+    void filePrev100();
+
 public:
     Gui(Set& set);
 };

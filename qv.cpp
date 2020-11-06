@@ -565,6 +565,31 @@ void QV::openFile()
     this->update();
 }
 
+void QV::closeFile()
+{
+    if (haveCurrentFile()) {
+        QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+        _set.removeFile(_set.fileIndex());
+        QGuiApplication::restoreOverrideCursor();
+        this->updateTitle();
+        this->update();
+    }
+}
+
+void QV::reloadFile()
+{
+    if (haveCurrentFile()) {
+        std::string errMsg;
+        QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+        if (!_set.currentFile()->reload(errMsg)) {
+            QMessageBox::critical(this, "Error", errMsg.c_str());
+        }
+        QGuiApplication::restoreOverrideCursor();
+        this->updateTitle();
+        this->update();
+    }
+}
+
 void QV::adjustFileIndex(int offset)
 {
     int i = _set.fileIndex();
@@ -736,21 +761,10 @@ void QV::keyPressEvent(QKeyEvent* e)
             window()->showFullScreen();
     } else if (e->key() == Qt::Key_O || e->matches(QKeySequence::Open)) {
         openFile();
-    } else if (haveCurrentFile() && (e->key() == Qt::Key_W || e->matches(QKeySequence::Close))) {
-        QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-        _set.removeFile(_set.fileIndex());
-        QGuiApplication::restoreOverrideCursor();
-        this->updateTitle();
-        this->update();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_R) {
-        std::string errMsg;
-        QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-        if (!_set.currentFile()->reload(errMsg)) {
-            QMessageBox::critical(this, "Error", errMsg.c_str());
-        }
-        QGuiApplication::restoreOverrideCursor();
-        this->updateTitle();
-        this->update();
+    } else if (e->key() == Qt::Key_W || e->matches(QKeySequence::Close)) {
+        closeFile();
+    } else if (e->key() == Qt::Key_R || e->matches(QKeySequence::Refresh)) {
+        reloadFile();
     } else if (haveCurrentFile() && e->key() == Qt::Key_Left) {
         if (e->modifiers() == Qt::ShiftModifier)
             adjustFrameIndex(-1);

@@ -88,17 +88,6 @@ private:
 
     bool haveCurrentFile() const;
 
-    void openFile();
-    void adjustFileIndex(int offset);
-    void adjustFrameIndex(int offset);
-    void setChannelIndex(int index);
-    void adjustZoom(int steps);
-    void adjustVisInterval(int minSteps, int maxSteps);
-    void resetVisInterval();
-    void changeColorMap(ColorMapType type);
-    void saveView(bool pure);
-    void copyView(bool pure);
-
 public:
     QV(Set& set, QWidget* parent = nullptr);
 
@@ -111,6 +100,19 @@ public:
     virtual void mousePressEvent(QMouseEvent* e) override;
     virtual void mouseReleaseEvent(QMouseEvent* e) override;
     virtual void wheelEvent(QWheelEvent* e) override;
+
+    void openFile();
+    void closeFile();
+    void reloadFile();
+    void adjustFileIndex(int offset);
+    void adjustFrameIndex(int offset);
+    void setChannelIndex(int index);
+    void adjustZoom(int steps);
+    void adjustVisInterval(int minSteps, int maxSteps);
+    void resetVisInterval();
+    void changeColorMap(ColorMapType type);
+    void saveView(bool pure);
+    void copyView(bool pure);
 };
 
 #endif

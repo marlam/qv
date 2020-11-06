@@ -29,13 +29,17 @@
 #include "set.hpp"
 #include "qv.hpp"
 
+class QAction;
 
 class Gui : public QMainWindow
 {
 Q_OBJECT
 
 private:
+    Set& _set;
     QV* _qv;
+    QAction* _viewToggleLinearInterpolationAction;
+    QAction* _viewToggleGridAction;
 
 private slots:
     void fileOpen();
@@ -68,6 +72,15 @@ private slots:
     void channel7();
     void channel8();
     void channel9();
+    void viewToggleFullscreen();
+    void viewZoomIn();
+    void viewZoomOut();
+    void viewZoomReset();
+    void viewRecenter();
+    void viewToggleLinearInterpolation();
+    void viewToggleGrid();
+
+    void updateFromParameters();
 
 public:
     Gui(Set& set);

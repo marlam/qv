@@ -65,6 +65,7 @@ private:
     bool _overlayColorMapActive;
     OverlayColorMap _overlayColorMap;
 
+    void updateView();
     void updateTitle();
     void navigationParameters(Frame* frame,
             int widgetWidth, int widgetHeight,
@@ -113,6 +114,14 @@ public:
     void changeColorMap(ColorMapType type);
     void saveView(bool pure);
     void copyView(bool pure);
+    void toggleLinearInterpolation();
+    void toggleGrid();
+    void resetZoom();
+    void recenter();
+
+signals:
+    void toggleFullscreen();
+    void parametersChanged();
 };
 
 #endif

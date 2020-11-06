@@ -71,6 +71,12 @@ QV::QV(Set& set, QWidget* parent) :
     updateTitle();
 }
 
+void QV::updateView()
+{
+    emit parametersChanged();
+    this->update();
+}
+
 void QV::updateTitle()
 {
     std::string s = _set.currentDescription();
@@ -562,7 +568,7 @@ void QV::openFile()
     }
     QGuiApplication::restoreOverrideCursor();
     this->updateTitle();
-    this->update();
+    this->updateView();
 }
 
 void QV::closeFile()
@@ -572,7 +578,7 @@ void QV::closeFile()
         _set.removeFile(_set.fileIndex());
         QGuiApplication::restoreOverrideCursor();
         this->updateTitle();
-        this->update();
+        this->updateView();
     }
 }
 
@@ -586,7 +592,7 @@ void QV::reloadFile()
         }
         QGuiApplication::restoreOverrideCursor();
         this->updateTitle();
-        this->update();
+        this->updateView();
     }
 }
 
@@ -611,7 +617,7 @@ void QV::adjustFileIndex(int offset)
         }
         QGuiApplication::restoreOverrideCursor();
         this->updateTitle();
-        this->update();
+        this->updateView();
     }
 }
 
@@ -638,7 +644,7 @@ void QV::adjustFrameIndex(int offset)
     if (ni != i) {
         if (file->setFrameIndex(ni, errMsg)) {
             this->updateTitle();
-            this->update();
+            this->updateView();
         } else {
             QMessageBox::critical(this, "Error", (errMsg
                         + ".\n\nClosing this file.").c_str());
@@ -662,18 +668,21 @@ void QV::setChannelIndex(int index)
             frame->setChannelIndex(index);
     }
     this->updateTitle();
-    this->update();
+    this->updateView();
 }
 
 void QV::adjustZoom(int steps)
 {
+    if (!haveCurrentFile())
+        return;
+
     float adjustmentPerStep = std::max(0.000001f, _set.currentParameters()->zoom * 0.05f);
     float oldZoom = _set.currentParameters()->zoom;
     float newZoom = std::max(0.000001f, _set.currentParameters()->zoom - steps * adjustmentPerStep);
     _set.currentParameters()->xOffset = _set.currentParameters()->xOffset * oldZoom / newZoom;
     _set.currentParameters()->yOffset = _set.currentParameters()->yOffset * oldZoom / newZoom;
     _set.currentParameters()->zoom = newZoom;
-    this->update();
+    this->updateView();
 }
 
 void QV::adjustVisInterval(int minSteps, int maxSteps)
@@ -700,7 +709,7 @@ void QV::adjustVisInterval(int minSteps, int maxSteps)
         newMaxVal = defaultVisMax;
     _set.currentParameters()->setVisMinVal(frame->channelIndex(), newMinVal);
     _set.currentParameters()->setVisMaxVal(frame->channelIndex(), newMaxVal);
-    this->update();
+    this->updateView();
 }
 
 void QV::resetVisInterval()
@@ -708,7 +717,7 @@ void QV::resetVisInterval()
     Frame* frame = _set.currentFile()->currentFrame();
     _set.currentParameters()->setVisMinVal(frame->channelIndex(), std::numeric_limits<float>::quiet_NaN());
     _set.currentParameters()->setVisMaxVal(frame->channelIndex(), std::numeric_limits<float>::quiet_NaN());
-    this->update();
+    this->updateView();
 }
 
 void QV::changeColorMap(ColorMapType type)
@@ -719,11 +728,14 @@ void QV::changeColorMap(ColorMapType type)
     } else {
         _set.currentParameters()->colorMap().cycle();
     }
-    this->update();
+    this->updateView();
 }
 
 void QV::saveView(bool pure)
 {
+    if (!haveCurrentFile())
+        return;
+
     Frame* frame = _set.currentFile()->currentFrame();
     QString name = QFileDialog::getSaveFileName(this, QString(), QString(), "PNG images (*.png)");
     if (!name.isEmpty()) {
@@ -738,11 +750,51 @@ void QV::saveView(bool pure)
 
 void QV::copyView(bool pure)
 {
+    if (!haveCurrentFile())
+        return;
+
     Frame* frame = _set.currentFile()->currentFrame();
     QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     QGuiApplication::clipboard()->setImage(
             pure ? renderFrameToImage(frame) : grabFramebuffer());
     QGuiApplication::restoreOverrideCursor();
+}
+
+void QV::toggleLinearInterpolation()
+{
+    if (!haveCurrentFile())
+        return;
+
+    _set.currentParameters()->magInterpolation = !_set.currentParameters()->magInterpolation;
+    this->updateView();
+}
+
+void QV::toggleGrid()
+{
+    if (!haveCurrentFile())
+        return;
+
+    _set.currentParameters()->magGrid = !_set.currentParameters()->magGrid;
+    this->updateView();
+}
+
+void QV::resetZoom()
+{
+    if (!haveCurrentFile())
+        return;
+
+    _set.currentParameters()->zoom = 1.0f;
+    this->updateView();
+}
+
+void QV::recenter()
+{
+    if (!haveCurrentFile())
+        return;
+
+    _set.currentParameters()->xOffset = 0.0f;
+    _set.currentParameters()->yOffset = 0.0f;
+    this->updateView();
 }
 
 static bool frameIsPrettyBig(const Frame* frame)
@@ -760,14 +812,11 @@ void QV::keyPressEvent(QKeyEvent* e)
         window()->close();
     } else if (e->key() == Qt::Key_Escape) {
         if (window()->windowState() & Qt::WindowFullScreen)
-            window()->showNormal();
+            emit toggleFullscreen();
         else
             window()->close();
     } else if (e->key() == Qt::Key_F11 || e->matches(QKeySequence::FullScreen)) {
-        if (window()->windowState() & Qt::WindowFullScreen)
-            window()->showNormal();
-        else
-            window()->showFullScreen();
+        emit toggleFullscreen();
     } else if (e->key() == Qt::Key_O || e->matches(QKeySequence::Open)) {
         openFile();
     } else if (e->key() == Qt::Key_W || e->matches(QKeySequence::Close)) {
@@ -824,25 +873,20 @@ void QV::keyPressEvent(QKeyEvent* e)
         setChannelIndex(7);
     } else if (e->key() == Qt::Key_8) {
         setChannelIndex(8);
-    } else if ( e->key() == Qt::Key_9) {
+    } else if (e->key() == Qt::Key_9) {
         setChannelIndex(9);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_L) {
-        _set.currentParameters()->magInterpolation = !_set.currentParameters()->magInterpolation;
-        this->update();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_G) {
-        _set.currentParameters()->magGrid = !_set.currentParameters()->magGrid;
-        this->update();
-    } else if (haveCurrentFile() && e->key() == Qt::Key_Equal) {
-        _set.currentParameters()->zoom = 1.0f;
-        this->update();
-    } else if (haveCurrentFile() && (e->key() == Qt::Key_Minus || e->matches(QKeySequence::ZoomOut))) {
+    } else if (e->key() == Qt::Key_L) {
+        toggleLinearInterpolation();
+    } else if (e->key() == Qt::Key_G) {
+        toggleGrid();
+    } else if (e->key() == Qt::Key_Equal) {
+        resetZoom();
+    } else if (e->key() == Qt::Key_Minus || e->matches(QKeySequence::ZoomOut)) {
         adjustZoom(-1);
-    } else if (haveCurrentFile() && (e->key() == Qt::Key_Plus || e->matches(QKeySequence::ZoomIn))) {
+    } else if (e->key() == Qt::Key_Plus || e->matches(QKeySequence::ZoomIn)) {
         adjustZoom(+1);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_Space) {
-        _set.currentParameters()->xOffset = 0.0f;
-        _set.currentParameters()->yOffset = 0.0f;
-        this->update();
+    } else if (e->key() == Qt::Key_Space) {
+        recenter();
     } else if (haveCurrentFile() && e->key() == Qt::Key_BraceLeft) {
         adjustVisInterval(-1, 0);
     } else if (haveCurrentFile() && e->key() == Qt::Key_BraceRight) {
@@ -859,16 +903,16 @@ void QV::keyPressEvent(QKeyEvent* e)
         resetVisInterval();
     } else if (haveCurrentFile() && e->key() == Qt::Key_D) {
         _set.currentParameters()->dynamicRangeReduction = !_set.currentParameters()->dynamicRangeReduction;
-        this->update();
+        this->updateView();
     } else if (haveCurrentFile() && e->key() == Qt::Key_Comma) {
         _set.currentParameters()->drrBrightness = std::max(2.0f, _set.currentParameters()->drrBrightness / 2.0f);
-        this->update();
+        this->updateView();
     } else if (haveCurrentFile() && e->key() == Qt::Key_Period) {
         _set.currentParameters()->drrBrightness = _set.currentParameters()->drrBrightness * 2.0f;
-        this->update();
+        this->updateView();
     } else if (haveCurrentFile() && e->key() == Qt::Key_Slash) {
         _set.currentParameters()->drrBrightness = Parameters().drrBrightness;
-        this->update();
+        this->updateView();
     } else if (haveCurrentFile() && e->key() == Qt::Key_F4) {
         changeColorMap(ColorMapNone);
     } else if (haveCurrentFile() && e->key() == Qt::Key_F5) {
@@ -881,13 +925,13 @@ void QV::keyPressEvent(QKeyEvent* e)
         changeColorMap(ColorMapCustom);
     } else if (haveCurrentFile() && e->key() == Qt::Key_A) {
         _set.toggleApplyCurrentParametersToAllFiles();
-        this->update();
+        this->updateView();
     } else if (haveCurrentFile() && (e->key() == Qt::Key_F1 || e->matches(QKeySequence::HelpContents))) {
         _overlayHelpActive = !_overlayHelpActive;
-        this->update();
+        this->updateView();
     } else if (haveCurrentFile() && e->key() == Qt::Key_I) {
         _overlayInfoActive = !_overlayInfoActive;
-        this->update();
+        this->updateView();
     } else if (haveCurrentFile() && e->key() == Qt::Key_V) {
         _overlayValueActive = !_overlayValueActive;
         Frame* frame = _set.currentFile()->currentFrame();
@@ -896,7 +940,7 @@ void QV::keyPressEvent(QKeyEvent* e)
                 && !frame->haveLuminance()) {
             QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         }
-        this->update();
+        this->updateView();
     } else if (haveCurrentFile() && e->key() == Qt::Key_S) {
         _overlayStatisticActive = !_overlayStatisticActive;
         Frame* frame = _set.currentFile()->currentFrame();
@@ -904,7 +948,7 @@ void QV::keyPressEvent(QKeyEvent* e)
                 && !frame->haveStatistic(frame->channelIndex())) {
             QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         }
-        this->update();
+        this->updateView();
     } else if (haveCurrentFile() && e->key() == Qt::Key_H) {
         _overlayHistogramActive = !_overlayHistogramActive;
         Frame* frame = _set.currentFile()->currentFrame();
@@ -912,10 +956,10 @@ void QV::keyPressEvent(QKeyEvent* e)
                 && !frame->haveHistogram(frame->channelIndex())) {
             QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         }
-        this->update();
+        this->updateView();
     } else if (haveCurrentFile() && e->key() == Qt::Key_M) {
         _overlayColorMapActive = !_overlayColorMapActive;
-        this->update();
+        this->updateView();
     } else if (haveCurrentFile() && e->key() == Qt::Key_F2) {
         saveView(false);
     } else if (haveCurrentFile() && e->key() == Qt::Key_F3) {
@@ -934,13 +978,13 @@ void QV::mouseMoveEvent(QMouseEvent* e)
     if (haveCurrentFile()) {
         _mousePos = e->pos();
         if (_overlayValueActive || _overlayHistogramActive)
-            this->update();
+            this->updateView();
         if (_dragMode) {
             QPoint dragEnd = e->pos();
             _set.currentParameters()->xOffset += dragEnd.x() - _dragStart.x();
             _set.currentParameters()->yOffset -= dragEnd.y() - _dragStart.y();
             _dragStart = dragEnd;
-            this->update();
+            this->updateView();
         }
     }
 }

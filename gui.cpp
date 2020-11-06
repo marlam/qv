@@ -28,7 +28,8 @@
 
 
 Gui::Gui(Set& set) : QMainWindow(),
-    _qv(new QV(set, this))
+    _set(set),
+    _qv(new QV(_set, this))
 {
     QMenu* fileMenu = menuBar()->addMenu("&File");
     QAction* fileOpenAction = new QAction("&Open...", this);
@@ -86,7 +87,7 @@ Gui::Gui(Set& set) : QMainWindow(),
     connect(fileQuitAction, SIGNAL(triggered()), this, SLOT(close()));
     fileMenu->addAction(fileQuitAction);
 
-    QMenu* frameMenu = menuBar()->addMenu("Frame");
+    QMenu* frameMenu = menuBar()->addMenu("F&rame");
     QAction* frameNextAction = new QAction("Jump to next frame in this file", this);
     connect(frameNextAction, SIGNAL(triggered()), this, SLOT(frameNext()));
     frameMenu->addAction(frameNextAction);
@@ -106,7 +107,7 @@ Gui::Gui(Set& set) : QMainWindow(),
     connect(framePrev100Action, SIGNAL(triggered()), this, SLOT(framePrev100()));
     frameMenu->addAction(framePrev100Action);
 
-    QMenu* channelMenu = menuBar()->addMenu("Channel");
+    QMenu* channelMenu = menuBar()->addMenu("&Channel");
     QAction* channelColorAction = new QAction("Show color channels of this frame", this);
     connect(channelColorAction, SIGNAL(triggered()), this, SLOT(channelColor()));
     channelMenu->addAction(channelColorAction);
@@ -141,6 +142,36 @@ Gui::Gui(Set& set) : QMainWindow(),
     connect(channel9Action, SIGNAL(triggered()), this, SLOT(channel9()));
     channelMenu->addAction(channel9Action);
 
+    QMenu* viewMenu = menuBar()->addMenu("&View");
+    QAction* viewToggleFullscreenAction = new QAction("Toggle &Fullscreen", this);
+    connect(viewToggleFullscreenAction, SIGNAL(triggered()), this, SLOT(viewToggleFullscreen()));
+    viewMenu->addAction(viewToggleFullscreenAction);
+    viewMenu->addSeparator();
+    QAction* viewZoomInAction = new QAction("Zoom &in", this);
+    connect(viewZoomInAction, SIGNAL(triggered()), this, SLOT(viewZoomIn()));
+    viewMenu->addAction(viewZoomInAction);
+    QAction* viewZoomOutAction = new QAction("Zoom &out", this);
+    connect(viewZoomOutAction, SIGNAL(triggered()), this, SLOT(viewZoomOut()));
+    viewMenu->addAction(viewZoomOutAction);
+    QAction* viewZoomResetAction = new QAction("&Reset zoom", this);
+    connect(viewZoomResetAction, SIGNAL(triggered()), this, SLOT(viewZoomReset()));
+    viewMenu->addAction(viewZoomResetAction);
+    QAction* viewRecenterAction = new QAction("Recenter view", this);
+    connect(viewRecenterAction, SIGNAL(triggered()), this, SLOT(viewRecenter()));
+    viewMenu->addAction(viewRecenterAction);
+    viewMenu->addSeparator();
+    _viewToggleLinearInterpolationAction = new QAction("Toggle &linear interpolation for magnified views");
+    _viewToggleLinearInterpolationAction->setCheckable(true);
+    connect(_viewToggleLinearInterpolationAction, SIGNAL(triggered()), this, SLOT(viewToggleLinearInterpolation()));
+    viewMenu->addAction(_viewToggleLinearInterpolationAction);
+    _viewToggleGridAction = new QAction("Toggle &grid for magnified views");
+    _viewToggleGridAction->setCheckable(true);
+    connect(_viewToggleGridAction, SIGNAL(triggered()), this, SLOT(viewToggleGrid()));
+    viewMenu->addAction(_viewToggleGridAction);
+
+    connect(_qv, SIGNAL(toggleFullscreen()), this, SLOT(viewToggleFullscreen()));
+    connect(_qv, SIGNAL(parametersChanged()), this, SLOT(updateFromParameters()));
+    updateFromParameters();
     setCentralWidget(_qv);
     _qv->setFocus();
 }
@@ -293,4 +324,56 @@ void Gui::channel8()
 void Gui::channel9()
 {
     _qv->setChannelIndex(9);
+}
+
+void Gui::viewToggleFullscreen()
+{
+    if (windowState() & Qt::WindowFullScreen) {
+        showNormal();
+        menuBar()->show();
+        activateWindow();
+    } else {
+        showFullScreen();
+        menuBar()->hide();
+    }
+}
+
+void Gui::viewZoomIn()
+{
+    _qv->adjustZoom(+1);
+}
+
+void Gui::viewZoomOut()
+{
+    _qv->adjustZoom(-1);
+}
+
+void Gui::viewZoomReset()
+{
+    _qv->resetZoom();
+}
+
+void Gui::viewRecenter()
+{
+    _qv->recenter();
+}
+
+void Gui::viewToggleLinearInterpolation()
+{
+    _qv->toggleLinearInterpolation();
+}
+
+void Gui::viewToggleGrid()
+{
+    _qv->toggleGrid();
+}
+
+void Gui::updateFromParameters()
+{
+    Parameters p;
+    if (_set.currentParameters()) {
+        p = *(_set.currentParameters());
+    }
+    _viewToggleLinearInterpolationAction->setChecked(p.magInterpolation);
+    _viewToggleGridAction->setChecked(p.magGrid);
 }

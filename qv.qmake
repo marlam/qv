@@ -17,7 +17,8 @@ HEADERS = version.hpp \
           qv.hpp \
           set.hpp \
           statistic.hpp \
-          utils.hpp
+          utils.hpp \
+          gui.hpp
 
 SOURCES = colormap.cpp \
           file.cpp \
@@ -37,6 +38,7 @@ SOURCES = colormap.cpp \
           set.cpp \
           statistic.cpp \
           utils.cpp \
+          gui.cpp \
           main.cpp
 
 RESOURCES = resources.qrc

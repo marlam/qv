@@ -100,7 +100,7 @@ private:
     void copyView(bool pure);
 
 public:
-    QV(Set& set);
+    QV(Set& set, QWidget* parent = nullptr);
 
     virtual void initializeGL() override;
     virtual void paintGL() override;

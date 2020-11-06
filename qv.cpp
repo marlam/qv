@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020 Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -41,7 +41,8 @@
 #include "gl.hpp"
 
 
-QV::QV(Set& set) :
+QV::QV(Set& set, QWidget* parent) :
+    QOpenGLWidget(parent),
     _set(set),
     _dragMode(false),
     _overlayHelpActive(false),
@@ -51,8 +52,8 @@ QV::QV(Set& set) :
     _overlayHistogramActive(false),
     _overlayColorMapActive(false)
 {
+    window()->setWindowIcon(QIcon(":cg-logo.png"));
     setMouseTracking(true);
-    setWindowIcon(QIcon(":cg-logo.png"));
     setMinimumSize(_overlayHelp.size());
     File* file = _set.currentFile();
     Frame* frame = (file ? file->currentFrame() : nullptr);
@@ -77,7 +78,7 @@ void QV::updateTitle()
         s = "qv";
     else
         s += " - qv";
-    setWindowTitle(s.c_str());
+    window()->setWindowTitle(s.c_str());
 }
 
 void QV::initializeGL()
@@ -722,17 +723,17 @@ static bool frameIsPrettyBig(const Frame* frame)
 void QV::keyPressEvent(QKeyEvent* e)
 {
     if (e->key() == Qt::Key_Q || e->matches(QKeySequence::Quit)) {
-        this->close();
+        window()->close();
     } else if (e->key() == Qt::Key_Escape) {
-        if (this->windowState() & Qt::WindowFullScreen)
-            this->showNormal();
+        if (window()->windowState() & Qt::WindowFullScreen)
+            window()->showNormal();
         else
-            this->close();
+            window()->close();
     } else if (e->key() == Qt::Key_F11 || e->matches(QKeySequence::FullScreen)) {
-        if (this->windowState() & Qt::WindowFullScreen)
-            this->showNormal();
+        if (window()->windowState() & Qt::WindowFullScreen)
+            window()->showNormal();
         else
-            this->showFullScreen();
+            window()->showFullScreen();
     } else if (e->key() == Qt::Key_O || e->matches(QKeySequence::Open)) {
         openFile();
     } else if (haveCurrentFile() && (e->key() == Qt::Key_W || e->matches(QKeySequence::Close))) {

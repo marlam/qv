@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020  Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -38,8 +38,8 @@
 
 #include "version.hpp"
 #include "set.hpp"
-#include "qv.hpp"
 #include "gl.hpp"
+#include "gui.hpp"
 
 
 int main(int argc, char* argv[])
@@ -124,9 +124,9 @@ int main(int argc, char* argv[])
     }
     QSurfaceFormat::setDefaultFormat(format);
 
-    // Present window
-    QV qv(set);
-    qv.show();
+    // Create and show GUI
+    Gui gui(set);
+    gui.show();
 
     return app.exec();
 }

@@ -44,6 +44,7 @@ add_executable(qv
     overlay-histogram.hpp overlay-histogram.cpp
     overlay-colormap.hpp overlay-colormap.cpp
     qv.hpp qv.cpp
+    gui.hpp gui.cpp
     ${RESOURCES})
 target_link_libraries(qv -lstdc++fs ${TAD_LIBRARIES} Qt5::Widgets OpenMP::OpenMP_CXX)
 install(TARGETS qv RUNTIME DESTINATION bin)

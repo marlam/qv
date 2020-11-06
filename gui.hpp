@@ -91,6 +91,11 @@ private slots:
     void rangeDRRDecBrightness();
     void rangeDRRIncBrightness();
     void rangeDRRResetBrightness();
+    void colorMapDisable();
+    void colorMapCycleSequential();
+    void colorMapCycleDiverging();
+    void colorMapQualitative();
+    void colorMapCustom();
 
     void updateFromParameters();
 

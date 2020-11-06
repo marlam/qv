@@ -728,6 +728,9 @@ void QV::resetVisInterval()
 
 void QV::changeColorMap(ColorMapType type)
 {
+    if (!haveCurrentFile())
+        return;
+
     ColorMapType oldType = _set.currentParameters()->colorMap().type();
     if (oldType != type) {
         _set.currentParameters()->colorMap().setType(type);
@@ -851,7 +854,7 @@ void QV::keyPressEvent(QKeyEvent* e)
         openFile();
     } else if (e->key() == Qt::Key_W || e->matches(QKeySequence::Close)) {
         closeFile();
-    } else if (e->key() == Qt::Key_R || e->matches(QKeySequence::Refresh)) {
+    } else if (e->key() == Qt::Key_R /* || e->matches(QKeySequence::Refresh) XXX: F5 conflicts with color map */) {
         reloadFile();
     } else if (e->key() == Qt::Key_Left) {
         if (e->modifiers() == Qt::ShiftModifier)
@@ -939,15 +942,15 @@ void QV::keyPressEvent(QKeyEvent* e)
         adjustDRRBrightness(+1);
     } else if (e->key() == Qt::Key_Slash) {
         adjustDRRBrightness(0);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_F4) {
+    } else if (e->key() == Qt::Key_F4) {
         changeColorMap(ColorMapNone);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_F5) {
+    } else if (e->key() == Qt::Key_F5) {
         changeColorMap(ColorMapSequential);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_F6) {
+    } else if (e->key() == Qt::Key_F6) {
         changeColorMap(ColorMapDiverging);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_F7) {
+    } else if (e->key() == Qt::Key_F7) {
         changeColorMap(ColorMapQualitative);
-    } else if (haveCurrentFile() && e->key() == Qt::Key_F8) {
+    } else if (e->key() == Qt::Key_F8) {
         changeColorMap(ColorMapCustom);
     } else if (haveCurrentFile() && e->key() == Qt::Key_A) {
         _set.toggleApplyCurrentParametersToAllFiles();

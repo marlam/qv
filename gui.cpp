@@ -37,7 +37,7 @@ Gui::Gui(Set& set) : QMainWindow(),
     connect(fileOpenAction, SIGNAL(triggered()), this, SLOT(fileOpen()));
     fileMenu->addAction(fileOpenAction);
     QAction* fileReloadAction = new QAction("&Reload", this);
-    fileReloadAction->setShortcut(QKeySequence::Refresh);
+    //fileReloadAction->setShortcut(QKeySequence::Refresh); // F5 conflicts with color map
     connect(fileReloadAction, SIGNAL(triggered()), this, SLOT(fileReload()));
     fileMenu->addAction(fileReloadAction);
     QAction* fileCloseAction = new QAction("&Close", this);
@@ -205,6 +205,23 @@ Gui::Gui(Set& set) : QMainWindow(),
     QAction* rangeDRRResetBrightnessAction = new QAction("Reset DRR brightness", this);
     connect(rangeDRRResetBrightnessAction, SIGNAL(triggered()), this, SLOT(rangeDRRResetBrightness()));
     rangeMenu->addAction(rangeDRRResetBrightnessAction);
+
+    QMenu* colorMapMenu = menuBar()->addMenu("&Colormap");
+    QAction* colorMapDisableAction = new QAction("Disable color map", this);
+    connect(colorMapDisableAction, SIGNAL(triggered()), this, SLOT(colorMapDisable()));
+    colorMapMenu->addAction(colorMapDisableAction);
+    QAction* colorMapCycleSequentialAction = new QAction("Enable next sequential color map", this);
+    connect(colorMapCycleSequentialAction, SIGNAL(triggered()), this, SLOT(colorMapCycleSequential()));
+    colorMapMenu->addAction(colorMapCycleSequentialAction);
+    QAction* colorMapCycleDivergingAction = new QAction("Enable next diverging color map", this);
+    connect(colorMapCycleDivergingAction, SIGNAL(triggered()), this, SLOT(colorMapCycleDiverging()));
+    colorMapMenu->addAction(colorMapCycleDivergingAction);
+    QAction* colorMapQualitativeAction = new QAction("Enable qualitative color map", this);
+    connect(colorMapQualitativeAction, SIGNAL(triggered()), this, SLOT(colorMapQualitative()));
+    colorMapMenu->addAction(colorMapQualitativeAction);
+    QAction* colorMapCustomAction = new QAction("Enable custom color map (import from clipboard in CSV format)", this);
+    connect(colorMapCustomAction, SIGNAL(triggered()), this, SLOT(colorMapCustom()));
+    colorMapMenu->addAction(colorMapCustomAction);
 
     connect(_qv, SIGNAL(toggleFullscreen()), this, SLOT(viewToggleFullscreen()));
     connect(_qv, SIGNAL(parametersChanged()), this, SLOT(updateFromParameters()));
@@ -458,6 +475,31 @@ void Gui::rangeDRRIncBrightness()
 void Gui::rangeDRRResetBrightness()
 {
     _qv->adjustDRRBrightness(0);
+}
+
+void Gui::colorMapDisable()
+{
+    _qv->changeColorMap(ColorMapNone);
+}
+
+void Gui::colorMapCycleSequential()
+{
+    _qv->changeColorMap(ColorMapSequential);
+}
+
+void Gui::colorMapCycleDiverging()
+{
+    _qv->changeColorMap(ColorMapDiverging);
+}
+
+void Gui::colorMapQualitative()
+{
+    _qv->changeColorMap(ColorMapQualitative);
+}
+
+void Gui::colorMapCustom()
+{
+    _qv->changeColorMap(ColorMapCustom);
 }
 
 void Gui::updateFromParameters()

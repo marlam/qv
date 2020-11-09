@@ -76,13 +76,13 @@ void OverlayInfo::update(int widthInPixels, Set& set)
 
     line = QString(" ") + std::filesystem::path(file->fileName()).filename().string().c_str();
     if (set.fileCount() > 1)
-        line.prepend(QString(" file %1/%2:").arg(set.fileIndex()).arg(set.fileCount()));
+        line.prepend(QString(" file %1/%2:").arg(set.fileIndex() + 1).arg(set.fileCount()));
     sl << line;
     line = QString(" %1x%2, %3 x %4 (%5)").arg(frame->width()).arg(frame->height())
         .arg(frame->channelCount()).arg(TAD::typeToString(frame->type()))
         .arg(humanReadableMemsize(frame->array().dataSize()).c_str());
     if (file->frameCount(errMsg) > 1) {
-        line.prepend(QString(" frame %1/%2:").arg(file->frameIndex()).arg(file->frameCount(errMsg)));
+        line.prepend(QString(" frame %1/%2:").arg(file->frameIndex() + 1).arg(file->frameCount(errMsg)));
     }
     sl << line;
     sl << QString(" current channel: %1").arg(frame->currentChannelName().c_str());

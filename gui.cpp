@@ -25,6 +25,7 @@
 #include <QMenuBar>
 #include <QMessageBox>
 #include <QContextMenuEvent>
+#include <QActionGroup>
 
 #include "gui.hpp"
 #include "version.hpp"
@@ -142,49 +143,72 @@ Gui::Gui(Set& set) : QMainWindow(),
     QMenu* channelMenu = addQVMenu("&Channel");
     _channelColorAction = new QAction("Show color channels of this frame", this);
     _channelColorAction->setShortcuts({Qt::Key_C });
+    _channelColorAction->setCheckable(true);
     connect(_channelColorAction, SIGNAL(triggered()), this, SLOT(channelColor()));
     addQVAction(_channelColorAction, channelMenu);
     _channel0Action = new QAction("Show channel 0 of this frame", this);
     _channel0Action->setShortcuts({Qt::Key_0 });
+    _channel0Action->setCheckable(true);
     connect(_channelColorAction, SIGNAL(triggered()), this, SLOT(channelColor()));
     connect(_channel0Action, SIGNAL(triggered()), this, SLOT(channel0()));
     addQVAction(_channel0Action, channelMenu);
     _channel1Action = new QAction("Show channel 1 of this frame", this);
     _channel1Action->setShortcuts({Qt::Key_1 });
+    _channel1Action->setCheckable(true);
     connect(_channel1Action, SIGNAL(triggered()), this, SLOT(channel1()));
     addQVAction(_channel1Action, channelMenu);
     _channel2Action = new QAction("Show channel 2 of this frame", this);
     _channel2Action->setShortcuts({Qt::Key_2 });
+    _channel2Action->setCheckable(true);
     connect(_channel2Action, SIGNAL(triggered()), this, SLOT(channel2()));
     addQVAction(_channel2Action, channelMenu);
     _channel3Action = new QAction("Show channel 3 of this frame", this);
     _channel3Action->setShortcuts({Qt::Key_3 });
+    _channel3Action->setCheckable(true);
     connect(_channel3Action, SIGNAL(triggered()), this, SLOT(channel3()));
     addQVAction(_channel3Action, channelMenu);
     _channel4Action = new QAction("Show channel 4 of this frame", this);
     _channel4Action->setShortcuts({Qt::Key_4 });
+    _channel4Action->setCheckable(true);
     connect(_channel4Action, SIGNAL(triggered()), this, SLOT(channel4()));
     addQVAction(_channel4Action, channelMenu);
     _channel5Action = new QAction("Show channel 5 of this frame", this);
     _channel5Action->setShortcuts({Qt::Key_5 });
+    _channel5Action->setCheckable(true);
     connect(_channel5Action, SIGNAL(triggered()), this, SLOT(channel5()));
     addQVAction(_channel5Action, channelMenu);
     _channel6Action = new QAction("Show channel 6 of this frame", this);
     _channel6Action->setShortcuts({Qt::Key_6 });
+    _channel6Action->setCheckable(true);
     connect(_channel6Action, SIGNAL(triggered()), this, SLOT(channel6()));
     addQVAction(_channel6Action, channelMenu);
     _channel7Action = new QAction("Show channel 7 of this frame", this);
     _channel7Action->setShortcuts({Qt::Key_7 });
+    _channel7Action->setCheckable(true);
     connect(_channel7Action, SIGNAL(triggered()), this, SLOT(channel7()));
     addQVAction(_channel7Action, channelMenu);
     _channel8Action = new QAction("Show channel 8 of this frame", this);
     _channel8Action->setShortcuts({Qt::Key_8 });
+    _channel8Action->setCheckable(true);
     connect(_channel8Action, SIGNAL(triggered()), this, SLOT(channel8()));
     addQVAction(_channel8Action, channelMenu);
     _channel9Action = new QAction("Show channel 9 of this frame", this);
     _channel9Action->setShortcuts({Qt::Key_9 });
+    _channel9Action->setCheckable(true);
     connect(_channel9Action, SIGNAL(triggered()), this, SLOT(channel9()));
     addQVAction(_channel9Action, channelMenu);
+    QActionGroup* channelSelectionGroup = new QActionGroup(this);
+    channelSelectionGroup->addAction(_channelColorAction);
+    channelSelectionGroup->addAction(_channel0Action);
+    channelSelectionGroup->addAction(_channel1Action);
+    channelSelectionGroup->addAction(_channel2Action);
+    channelSelectionGroup->addAction(_channel3Action);
+    channelSelectionGroup->addAction(_channel4Action);
+    channelSelectionGroup->addAction(_channel5Action);
+    channelSelectionGroup->addAction(_channel6Action);
+    channelSelectionGroup->addAction(_channel7Action);
+    channelSelectionGroup->addAction(_channel8Action);
+    channelSelectionGroup->addAction(_channel9Action);
 
     QMenu* viewMenu = addQVMenu("&View");
     _viewToggleFullscreenAction = new QAction("Toggle &Fullscreen", this);
@@ -707,16 +731,37 @@ void Gui::updateFromParameters()
     _frameNext100Action->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() < file->frameCount(dummy) - 1);
     _framePrev100Action->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() > 0);
     _channelColorAction->setEnabled(frame && frame->colorSpace() != ColorSpaceNone);
+    _channelColorAction->setChecked(frame && frame->channelIndex() == ColorChannelIndex);
     _channel0Action->setEnabled(frame);
+    _channel0Action->setChecked(frame && frame->channelIndex() == 0);
+    _channel0Action->setText(QString("Show channel %1 of this frame").arg(frame && frame->channelCount() > 0 ? QString(frame->channelName(0).c_str()) : QString::number(0)));
     _channel1Action->setEnabled(frame && frame->channelCount() > 1);
+    _channel1Action->setChecked(frame && frame->channelIndex() == 1);
+    _channel1Action->setText(QString("Show channel %1 of this frame").arg(frame && frame->channelCount() > 1 ? QString(frame->channelName(1).c_str()) : QString::number(1)));
     _channel2Action->setEnabled(frame && frame->channelCount() > 2);
+    _channel2Action->setChecked(frame && frame->channelIndex() == 2);
+    _channel2Action->setText(QString("Show channel %1 of this frame").arg(frame && frame->channelCount() > 2 ? QString(frame->channelName(2).c_str()) : QString::number(2)));
     _channel3Action->setEnabled(frame && frame->channelCount() > 3);
+    _channel3Action->setChecked(frame && frame->channelIndex() == 3);
+    _channel3Action->setText(QString("Show channel %1 of this frame").arg(frame && frame->channelCount() > 3 ? QString(frame->channelName(3).c_str()) : QString::number(3)));
     _channel4Action->setEnabled(frame && frame->channelCount() > 4);
+    _channel4Action->setChecked(frame && frame->channelIndex() == 4);
+    _channel4Action->setText(QString("Show channel %1 of this frame").arg(frame && frame->channelCount() > 4 ? QString(frame->channelName(4).c_str()) : QString::number(4)));
     _channel5Action->setEnabled(frame && frame->channelCount() > 5);
+    _channel5Action->setChecked(frame && frame->channelIndex() == 5);
+    _channel5Action->setText(QString("Show channel %1 of this frame").arg(frame && frame->channelCount() > 5 ? QString(frame->channelName(5).c_str()) : QString::number(5)));
     _channel6Action->setEnabled(frame && frame->channelCount() > 6);
+    _channel6Action->setChecked(frame && frame->channelIndex() == 6);
+    _channel6Action->setText(QString("Show channel %1 of this frame").arg(frame && frame->channelCount() > 6 ? QString(frame->channelName(6).c_str()) : QString::number(6)));
     _channel7Action->setEnabled(frame && frame->channelCount() > 7);
+    _channel7Action->setChecked(frame && frame->channelIndex() == 7);
+    _channel7Action->setText(QString("Show channel %1 of this frame").arg(frame && frame->channelCount() > 7 ? QString(frame->channelName(7).c_str()) : QString::number(7)));
     _channel8Action->setEnabled(frame && frame->channelCount() > 8);
+    _channel8Action->setChecked(frame && frame->channelIndex() == 8);
+    _channel8Action->setText(QString("Show channel %1 of this frame").arg(frame && frame->channelCount() > 8 ? QString(frame->channelName(8).c_str()) : QString::number(8)));
     _channel9Action->setEnabled(frame && frame->channelCount() > 9);
+    _channel9Action->setChecked(frame && frame->channelIndex() == 9);
+    _channel9Action->setText(QString("Show channel %1 of this frame").arg(frame && frame->channelCount() > 9 ? QString(frame->channelName(9).c_str()) : QString::number(9)));
     //_viewToggleFullscreenAction;
     _viewZoomInAction->setEnabled(frame);
     _viewZoomOutAction->setEnabled(frame);

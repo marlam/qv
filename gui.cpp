@@ -749,7 +749,7 @@ void Gui::updateFromParameters()
     _colorMapCycleDivergingAction->setEnabled(frame);
     _colorMapQualitativeAction->setEnabled(frame);
     _colorMapCustomAction->setEnabled(frame);
-    _analysisToggleApplyCurrentParametersToAllFilesAction->setEnabled(frame);
+    _analysisToggleApplyCurrentParametersToAllFilesAction->setEnabled(file && _set.fileCount() > 1);
     _analysisToggleApplyCurrentParametersToAllFilesAction->setChecked(_set.applyCurrentParametersToAllFiles());
     _analysisToggleInfoAction->setEnabled(frame);
     _analysisToggleInfoAction->setChecked(_qv->overlayInfoActive);

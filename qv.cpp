@@ -45,7 +45,6 @@ QV::QV(Set& set, QWidget* parent) :
     QOpenGLWidget(parent),
     _set(set),
     _dragMode(false),
-    overlayHelpActive(false),
     overlayInfoActive(false),
     overlayValueActive(false),
     overlayStatisticActive(false),
@@ -54,7 +53,7 @@ QV::QV(Set& set, QWidget* parent) :
 {
     window()->setWindowIcon(QIcon(":cg-logo.png"));
     setMouseTracking(true);
-    setMinimumSize(_overlayHelp.size());
+    setMinimumSize(_overlayFallback.size());
     File* file = _set.currentFile();
     Frame* frame = (file ? file->currentFrame() : nullptr);
     if (frame) {
@@ -468,14 +467,14 @@ void QV::paintGL()
     }
 
     // Draw the overlays
-    bool localOverlayHelpActive = overlayHelpActive;
+    bool localOverlayFallbackActive = false;
     bool localOverlayInfoActive = overlayInfoActive;
     bool localOverlayValueActive = overlayValueActive;
     bool localOverlayStatisticActive = overlayStatisticActive;
     bool localOverlayHistogramActive = overlayHistogramActive;
     bool localOverlayColorMapActive = overlayColorMapActive;
     if (!frame) {
-        localOverlayHelpActive = true;
+        localOverlayFallbackActive = true;
         localOverlayInfoActive = false;
         localOverlayValueActive = false;
         localOverlayStatisticActive = false;
@@ -531,14 +530,14 @@ void QV::paintGL()
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
         overlayYOffset += _overlayInfo.heightInPixels();
     }
-    if (localOverlayHelpActive) {
-        _overlayHelp.update(_w);
-        gl->glViewport(0, overlayYOffset, _w, _overlayHelp.heightInPixels());
+    if (localOverlayFallbackActive) {
+        _overlayFallback.update(_w);
+        gl->glViewport(0, overlayYOffset, _w, _overlayFallback.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, _overlayHelp.texture());
+        gl->glBindTexture(GL_TEXTURE_2D, _overlayFallback.texture());
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-        overlayYOffset += _overlayHelp.heightInPixels();
+        overlayYOffset += _overlayFallback.heightInPixels();
     }
     gl->glDisable(GL_BLEND);
     QGuiApplication::restoreOverrideCursor();
@@ -897,15 +896,6 @@ void QV::toggleOverlayColormap()
         return;
 
     overlayColorMapActive = !overlayColorMapActive;
-    this->updateView();
-}
-
-void QV::toggleOverlayHelp()
-{
-    if (!haveCurrentFile())
-        return;
-
-    overlayHelpActive = !overlayHelpActive;
     this->updateView();
 }
 

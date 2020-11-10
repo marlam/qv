@@ -351,15 +351,6 @@ Gui::Gui(Set& set) : QMainWindow(),
     addQVAction(_analysisToggleValueAction, analysisMenu);
 
     QMenu* helpMenu = addQVMenu("&Help");
-    _helpToggleOverlayAction = new QAction("Toggle &help overlay", this);
-    _helpToggleOverlayAction->setCheckable(true);
-    if (QKeySequence(QKeySequence::HelpContents) != QKeySequence(Qt::Key_F1))
-        _helpToggleOverlayAction->setShortcuts({ Qt::Key_F1, QKeySequence::HelpContents });
-    else
-        _helpToggleOverlayAction->setShortcuts({ Qt::Key_F1 });
-    connect(_helpToggleOverlayAction, SIGNAL(triggered()), this, SLOT(helpToggleOverlay()));
-    addQVAction(_helpToggleOverlayAction, helpMenu);
-    helpMenu->addSeparator();
     _helpAboutAction = new QAction("&About");
     connect(_helpAboutAction, SIGNAL(triggered()), this, SLOT(helpAbout()));
     addQVAction(_helpAboutAction, helpMenu);
@@ -369,7 +360,7 @@ Gui::Gui(Set& set) : QMainWindow(),
     updateFromParameters();
     setCentralWidget(_qv);
 
-    menuBar()->setMinimumSize(menuBar()->sizeHint());
+    setMinimumSize(menuBar()->sizeHint().width(), menuBar()->sizeHint().width() / 2);
 }
 
 void Gui::fileOpen()
@@ -682,11 +673,6 @@ void Gui::analysisToggleValue()
     _qv->toggleOverlayValue();
 }
 
-void Gui::helpToggleOverlay()
-{
-    _qv->toggleOverlayHelp();
-}
-
 void Gui::helpAbout()
 {
     QMessageBox::about(this, "About qv",
@@ -802,8 +788,6 @@ void Gui::updateFromParameters()
     _analysisToggleStatisticsAction->setChecked(_qv->overlayStatisticActive);
     _analysisToggleValueAction->setEnabled(frame);
     _analysisToggleValueAction->setChecked(_qv->overlayValueActive);
-    _helpToggleOverlayAction->setEnabled(frame);
-    _helpToggleOverlayAction->setChecked(_qv->overlayHelpActive);
     //_helpAboutAction;
 }
 

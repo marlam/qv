@@ -6,7 +6,7 @@ HEADERS = version.hpp \
           gl.hpp \
           textureholder.hpp \
           histogram.hpp \
-          overlay-help.hpp \
+          overlay-fallback.hpp \
           overlay-info.hpp \
           overlay-value.hpp \
           overlay-statistic.hpp \
@@ -26,7 +26,7 @@ SOURCES = colormap.cpp \
           gl.cpp \
           textureholder.cpp \
           histogram.cpp \
-          overlay-help.cpp \
+          overlay-fallback.cpp \
           overlay-info.cpp \
           overlay-value.cpp \
           overlay-statistic.cpp \

@@ -37,7 +37,7 @@ add_executable(qv
     set.hpp set.cpp
     parameters.hpp parameters.cpp
     overlay.hpp overlay.cpp
-    overlay-help.hpp overlay-help.cpp
+    overlay-fallback.hpp overlay-fallback.cpp
     overlay-info.hpp overlay-info.cpp
     overlay-value.hpp overlay-value.cpp
     overlay-statistic.hpp overlay-statistic.cpp

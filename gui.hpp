@@ -99,7 +99,6 @@ private:
     QAction* _analysisToggleInfoAction;
     QAction* _analysisToggleStatisticsAction;
     QAction* _analysisToggleValueAction;
-    QAction* _helpToggleOverlayAction;
     QAction* _helpAboutAction;
 
     QMenu* addQVMenu(const QString& title);
@@ -166,7 +165,6 @@ private slots:
     void analysisToggleInfo();
     void analysisToggleStatistics();
     void analysisToggleValue();
-    void helpToggleOverlay();
     void helpAbout();
 
     void updateFromParameters();

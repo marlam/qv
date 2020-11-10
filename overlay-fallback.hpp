@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020 Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,20 +21,20 @@
  * SOFTWARE.
  */
 
-#ifndef QV_OVERLAY_HELP_HPP
-#define QV_OVERLAY_HELP_HPP
+#ifndef QV_OVERLAY_FALLBACK_HPP
+#define QV_OVERLAY_FALLBACK_HPP
 
 #include <QStringList>
 
 #include "overlay.hpp"
 
-class OverlayHelp : public Overlay
+class OverlayFallback : public Overlay
 {
 private:
-    QStringList _helpText;
+    QStringList _fallbackText;
 
 public:
-    OverlayHelp();
+    OverlayFallback();
 
     void update(int widthInPixels);
 

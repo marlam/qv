@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020 Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,7 +28,7 @@
 #include <QOpenGLShaderProgram>
 
 #include "set.hpp"
-#include "overlay-help.hpp"
+#include "overlay-fallback.hpp"
 #include "overlay-info.hpp"
 #include "overlay-value.hpp"
 #include "overlay-statistic.hpp"
@@ -52,7 +52,7 @@ private:
     bool _dragMode;
     QPoint _dragStart;
     QPoint _mousePos;
-    OverlayHelp _overlayHelp;
+    OverlayFallback _overlayFallback;
     OverlayInfo _overlayInfo;
     OverlayValue _overlayValue;
     OverlayStatistic _overlayStatistic;
@@ -86,7 +86,6 @@ private:
 public:
     QV(Set& set, QWidget* parent = nullptr);
 
-    bool overlayHelpActive;
     bool overlayInfoActive;
     bool overlayValueActive;
     bool overlayStatisticActive;
@@ -125,7 +124,6 @@ public:
     void toggleOverlayValue();
     void toggleOverlayHistogram();
     void toggleOverlayColormap();
-    void toggleOverlayHelp();
     void toggleApplyCurrentParametersToAllFiles();
 
 signals:

@@ -29,6 +29,7 @@
 #include "set.hpp"
 #include "qv.hpp"
 
+class QMenu;
 class QAction;
 
 class Gui : public QMainWindow
@@ -38,16 +39,73 @@ Q_OBJECT
 private:
     Set& _set;
     QV* _qv;
+    QMenu* _contextMenu;
+
+    QAction* _fileOpenAction;
+    QAction* _fileCloseAction;
+    QAction* _fileReloadAction;
+    QAction* _fileSaveCurrentViewAction;
+    QAction* _fileSaveViewAction;
+    QAction* _fileCopyCurrentViewAction;
+    QAction* _fileCopyViewAction;
+    QAction* _fileNextAction;
+    QAction* _filePrevAction;
+    QAction* _fileNext10Action;
+    QAction* _filePrev10Action;
+    QAction* _fileNext100Action;
+    QAction* _filePrev100Action;
+    QAction* _fileQuitAction;
+    QAction* _frameNextAction;
+    QAction* _framePrevAction;
+    QAction* _frameNext10Action;
+    QAction* _framePrev10Action;
+    QAction* _frameNext100Action;
+    QAction* _framePrev100Action;
+    QAction* _channelColorAction;
+    QAction* _channel0Action;
+    QAction* _channel1Action;
+    QAction* _channel2Action;
+    QAction* _channel3Action;
+    QAction* _channel4Action;
+    QAction* _channel5Action;
+    QAction* _channel6Action;
+    QAction* _channel7Action;
+    QAction* _channel8Action;
+    QAction* _channel9Action;
+    QAction* _viewToggleFullscreenAction;
+    QAction* _viewZoomInAction;
+    QAction* _viewZoomOutAction;
+    QAction* _viewZoomResetAction;
+    QAction* _viewRecenterAction;
     QAction* _viewToggleLinearInterpolationAction;
     QAction* _viewToggleGridAction;
     QAction* _rangeToggleOverlayAction;
+    QAction* _rangeDecLoAction;
+    QAction* _rangeIncLoAction;
+    QAction* _rangeDecHiAction;
+    QAction* _rangeIncHiAction;
+    QAction* _rangeShiftLeftAction;
+    QAction* _rangeShiftRightAction;
+    QAction* _rangeResetAction;
     QAction* _rangeDRRToggleAction;
+    QAction* _rangeDRRDecBrightnessAction;
+    QAction* _rangeDRRIncBrightnessAction;
+    QAction* _rangeDRRResetBrightnessAction;
     QAction* _colorMapToggleOverlayAction;
+    QAction* _colorMapDisableAction;
+    QAction* _colorMapCycleSequentialAction;
+    QAction* _colorMapCycleDivergingAction;
+    QAction* _colorMapQualitativeAction;
+    QAction* _colorMapCustomAction;
     QAction* _analysisToggleApplyCurrentParametersToAllFilesAction;
     QAction* _analysisToggleInfoAction;
     QAction* _analysisToggleStatisticsAction;
     QAction* _analysisToggleValueAction;
     QAction* _helpToggleOverlayAction;
+    QAction* _helpAboutAction;
+
+    QMenu* addQVMenu(const QString& title);
+    void addQVAction(QAction* action, QMenu* menu);
 
 private slots:
     void fileOpen();
@@ -63,6 +121,7 @@ private slots:
     void filePrev10();
     void fileNext100();
     void filePrev100();
+    void fileQuit();
     void frameNext();
     void framePrev();
     void frameNext10();
@@ -113,6 +172,11 @@ private slots:
     void helpAbout();
 
     void updateFromParameters();
+
+protected:
+#ifndef QT_NO_CONTEXTMENU
+    void contextMenuEvent(QContextMenuEvent* event) override;
+#endif
 
 public:
     Gui(Set& set);

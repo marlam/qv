@@ -368,6 +368,8 @@ Gui::Gui(Set& set) : QMainWindow(),
     connect(_qv, SIGNAL(parametersChanged()), this, SLOT(updateFromParameters()));
     updateFromParameters();
     setCentralWidget(_qv);
+
+    menuBar()->setMinimumSize(menuBar()->sizeHint());
 }
 
 void Gui::fileOpen()

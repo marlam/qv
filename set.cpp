@@ -162,11 +162,7 @@ std::string Set::currentDescription()
                 + '/' + std::to_string(currentFile()->frameCount(dummyErrorMsg)) + ' ';
         }
         if (currentFile()->currentFrame()->channelCount() > 1) {
-            if (currentFile()->currentFrame()->channelIndex() == ColorChannelIndex)
-                desc += "color";
-            else
-                desc += std::string("ch. ") + currentFile()->currentFrame()->currentChannelName()
-                    + '/' + std::to_string(currentFile()->currentFrame()->channelCount());
+            desc += currentFile()->currentFrame()->currentChannelName();
         }
     }
     return desc;

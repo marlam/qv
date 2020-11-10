@@ -29,8 +29,6 @@
 #include "set.hpp"
 #include "qv.hpp"
 
-class QMenu;
-class QAction;
 
 class Gui : public QMainWindow
 {

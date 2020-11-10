@@ -62,11 +62,11 @@ QV::QV(Set& set, QWidget* parent) :
         QSize screenSize = QGuiApplication::primaryScreen()->availableSize();
         QSize maxSize = 0.9f * screenSize;
         if (frameSize.width() < maxSize.width() && frameSize.height() < maxSize.height())
-            resize(frameSize);
+            window()->resize(frameSize);
         else
-            resize(frameSize.scaled(maxSize, Qt::KeepAspectRatio));
+            window()->resize(frameSize.scaled(maxSize, Qt::KeepAspectRatio));
     } else {
-        resize(minimumSize());
+        window()->resize(minimumSize());
     }
     updateTitle();
 }

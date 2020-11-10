@@ -54,19 +54,6 @@ QV::QV(Set& set, QWidget* parent) :
     window()->setWindowIcon(QIcon(":cg-logo.png"));
     setMouseTracking(true);
     setMinimumSize(_overlayFallback.size());
-    File* file = _set.currentFile();
-    Frame* frame = (file ? file->currentFrame() : nullptr);
-    if (frame) {
-        QSize frameSize(frame->width(), frame->height());
-        QSize screenSize = QGuiApplication::primaryScreen()->availableSize();
-        QSize maxSize = 0.9f * screenSize;
-        if (frameSize.width() < maxSize.width() && frameSize.height() < maxSize.height())
-            window()->resize(frameSize);
-        else
-            window()->resize(frameSize.scaled(maxSize, Qt::KeepAspectRatio));
-    } else {
-        window()->resize(minimumSize());
-    }
     updateTitle();
 }
 
@@ -84,6 +71,23 @@ void QV::updateTitle()
     else
         s += " - qv";
     window()->setWindowTitle(s.c_str());
+}
+
+QSize QV::sizeHint() const
+{
+    QSize size(minimumSize());
+    File* file = _set.currentFile();
+    Frame* frame = (file ? file->currentFrame() : nullptr);
+    if (frame) {
+        QSize frameSize(frame->width(), frame->height());
+        QSize screenSize = QGuiApplication::primaryScreen()->availableSize();
+        QSize maxSize = 0.9f * screenSize;
+        if (frameSize.width() < maxSize.width() && frameSize.height() < maxSize.height())
+            size = frameSize;
+        else
+            size = frameSize.scaled(maxSize, Qt::KeepAspectRatio);
+    }
+    return size;
 }
 
 void QV::initializeGL()

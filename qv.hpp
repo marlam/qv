@@ -92,6 +92,7 @@ public:
     bool overlayHistogramActive;
     bool overlayColorMapActive;
 
+    virtual QSize sizeHint() const override;
     virtual void initializeGL() override;
     virtual void paintGL() override;
     virtual void resizeGL(int w, int h) override;

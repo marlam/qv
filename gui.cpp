@@ -229,7 +229,6 @@ Gui::Gui(Set& set) : QMainWindow(),
     _rangeToggleOverlayAction->setShortcuts({ Qt::Key_H });
     connect(_rangeToggleOverlayAction, SIGNAL(triggered()), this, SLOT(rangeToggleOverlay()));
     addQVAction(_rangeToggleOverlayAction, rangeMenu);
-    rangeMenu->addSeparator();
     _rangeDecLoAction = new QAction("Decrease lower bound of visible range", this);
     _rangeDecLoAction->setShortcuts({ Qt::Key_BraceLeft });
     connect(_rangeDecLoAction, SIGNAL(triggered()), this, SLOT(rangeDecLo()));
@@ -283,7 +282,6 @@ Gui::Gui(Set& set) : QMainWindow(),
     _colorMapToggleOverlayAction->setShortcuts({ Qt::Key_M });
     connect(_colorMapToggleOverlayAction, SIGNAL(triggered()), this, SLOT(colorMapToggleOverlay()));
     addQVAction(_colorMapToggleOverlayAction, colorMapMenu);
-    colorMapMenu->addSeparator();
     _colorMapDisableAction = new QAction("Disable color &map", this);
     _colorMapDisableAction->setShortcuts({ Qt::Key_F4 });
     connect(_colorMapDisableAction, SIGNAL(triggered()), this, SLOT(colorMapDisable()));

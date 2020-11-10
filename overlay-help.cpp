@@ -60,7 +60,7 @@ OverlayHelp::OverlayHelp()
     _helpText << " F4: disable               F2: save current view";
     _helpText << " F5: sequential (cycle)    F3: save 1:1 view";
     _helpText << " F6: diverging (cycle)     F9: copy current view";
-    _helpText << " F7: qualitative           F10: copy 1:1 view";
+    _helpText << " F7: qualitative (cycle)   F10: copy 1:1 view";
     _helpText << " F8: from clipboard (image or CSV)";
     _helpText << "";
     _helpText << " a: apply current view parameters to all files (toggle)";

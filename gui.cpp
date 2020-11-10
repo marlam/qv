@@ -296,7 +296,7 @@ Gui::Gui(Set& set) : QMainWindow(),
     _colorMapCycleDivergingAction->setShortcuts({ Qt::Key_F6 });
     connect(_colorMapCycleDivergingAction, SIGNAL(triggered()), this, SLOT(colorMapCycleDiverging()));
     addQVAction(_colorMapCycleDivergingAction, colorMapMenu);
-    _colorMapQualitativeAction = new QAction("Enable &qualitative color map", this);
+    _colorMapQualitativeAction = new QAction("Enable next &qualitative color map", this);
     _colorMapQualitativeAction->setShortcuts({ Qt::Key_F7 });
     connect(_colorMapQualitativeAction, SIGNAL(triggered()), this, SLOT(colorMapQualitative()));
     addQVAction(_colorMapQualitativeAction, colorMapMenu);

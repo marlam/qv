@@ -8,3 +8,4 @@ gencolormap -n 512 --type=brewer-diverging  --hue=120 > colormap-diverging-1.csv
 gencolormap -n 512 --type=brewer-diverging  --hue=240 > colormap-diverging-2.csv
 gencolormap -n 512 --type=moreland                    > colormap-diverging-3.csv
 gencolormap -n 512 --type=brewer-qualitative          > colormap-qualitative-0.csv
+gencolormap -n 512 --type=brewer-qualitative -d 360   > colormap-qualitative-1.csv

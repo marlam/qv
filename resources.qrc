@@ -16,5 +16,6 @@
     <file>colormap-diverging-2.csv</file>
     <file>colormap-diverging-3.csv</file>
     <file>colormap-qualitative-0.csv</file>
+    <file>colormap-qualitative-1.csv</file>
 </qresource>
 </RCC>

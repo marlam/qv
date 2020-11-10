@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020 Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,7 +34,7 @@
 
 
 ColorMap::ColorMap() :
-    _count { 4, 4, 1, 1 },
+    _count { 4, 4, 2, 1 },
     _type(ColorMapNone),
     _index { 0, 0, 0, 0 }
 {

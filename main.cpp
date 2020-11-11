@@ -21,7 +21,12 @@
  * SOFTWARE.
  */
 
-#include <unistd.h> // for isatty()
+// for isatty():
+#if __has_include(<unistd.h>)
+# include <unistd.h>
+#elif __has_include(<io.h>)
+# include <io.h>
+#endif
 
 #include <cstdio>
 #include <cstring>

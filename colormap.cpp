@@ -46,64 +46,79 @@ void ColorMap::reload()
         _textureHolder->clear();
     _sRgbData.clear();
 
-    QString csvData;
+    bool haveData = false;
+    QImage img;
     if (_type == ColorMapNone) {
         /* empty */
     } else if (_type == ColorMapCustom) {
-        QImage img = QGuiApplication::clipboard()->image();
-        if (!img.isNull()) {
-            QImage cimg = img.convertToFormat(QImage::Format_RGB32);
-            if (cimg.width() >= cimg.height()) {
-                const QRgb* scanline = reinterpret_cast<const QRgb*>(cimg.scanLine(0));
-                for (int i = 0; i < cimg.width(); i++) {
-                    QRgb color = scanline[i];
-                    csvData += QString("%1, %2, %3\n").arg(qRed(color)).arg(qGreen(color)).arg(qBlue(color));
+        img = QGuiApplication::clipboard()->image();
+        if (img.isNull()) {
+            QString csvData = QGuiApplication::clipboard()->text();
+            QStringList lines = csvData.split('\n');
+            bool ok = true;
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines[i].isEmpty())
+                    continue;
+                unsigned short r = 0, g = 0, b = 0;
+                QStringList values = lines[i].split(',');
+                if (values.size() != 3) {
+                    ok = false;
+                    break;
                 }
-            } else {
-                for (int i = 0; i < cimg.height(); i++) {
-                    const QRgb* scanline = reinterpret_cast<const QRgb*>(cimg.scanLine(i));
-                    QRgb color = scanline[0];
-                    csvData += QString("%1, %2, %3\n").arg(qRed(color)).arg(qGreen(color)).arg(qBlue(color));
+                bool rok, gok, bok;
+                r = values[0].toUShort(&rok);
+                g = values[1].toUShort(&gok);
+                b = values[2].toUShort(&bok);
+                if (!rok || !gok || !bok || r > 0xff || g > 0xff || b > 0xff) {
+                    ok = false;
+                    break;
                 }
+                _sRgbData.push_back(r);
+                _sRgbData.push_back(g);
+                _sRgbData.push_back(b);
             }
-        } else {
-            csvData = QGuiApplication::clipboard()->text();
+            if (_sRgbData.size() == 0)
+                ok = false;
+            if (ok)
+                haveData = true;
+            else
+                _sRgbData.clear();
         }
     } else {
-        QString fileName = QString(":colormap-%1-%2.csv").arg(
+        QString fileName = QString(":colormap-%1-%2.png").arg(
                 _type == ColorMapSequential ? "sequential"
                 : _type == ColorMapDiverging ? "diverging"
                 : "qualitative").arg(_index[_type]);
-        csvData = readFile(fileName);
-    }    
-
-    QStringList lines = csvData.split('\n');
-    bool ok = true;
-    for (int i = 0; i < lines.size(); i++) {
-        if (lines[i].isEmpty())
-            continue;
-        unsigned short r = 0, g = 0, b = 0;
-        QStringList values = lines[i].split(',');
-        if (values.size() != 3) {
-            ok = false;
-            break;
-        }
-        bool rok, gok, bok;
-        r = values[0].toUShort(&rok);
-        g = values[1].toUShort(&gok);
-        b = values[2].toUShort(&bok);
-        if (!rok || !gok || !bok || r > 0xff || g > 0xff || b > 0xff) {
-            ok = false;
-            break;
-        }
-        _sRgbData.push_back(r);
-        _sRgbData.push_back(g);
-        _sRgbData.push_back(b);
+        img.load(fileName);
     }
-    if (_sRgbData.size() == 0)
-        ok = false;
-    if (!ok)
+
+    if (!haveData && !img.isNull()) {
+        img = img.convertToFormat(QImage::Format_RGB32);
+        if (img.width() >= img.height()) {
+            _sRgbData.resize(img.width() * 3);
+            const QRgb* scanline = reinterpret_cast<const QRgb*>(img.scanLine(0));
+            for (int i = 0; i < img.width(); i++) {
+                QRgb color = scanline[i];
+                _sRgbData[3 * i + 0] = qRed(color);
+                _sRgbData[3 * i + 1] = qGreen(color);
+                _sRgbData[3 * i + 2] = qBlue(color);
+            }
+        } else {
+            _sRgbData.resize(img.height() * 3);
+            for (int i = 0; i < img.height(); i++) {
+                const QRgb* scanline = reinterpret_cast<const QRgb*>(img.scanLine(i));
+                QRgb color = scanline[0];
+                _sRgbData[3 * i + 0] = qRed(color);
+                _sRgbData[3 * i + 1] = qGreen(color);
+                _sRgbData[3 * i + 2] = qBlue(color);
+            }
+        }
+        haveData = true;
+    }
+
+    if (!haveData) {
         _type = ColorMapNone;
+    }
 }
 
 void ColorMap::setType(ColorMapType type)

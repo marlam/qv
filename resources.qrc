@@ -7,15 +7,15 @@
     <file>shader-view-fragment.glsl</file>
     <file>shader-overlay-vertex.glsl</file>
     <file>shader-overlay-fragment.glsl</file>
-    <file>colormap-sequential-0.csv</file>
-    <file>colormap-sequential-1.csv</file>
-    <file>colormap-sequential-2.csv</file>
-    <file>colormap-sequential-3.csv</file>
-    <file>colormap-diverging-0.csv</file>
-    <file>colormap-diverging-1.csv</file>
-    <file>colormap-diverging-2.csv</file>
-    <file>colormap-diverging-3.csv</file>
-    <file>colormap-qualitative-0.csv</file>
-    <file>colormap-qualitative-1.csv</file>
+    <file>colormap-sequential-0.png</file>
+    <file>colormap-sequential-1.png</file>
+    <file>colormap-sequential-2.png</file>
+    <file>colormap-sequential-3.png</file>
+    <file>colormap-diverging-0.png</file>
+    <file>colormap-diverging-1.png</file>
+    <file>colormap-diverging-2.png</file>
+    <file>colormap-diverging-3.png</file>
+    <file>colormap-qualitative-0.png</file>
+    <file>colormap-qualitative-1.png</file>
 </qresource>
 </RCC>

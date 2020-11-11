@@ -42,6 +42,7 @@ Q_OBJECT
 
 private:
     Set& _set;
+    QSize _sizeHint;
     int _w, _h;
     unsigned int _fbo;
     unsigned int _fboTex;

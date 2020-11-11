@@ -51,10 +51,24 @@ QV::QV(Set& set, QWidget* parent) :
     overlayHistogramActive(false),
     overlayColorMapActive(false)
 {
-    window()->setWindowIcon(QIcon(":cg-logo.png"));
     setMouseTracking(true);
-    setMinimumSize(_overlayFallback.size());
+    window()->setWindowIcon(QIcon(":cg-logo.png"));
     updateTitle();
+
+    setMinimumSize(_overlayFallback.size());
+    File* file = _set.currentFile();
+    Frame* frame = (file ? file->currentFrame() : nullptr);
+    if (frame) {
+        QSize frameSize(frame->width(), frame->height());
+        QSize screenSize = QGuiApplication::primaryScreen()->availableSize();
+        QSize maxSize = 0.9f * screenSize;
+        if (frameSize.width() < maxSize.width() && frameSize.height() < maxSize.height())
+            _sizeHint = frameSize;
+        else
+            _sizeHint = frameSize.scaled(maxSize, Qt::KeepAspectRatio);
+    } else {
+        _sizeHint = minimumSize();
+    }
 }
 
 void QV::updateView()
@@ -75,19 +89,7 @@ void QV::updateTitle()
 
 QSize QV::sizeHint() const
 {
-    QSize size(minimumSize());
-    File* file = _set.currentFile();
-    Frame* frame = (file ? file->currentFrame() : nullptr);
-    if (frame) {
-        QSize frameSize(frame->width(), frame->height());
-        QSize screenSize = QGuiApplication::primaryScreen()->availableSize();
-        QSize maxSize = 0.9f * screenSize;
-        if (frameSize.width() < maxSize.width() && frameSize.height() < maxSize.height())
-            size = frameSize;
-        else
-            size = frameSize.scaled(maxSize, Qt::KeepAspectRatio);
-    }
-    return size;
+    return _sizeHint;
 }
 
 void QV::initializeGL()

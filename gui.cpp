@@ -115,6 +115,17 @@ Gui::Gui(Set& set) : QMainWindow(),
     addQVAction(_fileQuitAction, fileMenu);
 
     QMenu* frameMenu = addQVMenu("F&rame");
+    _frameToggleInfoAction = new QAction("Toggle &info overlay", this);
+    _frameToggleInfoAction->setShortcuts({ Qt::Key_I });
+    _frameToggleInfoAction->setCheckable(true);
+    connect(_frameToggleInfoAction, SIGNAL(triggered()), this, SLOT(frameToggleInfo()));
+    addQVAction(_frameToggleInfoAction, frameMenu);
+    _frameToggleValueAction = new QAction("Toggle &value inspection overlay", this);
+    _frameToggleValueAction->setShortcuts({ Qt::Key_V });
+    _frameToggleValueAction->setCheckable(true);
+    connect(_frameToggleValueAction, SIGNAL(triggered()), this, SLOT(frameToggleValue()));
+    addQVAction(_frameToggleValueAction, frameMenu);
+    frameMenu->addSeparator();
     _frameNextAction = new QAction("Jump to next frame in this file", this);
     _frameNextAction->setShortcuts({ Qt::Key_Right + Qt::ShiftModifier });
     connect(_frameNextAction, SIGNAL(triggered()), this, SLOT(frameNext()));
@@ -141,6 +152,12 @@ Gui::Gui(Set& set) : QMainWindow(),
     addQVAction(_framePrev100Action, frameMenu);
 
     QMenu* channelMenu = addQVMenu("&Channel");
+    _channelToggleStatisticsAction = new QAction("Toggle &statistics overlay", this);
+    _channelToggleStatisticsAction->setShortcuts({ Qt::Key_S });
+    _channelToggleStatisticsAction->setCheckable(true);
+    connect(_channelToggleStatisticsAction, SIGNAL(triggered()), this, SLOT(channelToggleStatistics()));
+    addQVAction(_channelToggleStatisticsAction, channelMenu);
+    channelMenu->addSeparator();
     _channelColorAction = new QAction("Show color channels of this frame", this);
     _channelColorAction->setShortcuts({Qt::Key_C });
     _channelColorAction->setCheckable(true);
@@ -209,43 +226,6 @@ Gui::Gui(Set& set) : QMainWindow(),
     channelSelectionGroup->addAction(_channel7Action);
     channelSelectionGroup->addAction(_channel8Action);
     channelSelectionGroup->addAction(_channel9Action);
-
-    QMenu* viewMenu = addQVMenu("&View");
-    _viewToggleFullscreenAction = new QAction("Toggle &Fullscreen", this);
-    if (QKeySequence(QKeySequence::FullScreen) != QKeySequence(Qt::Key_F11))
-        _viewToggleFullscreenAction->setShortcuts({ Qt::Key_F11, QKeySequence::FullScreen });
-    else
-        _viewToggleFullscreenAction->setShortcuts({ Qt::Key_F11 });
-    connect(_viewToggleFullscreenAction, SIGNAL(triggered()), this, SLOT(viewToggleFullscreen()));
-    addQVAction(_viewToggleFullscreenAction, viewMenu);
-    viewMenu->addSeparator();
-    _viewZoomInAction = new QAction("Zoom &in", this);
-    _viewZoomInAction->setShortcuts({ Qt::Key_Plus, QKeySequence::ZoomIn });
-    connect(_viewZoomInAction, SIGNAL(triggered()), this, SLOT(viewZoomIn()));
-    addQVAction(_viewZoomInAction, viewMenu);
-    _viewZoomOutAction = new QAction("Zoom &out", this);
-    _viewZoomOutAction->setShortcuts({ Qt::Key_Minus, QKeySequence::ZoomOut });
-    connect(_viewZoomOutAction, SIGNAL(triggered()), this, SLOT(viewZoomOut()));
-    addQVAction(_viewZoomOutAction, viewMenu);
-    _viewZoomResetAction = new QAction("&Reset zoom", this);
-    _viewZoomResetAction->setShortcuts({ Qt::Key_Equal });
-    connect(_viewZoomResetAction, SIGNAL(triggered()), this, SLOT(viewZoomReset()));
-    addQVAction(_viewZoomResetAction, viewMenu);
-    _viewRecenterAction = new QAction("Recenter view", this);
-    _viewRecenterAction->setShortcuts({ Qt::Key_Space });
-    connect(_viewRecenterAction, SIGNAL(triggered()), this, SLOT(viewRecenter()));
-    addQVAction(_viewRecenterAction, viewMenu);
-    viewMenu->addSeparator();
-    _viewToggleLinearInterpolationAction = new QAction("Toggle &linear interpolation for magnified views");
-    _viewToggleLinearInterpolationAction->setCheckable(true);
-    _viewToggleLinearInterpolationAction->setShortcuts({ Qt::Key_L });
-    connect(_viewToggleLinearInterpolationAction, SIGNAL(triggered()), this, SLOT(viewToggleLinearInterpolation()));
-    addQVAction(_viewToggleLinearInterpolationAction, viewMenu);
-    _viewToggleGridAction = new QAction("Toggle &grid for magnified views");
-    _viewToggleGridAction->setCheckable(true);
-    _viewToggleGridAction->setShortcuts({ Qt::Key_G });
-    connect(_viewToggleGridAction, SIGNAL(triggered()), this, SLOT(viewToggleGrid()));
-    addQVAction(_viewToggleGridAction, viewMenu);
 
     QMenu* rangeMenu = addQVMenu("&Range");
     _rangeToggleOverlayAction = new QAction("Toggle histogram and visible range &overlay");
@@ -327,28 +307,47 @@ Gui::Gui(Set& set) : QMainWindow(),
     connect(_colorMapCustomAction, SIGNAL(triggered()), this, SLOT(colorMapCustom()));
     addQVAction(_colorMapCustomAction, colorMapMenu);
 
-    QMenu* analysisMenu = addQVMenu("&Analysis");
-    _analysisToggleApplyCurrentParametersToAllFilesAction = new QAction("Toggle &application of current parameters to all files", this);
-    _analysisToggleApplyCurrentParametersToAllFilesAction->setCheckable(true);
-    _analysisToggleApplyCurrentParametersToAllFilesAction->setShortcuts({ Qt::Key_A });
-    connect(_analysisToggleApplyCurrentParametersToAllFilesAction, SIGNAL(triggered()), this, SLOT(analysisToggleApplyCurrentParametersToAllFiles()));
-    addQVAction(_analysisToggleApplyCurrentParametersToAllFilesAction, analysisMenu);
-    analysisMenu->addSeparator();
-    _analysisToggleInfoAction = new QAction("Toggle &info overlay", this);
-    _analysisToggleInfoAction->setShortcuts({ Qt::Key_I });
-    _analysisToggleInfoAction->setCheckable(true);
-    connect(_analysisToggleInfoAction, SIGNAL(triggered()), this, SLOT(analysisToggleInfo()));
-    addQVAction(_analysisToggleInfoAction, analysisMenu);
-    _analysisToggleStatisticsAction = new QAction("Toggle &statistics overlay", this);
-    _analysisToggleStatisticsAction->setShortcuts({ Qt::Key_S });
-    _analysisToggleStatisticsAction->setCheckable(true);
-    connect(_analysisToggleStatisticsAction, SIGNAL(triggered()), this, SLOT(analysisToggleStatistics()));
-    addQVAction(_analysisToggleStatisticsAction, analysisMenu);
-    _analysisToggleValueAction = new QAction("Toggle &value inspection overlay", this);
-    _analysisToggleValueAction->setShortcuts({ Qt::Key_V });
-    _analysisToggleValueAction->setCheckable(true);
-    connect(_analysisToggleValueAction, SIGNAL(triggered()), this, SLOT(analysisToggleValue()));
-    addQVAction(_analysisToggleValueAction, analysisMenu);
+    QMenu* viewMenu = addQVMenu("&View");
+    _viewToggleFullscreenAction = new QAction("Toggle &Fullscreen", this);
+    if (QKeySequence(QKeySequence::FullScreen) != QKeySequence(Qt::Key_F11))
+        _viewToggleFullscreenAction->setShortcuts({ Qt::Key_F11, QKeySequence::FullScreen });
+    else
+        _viewToggleFullscreenAction->setShortcuts({ Qt::Key_F11 });
+    connect(_viewToggleFullscreenAction, SIGNAL(triggered()), this, SLOT(viewToggleFullscreen()));
+    addQVAction(_viewToggleFullscreenAction, viewMenu);
+    viewMenu->addSeparator();
+    _viewZoomInAction = new QAction("Zoom &in", this);
+    _viewZoomInAction->setShortcuts({ Qt::Key_Plus, QKeySequence::ZoomIn });
+    connect(_viewZoomInAction, SIGNAL(triggered()), this, SLOT(viewZoomIn()));
+    addQVAction(_viewZoomInAction, viewMenu);
+    _viewZoomOutAction = new QAction("Zoom &out", this);
+    _viewZoomOutAction->setShortcuts({ Qt::Key_Minus, QKeySequence::ZoomOut });
+    connect(_viewZoomOutAction, SIGNAL(triggered()), this, SLOT(viewZoomOut()));
+    addQVAction(_viewZoomOutAction, viewMenu);
+    _viewZoomResetAction = new QAction("&Reset zoom", this);
+    _viewZoomResetAction->setShortcuts({ Qt::Key_Equal });
+    connect(_viewZoomResetAction, SIGNAL(triggered()), this, SLOT(viewZoomReset()));
+    addQVAction(_viewZoomResetAction, viewMenu);
+    _viewRecenterAction = new QAction("Recenter view", this);
+    _viewRecenterAction->setShortcuts({ Qt::Key_Space });
+    connect(_viewRecenterAction, SIGNAL(triggered()), this, SLOT(viewRecenter()));
+    addQVAction(_viewRecenterAction, viewMenu);
+    viewMenu->addSeparator();
+    _viewToggleLinearInterpolationAction = new QAction("Toggle &linear interpolation for magnified views");
+    _viewToggleLinearInterpolationAction->setCheckable(true);
+    _viewToggleLinearInterpolationAction->setShortcuts({ Qt::Key_L });
+    connect(_viewToggleLinearInterpolationAction, SIGNAL(triggered()), this, SLOT(viewToggleLinearInterpolation()));
+    addQVAction(_viewToggleLinearInterpolationAction, viewMenu);
+    _viewToggleGridAction = new QAction("Toggle &grid for magnified views");
+    _viewToggleGridAction->setCheckable(true);
+    _viewToggleGridAction->setShortcuts({ Qt::Key_G });
+    connect(_viewToggleGridAction, SIGNAL(triggered()), this, SLOT(viewToggleGrid()));
+    addQVAction(_viewToggleGridAction, viewMenu);
+    _viewToggleApplyCurrentParametersToAllFilesAction = new QAction("Toggle &application of current parameters to all files", this);
+    _viewToggleApplyCurrentParametersToAllFilesAction->setCheckable(true);
+    _viewToggleApplyCurrentParametersToAllFilesAction->setShortcuts({ Qt::Key_A });
+    connect(_viewToggleApplyCurrentParametersToAllFilesAction, SIGNAL(triggered()), this, SLOT(viewToggleApplyCurrentParametersToAllFiles()));
+    addQVAction(_viewToggleApplyCurrentParametersToAllFilesAction, viewMenu);
 
     QMenu* helpMenu = addQVMenu("&Help");
     _helpAboutAction = new QAction("&About");
@@ -433,6 +432,16 @@ void Gui::fileQuit()
     close();
 }
 
+void Gui::frameToggleInfo()
+{
+    _qv->toggleOverlayInfo();
+}
+
+void Gui::frameToggleValue()
+{
+    _qv->toggleOverlayValue();
+}
+
 void Gui::frameNext()
 {
     _qv->adjustFrameIndex(+1);
@@ -461,6 +470,11 @@ void Gui::frameNext100()
 void Gui::framePrev100()
 {
     _qv->adjustFrameIndex(-100);
+}
+
+void Gui::channelToggleStatistics()
+{
+    _qv->toggleOverlayStatistics();
 }
 
 void Gui::channelColor()
@@ -516,51 +530,6 @@ void Gui::channel8()
 void Gui::channel9()
 {
     _qv->setChannelIndex(9);
-}
-
-void Gui::viewToggleFullscreen()
-{
-    if (windowState() & Qt::WindowFullScreen) {
-        showNormal();
-        menuBar()->show();
-        activateWindow();
-        setFocus();
-    } else {
-        menuBar()->hide();
-        showFullScreen();
-        activateWindow();
-        setFocus();
-    }
-}
-
-void Gui::viewZoomIn()
-{
-    _qv->adjustZoom(+1);
-}
-
-void Gui::viewZoomOut()
-{
-    _qv->adjustZoom(-1);
-}
-
-void Gui::viewZoomReset()
-{
-    _qv->resetZoom();
-}
-
-void Gui::viewRecenter()
-{
-    _qv->recenter();
-}
-
-void Gui::viewToggleLinearInterpolation()
-{
-    _qv->toggleLinearInterpolation();
-}
-
-void Gui::viewToggleGrid()
-{
-    _qv->toggleGrid();
 }
 
 void Gui::rangeToggleOverlay()
@@ -653,24 +622,54 @@ void Gui::colorMapCustom()
     _qv->changeColorMap(ColorMapCustom);
 }
 
-void Gui::analysisToggleApplyCurrentParametersToAllFiles()
+void Gui::viewToggleFullscreen()
+{
+    if (windowState() & Qt::WindowFullScreen) {
+        showNormal();
+        menuBar()->show();
+        activateWindow();
+        setFocus();
+    } else {
+        menuBar()->hide();
+        showFullScreen();
+        activateWindow();
+        setFocus();
+    }
+}
+
+void Gui::viewZoomIn()
+{
+    _qv->adjustZoom(+1);
+}
+
+void Gui::viewZoomOut()
+{
+    _qv->adjustZoom(-1);
+}
+
+void Gui::viewZoomReset()
+{
+    _qv->resetZoom();
+}
+
+void Gui::viewRecenter()
+{
+    _qv->recenter();
+}
+
+void Gui::viewToggleLinearInterpolation()
+{
+    _qv->toggleLinearInterpolation();
+}
+
+void Gui::viewToggleGrid()
+{
+    _qv->toggleGrid();
+}
+
+void Gui::viewToggleApplyCurrentParametersToAllFiles()
 {
     _qv->toggleApplyCurrentParametersToAllFiles();
-}
-
-void Gui::analysisToggleInfo()
-{
-    _qv->toggleOverlayInfo();
-}
-
-void Gui::analysisToggleStatistics()
-{
-    _qv->toggleOverlayStatistics();
-}
-
-void Gui::analysisToggleValue()
-{
-    _qv->toggleOverlayValue();
 }
 
 void Gui::helpAbout()
@@ -712,12 +711,18 @@ void Gui::updateFromParameters()
     _fileNext100Action->setEnabled(file && _set.fileCount() > 1 && _set.fileIndex() < _set.fileCount() - 1);
     _filePrev100Action->setEnabled(file && _set.fileCount() > 1 && _set.fileIndex() > 0);
     //_fileQuitAction;
+    _frameToggleInfoAction->setEnabled(frame);
+    _frameToggleInfoAction->setChecked(_qv->overlayInfoActive);
+    _frameToggleValueAction->setEnabled(frame);
+    _frameToggleValueAction->setChecked(_qv->overlayValueActive);
     _frameNextAction->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() < file->frameCount(dummy) - 1);
     _framePrevAction->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() > 0);
     _frameNext10Action->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() < file->frameCount(dummy) - 1);
     _framePrev10Action->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() > 0);
     _frameNext100Action->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() < file->frameCount(dummy) - 1);
     _framePrev100Action->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() > 0);
+    _channelToggleStatisticsAction->setEnabled(frame);
+    _channelToggleStatisticsAction->setChecked(_qv->overlayStatisticActive);
     _channelColorAction->setEnabled(frame && frame->colorSpace() != ColorSpaceNone);
     _channelColorAction->setChecked(frame && frame->channelIndex() == ColorChannelIndex);
     _channel0Action->setEnabled(frame);
@@ -750,15 +755,6 @@ void Gui::updateFromParameters()
     _channel9Action->setEnabled(frame && frame->channelCount() > 9);
     _channel9Action->setChecked(frame && frame->channelIndex() == 9);
     _channel9Action->setText(QString("Show channel %1 of this frame").arg(frame && frame->channelCount() > 9 ? QString(frame->channelName(9).c_str()) : QString::number(9)));
-    //_viewToggleFullscreenAction;
-    _viewZoomInAction->setEnabled(frame);
-    _viewZoomOutAction->setEnabled(frame);
-    _viewZoomResetAction->setEnabled(frame);
-    _viewRecenterAction->setEnabled(frame);
-    _viewToggleLinearInterpolationAction->setEnabled(frame);
-    _viewToggleLinearInterpolationAction->setChecked(p.magInterpolation);
-    _viewToggleGridAction->setEnabled(frame);
-    _viewToggleGridAction->setChecked(p.magGrid);
     _rangeToggleOverlayAction->setEnabled(frame);
     _rangeToggleOverlayAction->setChecked(_qv->overlayHistogramActive);
     _rangeDecLoAction->setEnabled(frame);
@@ -780,14 +776,17 @@ void Gui::updateFromParameters()
     _colorMapCycleDivergingAction->setEnabled(frame);
     _colorMapQualitativeAction->setEnabled(frame);
     _colorMapCustomAction->setEnabled(frame);
-    _analysisToggleApplyCurrentParametersToAllFilesAction->setEnabled(file && _set.fileCount() > 1);
-    _analysisToggleApplyCurrentParametersToAllFilesAction->setChecked(_set.applyCurrentParametersToAllFiles());
-    _analysisToggleInfoAction->setEnabled(frame);
-    _analysisToggleInfoAction->setChecked(_qv->overlayInfoActive);
-    _analysisToggleStatisticsAction->setEnabled(frame);
-    _analysisToggleStatisticsAction->setChecked(_qv->overlayStatisticActive);
-    _analysisToggleValueAction->setEnabled(frame);
-    _analysisToggleValueAction->setChecked(_qv->overlayValueActive);
+    //_viewToggleFullscreenAction;
+    _viewZoomInAction->setEnabled(frame);
+    _viewZoomOutAction->setEnabled(frame);
+    _viewZoomResetAction->setEnabled(frame);
+    _viewRecenterAction->setEnabled(frame);
+    _viewToggleLinearInterpolationAction->setEnabled(frame);
+    _viewToggleLinearInterpolationAction->setChecked(p.magInterpolation);
+    _viewToggleGridAction->setEnabled(frame);
+    _viewToggleGridAction->setChecked(p.magGrid);
+    _viewToggleApplyCurrentParametersToAllFilesAction->setEnabled(file && _set.fileCount() > 1);
+    _viewToggleApplyCurrentParametersToAllFilesAction->setChecked(_set.applyCurrentParametersToAllFiles());
     //_helpAboutAction;
 }
 

@@ -1,21 +1,21 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
-    <file>cg-logo.png</file>
-    <file>shader-quadtree-vertex.glsl</file>
-    <file>shader-quadtree-fragment.glsl</file>
-    <file>shader-view-vertex.glsl</file>
-    <file>shader-view-fragment.glsl</file>
-    <file>shader-overlay-vertex.glsl</file>
-    <file>shader-overlay-fragment.glsl</file>
-    <file>colormap-sequential-0.png</file>
-    <file>colormap-sequential-1.png</file>
-    <file>colormap-sequential-2.png</file>
-    <file>colormap-sequential-3.png</file>
-    <file>colormap-diverging-0.png</file>
-    <file>colormap-diverging-1.png</file>
-    <file>colormap-diverging-2.png</file>
-    <file>colormap-diverging-3.png</file>
-    <file>colormap-qualitative-0.png</file>
-    <file>colormap-qualitative-1.png</file>
+    <file compress-algo="none">cg-logo.png</file>
+    <file compress-algo="best" threshold="1">shader-quadtree-vertex.glsl</file>
+    <file compress-algo="best" threshold="1">shader-quadtree-fragment.glsl</file>
+    <file compress-algo="best" threshold="1">shader-view-vertex.glsl</file>
+    <file compress-algo="best" threshold="1">shader-view-fragment.glsl</file>
+    <file compress-algo="best" threshold="1">shader-overlay-vertex.glsl</file>
+    <file compress-algo="best" threshold="1">shader-overlay-fragment.glsl</file>
+    <file compress-algo="none">colormap-sequential-0.png</file>
+    <file compress-algo="none">colormap-sequential-1.png</file>
+    <file compress-algo="none">colormap-sequential-2.png</file>
+    <file compress-algo="none">colormap-sequential-3.png</file>
+    <file compress-algo="none">colormap-diverging-0.png</file>
+    <file compress-algo="none">colormap-diverging-1.png</file>
+    <file compress-algo="none">colormap-diverging-2.png</file>
+    <file compress-algo="none">colormap-diverging-3.png</file>
+    <file compress-algo="none">colormap-qualitative-0.png</file>
+    <file compress-algo="none">colormap-qualitative-1.png</file>
 </qresource>
 </RCC>

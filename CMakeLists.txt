@@ -25,7 +25,6 @@ qt5_add_resources(RESOURCES resources.qrc)
 add_executable(qv
     main.cpp
     version.hpp
-    utils.hpp utils.cpp
     gl.hpp gl.cpp
     textureholder.hpp textureholder.cpp
     color.hpp

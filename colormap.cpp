@@ -29,7 +29,6 @@
 #include <QImage>
 
 #include "colormap.hpp"
-#include "utils.hpp"
 #include "gl.hpp"
 
 

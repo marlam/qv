@@ -36,7 +36,6 @@
 #include <QMessageBox>
 #include <QIcon>
 
-#include "utils.hpp"
 #include "qv.hpp"
 #include "gl.hpp"
 
@@ -90,6 +89,15 @@ void QV::updateTitle()
 QSize QV::sizeHint() const
 {
     return _sizeHint;
+}
+
+// Helper: read file into string (for shader loading)
+static QString readFile(QString fileName)
+{
+    QFile f(fileName);
+    f.open(QIODevice::ReadOnly);
+    QTextStream in(&f);
+    return in.readAll();
 }
 
 void QV::initializeGL()

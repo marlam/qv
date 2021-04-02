@@ -1,4 +1,4 @@
-# Copyright (C) 2019, 2020 Martin Lambers <marlam@marlam.de>
+# Copyright (C) 2019, 2020, 2021 Martin Lambers <marlam@marlam.de>
 #
 # Copying and distribution of this file, with or without modification, are
 # permitted in any medium without royalty provided the copyright notice and this
@@ -15,7 +15,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
-find_package(libtad 1.0 REQUIRED)
+find_package(libtad 2.0 REQUIRED)
 find_package(Qt5 5.11.0 COMPONENTS Widgets)
 find_package(OpenMP)
 

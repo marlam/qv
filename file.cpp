@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -126,8 +127,14 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
         errorMessage = fileName() + ": " + "incompatible arrays";
         return false;
     }
+    int channelIndex = (currentFrame() ? currentFrame()->channelIndex() : -1);
     _frame.init(a);
     _frameIndex = index;
+    if ((channelIndex == ColorChannelIndex && _frame.colorSpace() == ColorSpaceNone)
+            || (channelIndex != ColorChannelIndex && channelIndex >= _frame.channelCount()))
+        channelIndex = -1;
+    if (channelIndex >= 0)
+        _frame.setChannelIndex(channelIndex);
     return true;
 }
 

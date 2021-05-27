@@ -92,6 +92,20 @@ vec3 l_to_xyz(float l) // l from Luv color space (perceptually linear)
     return xyz;
 }
 
+float xyz_to_l(vec3 xyz) // l from Luv color space (perceptually linear)
+{
+    const float c0 = 0.00885645167904; // 6.0f * 6.0f * 6.0f / (29.0f * 29.0f * 29.0f);
+    float ratio = xyz.y / d65_xyz.y;
+    float l;
+    if (ratio <= c0) {
+        const float c1 = 903.296296296; // 29.0f * 29.0f * 29.0f / (3.0f * 3.0f * 3.0f);
+        l = c1 * ratio;
+    } else {
+        l = 116.0 * pow(ratio, (1.0 / 3.0)) - 16.0;
+    }
+    return l;
+}
+
 vec3 rgb_to_xyz(vec3 rgb)
 {
     // values from http://terathon.com/blog/rgb-xyz-conversion-matrix-accuracy/
@@ -191,13 +205,9 @@ void main(void)
         }
         // Get color
         vec3 xyz;
-        if (colorSpace == ColorSpaceLinearGray) {
-            xyz = rgb_to_xyz(vec3(data[0], data[0], data[0]));
-        } else if (colorSpace == ColorSpaceLinearRGB) {
-            xyz = rgb_to_xyz(vec3(data[0], data[1], data[2]));
-        } else if (colorSpace == ColorSpaceSGray) {
-            xyz = rgb_to_xyz(vec3(data[0], data[0], data[0]));
-        } else if (colorSpace == ColorSpaceSRGB) {
+        if (colorSpace == ColorSpaceLinearGray || colorSpace == ColorSpaceSGray) {
+            xyz = l_to_xyz(100.0 * data[0]);
+        } else if (colorSpace == ColorSpaceLinearRGB || colorSpace == ColorSpaceSRGB) {
             xyz = rgb_to_xyz(vec3(data[0], data[1], data[2]));
         } else if (colorSpace == ColorSpaceY) {
             xyz = adjust_y(d65_xyz, data[0]);
@@ -212,11 +222,11 @@ void main(void)
         if (dynamicRangeReduction) {
             y = uniformRationalQuantization(y);
         }
+        xyz = adjust_y(xyz, 100.0 * y);
         // Apply color map
         if (colorMap) {
-            srgb = rgb_to_srgb(texture(colorMapTex, vec2(y, 0.5)).rgb);
+            srgb = rgb_to_srgb(texture(colorMapTex, vec2(0.01 * xyz_to_l(xyz), 0.5)).rgb);
         } else {
-            xyz = adjust_y(xyz, 100.0 * y);
             vec3 rgb = xyz_to_rgb(xyz);
             if (alphaChannelIndex >= 0) {
                 float alpha = clamp(data[3], 0.0, 1.0);

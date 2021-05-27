@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -185,7 +186,7 @@ void main(void)
             if (srgbWas16Bit)
                 data /= 65535.0f;
             if (!srgbWas8Bit)
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < 3; i++)
                     data[i] = s_to_linear(data[i]);
         }
         // Get color

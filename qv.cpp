@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019, 2020 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -278,7 +279,7 @@ void QV::prepareQuadRendering(Frame* frame, int quadTreeLevel,
     _viewPrg.setUniformValue("showColor", frame->channelIndex() == ColorChannelIndex);
     _viewPrg.setUniformValue("colorSpace", int(frame->colorSpace()));
     _viewPrg.setUniformValue("channelCount", frame->channelCount());
-    _viewPrg.setUniformValue("dataChannelIndex", frame->channelIndex());
+    _viewPrg.setUniformValue("dataChannelIndex", frame->channelCount() <= 4 ? frame->channelIndex() : 0);
     _viewPrg.setUniformValue("colorChannel0Index", frame->colorChannelIndex(0));
     _viewPrg.setUniformValue("colorChannel1Index", frame->colorChannelIndex(1));
     _viewPrg.setUniformValue("colorChannel2Index", frame->colorChannelIndex(2));

@@ -63,8 +63,20 @@ smooth in vec2 vDataCoord;
 layout(location = 0) out vec4 fcolor;
 
 const vec3 d65_xyz = vec3(95.047, 100.000, 108.883);
-const float d65_u_prime = 0.197839824821;
-const float d65_v_prime = 0.468336302932;
+const float d65_u_prime = 0.197839824821; // == u_prime(d65_xyz)
+const float d65_v_prime = 0.468336302932; // == v_prime(d65_xyz)
+
+/* XYZ helpers */
+
+float u_prime(vec3 xyz)
+{
+    return 4.0 * xyz.x / (xyz.x + 15.0 * xyz.y + 3.0 * xyz.z);
+}
+
+float v_prime(vec3 xyz)
+{
+    return 9.0 * xyz.y / (xyz.x + 15.0 * xyz.y + 3.0 * xyz.z);
+}
 
 vec3 adjust_y(vec3 xyz, float new_y)
 {
@@ -77,34 +89,61 @@ vec3 adjust_y(vec3 xyz, float new_y)
     return vec3(r * x, new_y, r * (1.0 - x - y));
 }
 
-vec3 l_to_xyz(float l) // l from Luv color space (perceptually linear)
+/* LUV */
+
+const float luv_c0 = 0.00885645167904; // 6.0f * 6.0f * 6.0f / (29.0f * 29.0f * 29.0f);
+const float luv_c1 = 903.296296296; // 29.0f * 29.0f * 29.0f / (3.0f * 3.0f * 3.0f);
+const float luv_c2 = 0.00110705645988; // 3.0f * 3.0f * 3.0f / (29.0f * 29.0f * 29.0f);
+
+float y_to_l(float y) // l from Luv color space (perceptually linear)
+{
+    const float one_over_d65_y = 1.0 / d65_xyz.y;
+    float ratio = one_over_d65_y * y;
+    float l = (ratio <= luv_c0 ? luv_c1 * ratio : 116.0 * pow(ratio, (1.0 / 3.0)) - 16.0);
+    return l;
+}
+
+float l_to_y(float l)
+{
+    float y;
+    if (l <= 8.0) {
+        y = d65_xyz.y * l * luv_c2;
+    } else {
+        float tmp = (l + 16.0) * 0.00862068965517; // / 116.0
+        y = d65_xyz.y * tmp * tmp * tmp;
+    }
+    return y;
+}
+
+vec3 luv_to_xyz(vec3 luv)
 {
     vec3 xyz;
-    if (l <= 8.0) {
-        const float c0 = 0.00110705645988; // 3.0f * 3.0f * 3.0f / (29.0f * 29.0f * 29.0f);
-        xyz.y = d65_xyz.y * l * c0;
-    } else {
-        float tmp = (l + 16.0f) / 116.0f;
-        xyz.y = d65_xyz.y * tmp * tmp * tmp;
-    }
-    xyz.x = xyz.y * (9.0f * d65_u_prime) / (4.0f * d65_v_prime);
-    xyz.z = xyz.y * (12.0f - 3.0f * d65_u_prime - 20.0f * d65_v_prime) / (4.0f * d65_v_prime);
+    xyz.y = l_to_y(luv[0]);
+    float u_prime = luv[1] / (13.0 * luv[0]) + d65_u_prime;
+    float v_prime = luv[2] / (13.0 * luv[0]) + d65_v_prime;
+    xyz.x = xyz.y * (9.0 * u_prime) / (4.0 * v_prime);
+    xyz.z = xyz.y * (12.0 - 3.0 * u_prime - 20.0 * v_prime) / (4.0 * v_prime);
     return xyz;
 }
 
-float xyz_to_l(vec3 xyz) // l from Luv color space (perceptually linear)
+vec3 xyz_to_luv(vec3 xyz)
 {
-    const float c0 = 0.00885645167904; // 6.0f * 6.0f * 6.0f / (29.0f * 29.0f * 29.0f);
-    float ratio = xyz.y / d65_xyz.y;
-    float l;
-    if (ratio <= c0) {
-        const float c1 = 903.296296296; // 29.0f * 29.0f * 29.0f / (3.0f * 3.0f * 3.0f);
-        l = c1 * ratio;
-    } else {
-        l = 116.0 * pow(ratio, (1.0 / 3.0)) - 16.0;
-    }
-    return l;
+    vec3 luv;
+    luv[0] = y_to_l(xyz.y);
+    luv[1] = 13.0 * luv[0] * (u_prime(xyz) - d65_u_prime);
+    luv[2] = 13.0 * luv[0] * (v_prime(xyz) - d65_v_prime);
+    return luv;
 }
+
+vec3 adjust_l(vec3 luv, float new_l)
+{
+    vec3 xyz = luv_to_xyz(luv);
+    float new_y = l_to_y(new_l);
+    xyz = adjust_y(xyz, new_y);
+    return xyz_to_luv(xyz);
+}
+
+/* Linear RGB */
 
 vec3 rgb_to_xyz(vec3 rgb)
 {
@@ -123,6 +162,8 @@ vec3 xyz_to_rgb(vec3 xyz)
             (-0.969244 * xyz.x + 1.875968 * xyz.y + 0.041555 * xyz.z),
             (+0.055630 * xyz.x - 0.203977 * xyz.y + 1.056972 * xyz.z));
 }
+
+/* sRGB */
 
 float s_to_linear(float x)
 {
@@ -162,7 +203,7 @@ void main(void)
         // Get value
         float v = texture(tex0, vTexCoord)[dataChannelIndex];
         if ((colorSpace == ColorSpaceSGray || colorSpace == ColorSpaceSRGB) && srgbWas8Bit)
-            v = linear_to_s(v) * 255.0f;
+            v = linear_to_s(v) * 255.0;
         // Apply range selection
         v = (v - visMinVal) / (visMaxVal - visMinVal);
         v = clamp(v, 0.0, 1.0);
@@ -174,7 +215,7 @@ void main(void)
         if (colorMap) {
             srgb = rgb_to_srgb(texture(colorMapTex, vec2(v, 0.5)).rgb);
         } else {
-            vec3 xyz = l_to_xyz(100.0 * v);
+            vec3 xyz = adjust_y(d65_xyz, l_to_y(100.0 * v));
             srgb = rgb_to_srgb(xyz_to_rgb(xyz));
         }
     } else {
@@ -198,36 +239,36 @@ void main(void)
         }
         if (colorSpace == ColorSpaceSGray || colorSpace == ColorSpaceSRGB) {
             if (srgbWas16Bit)
-                data /= 65535.0f;
+                data /= 65535.0;
             if (!srgbWas8Bit)
                 for (int i = 0; i < 3; i++)
                     data[i] = s_to_linear(data[i]);
         }
         // Get color
-        vec3 xyz;
+        vec3 luv;
         if (colorSpace == ColorSpaceLinearGray || colorSpace == ColorSpaceSGray) {
-            xyz = l_to_xyz(100.0 * data[0]);
+            luv = xyz_to_luv(adjust_y(d65_xyz, l_to_y(100.0 * data[0])));
         } else if (colorSpace == ColorSpaceLinearRGB || colorSpace == ColorSpaceSRGB) {
-            xyz = rgb_to_xyz(vec3(data[0], data[1], data[2]));
+            luv = xyz_to_luv(rgb_to_xyz(data.rgb));
         } else if (colorSpace == ColorSpaceY) {
-            xyz = adjust_y(d65_xyz, data[0]);
+            luv = xyz_to_luv(adjust_y(d65_xyz, data[0]));
         } else if (colorSpace == ColorSpaceXYZ) {
-            xyz = vec3(data[0], data[1], data[2]);
+            luv = xyz_to_luv(data.xyz);
         }
         // Apply range selection
-        float y = xyz.y;
-        y = (y - visMinVal) / (visMaxVal - visMinVal);
-        y = clamp(y, 0.0, 1.0);
+        float l = luv[0];
+        l = (l - visMinVal) / (visMaxVal - visMinVal);
+        l = clamp(l, 0.0, 1.0);
         // Apply dynamic range reduction
         if (dynamicRangeReduction) {
-            y = uniformRationalQuantization(y);
+            l = uniformRationalQuantization(l);
         }
-        xyz = adjust_y(xyz, 100.0 * y);
+        luv = adjust_l(luv, 100.0 * l);
         // Apply color map
         if (colorMap) {
-            srgb = rgb_to_srgb(texture(colorMapTex, vec2(0.01 * xyz_to_l(xyz), 0.5)).rgb);
+            srgb = rgb_to_srgb(texture(colorMapTex, vec2(0.01 * luv[0], 0.5)).rgb);
         } else {
-            vec3 rgb = xyz_to_rgb(xyz);
+            vec3 rgb = xyz_to_rgb(luv_to_xyz(luv));
             if (alphaChannelIndex >= 0) {
                 float alpha = clamp(data[3], 0.0, 1.0);
                 rgb = clamp(rgb, vec3(0.0), vec3(1.0));

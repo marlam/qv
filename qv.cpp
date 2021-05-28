@@ -872,7 +872,7 @@ void QV::toggleOverlayValue()
     Frame* frame = _set.currentFile()->currentFrame();
     if (overlayValueActive && frameIsPrettyBig(frame)
             && frame->colorSpace() != ColorSpaceNone
-            && !frame->haveLuminance()) {
+            && !frame->haveLightness()) {
         QGuiApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     }
     this->updateView();

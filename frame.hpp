@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -41,7 +42,7 @@ class Frame {
 private:
     /* data: */
     TAD::ArrayContainer _originalArray;
-    TAD::Array<float> _lumArray;
+    TAD::Array<float> _lightnessArray; // perceptually linear lightness from CIELUV
     /* per channel: */
     std::vector<float> _minVals, _maxVals;
     std::vector<Statistic> _statistics;
@@ -68,7 +69,7 @@ private:
     std::shared_ptr<TextureHolder> _textureHolder;
     TAD::Array<float> _textureTransferArray;
 
-    const TAD::Array<float>& lumArray();
+    const TAD::Array<float>& lightnessArray();
     TAD::ArrayContainer quadFromLevel0(int qx, int qy);
     bool textureChannelIsS(int index);
 
@@ -125,7 +126,7 @@ public:
             unsigned int fbo, unsigned int vao, QOpenGLShaderProgram& quadTreePrg);
 
     // Query whether some information is already computed or not yet
-    bool haveLuminance() const;
+    bool haveLightness() const;
     bool haveStatistic(int channelIndex) const;
     bool haveHistogram(int channelIndex) const;
 };

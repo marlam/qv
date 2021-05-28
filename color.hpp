@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,8 +33,8 @@ typedef enum {
     ColorSpaceNone        = 0,
     ColorSpaceLinearGray  = 1,
     ColorSpaceLinearRGB   = 2,
-    ColorSpaceSGray       = 3, // only uint8, 1 channel
-    ColorSpaceSRGB        = 4, // only uint8, 3 or 4 channels, alpha must be in channel 3
+    ColorSpaceSGray       = 3,
+    ColorSpaceSRGB        = 4,
     ColorSpaceY           = 5,
     ColorSpaceXYZ         = 6
 } ColorSpace;
@@ -50,6 +51,22 @@ inline float toLinear(float x)
 inline float rgbToY(float r, float g, float b)
 {
     return 100.0f * (0.2126f * r + 0.7152f * g + 0.0722f * b);
+}
+
+inline float YToL(float Y)
+{
+    constexpr float one_over_d65_y = 0.01f; // 1 / D65.Y
+    constexpr float c0 = 0.00885645167904f; // 6.0f * 6.0f * 6.0f / (29.0f * 29.0f * 29.0f);
+    constexpr float c1 = 903.296296296f; // 29.0f * 29.0f * 29.0f / (3.0f * 3.0f * 3.0f);
+
+    float ratio = one_over_d65_y * Y;
+    float L = (ratio <= c0 ? c1 * ratio : 116.0f * std::cbrt(ratio) - 16.0f);
+    return L;
+}
+
+inline float rgbToL(float r, float g, float b)
+{
+    return YToL(rgbToY(r, g, b));
 }
 
 #endif

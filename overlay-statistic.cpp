@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -34,7 +35,7 @@ void OverlayStatistic::update(int widthInPixels, Set& set)
     Frame* frame = set.currentFile()->currentFrame();
     QString s = " channel=";
     if (frame->channelIndex() == ColorChannelIndex)
-        s += "luminance";
+        s += "lightness";
     else
         s += frame->currentChannelName().c_str();
     const Statistic& S = frame->currentStatistic();

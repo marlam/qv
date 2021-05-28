@@ -67,7 +67,7 @@ void OverlayValue::update(int widthInPixels, const QPoint& arrayCoordinates, Set
         }
         if (frame->colorSpace() != ColorSpaceNone) {
             float v = frame->value(arrayCoordinates.x(), arrayCoordinates.y(), ColorChannelIndex);
-            val += QString("lum=%1").arg(v);
+            val += QString("lightness=%1").arg(v);
         }
         _painter->drawText(xOffset, yOffset, val);
         xOffset += fontMetrics.horizontalAdvance(val);

@@ -22,6 +22,7 @@
  */
 
 #include <limits>
+#include <type_traits>
 #include <cmath>
 
 #include "frame.hpp"
@@ -271,11 +272,26 @@ std::string Frame::channelName(int channelIndex) const
 }
 
 template<typename T>
+float normalize(T value)
+{
+    // for integer types, convert original value range to [0,1]
+    // for floating point types, do nothing
+    float normalizedValue = value;
+    if (std::is_integral<T>::value) {
+        float minVal = std::numeric_limits<T>::min();
+        float maxVal = std::numeric_limits<T>::max();
+        normalizedValue = (value - minVal) / (maxVal - minVal);
+    }
+    return normalizedValue;
+}
+
+template<typename T>
 static void lightnessArrayHelperLinearGray(float* lightness, size_t n, const T* src, int cc, int c)
 {
     #pragma omp parallel for
     for (size_t e = 0; e < n; e++) {
-        lightness[e] = 100.0f * src[e * cc + c];
+        float v = normalize(src[e * cc + c]);
+        lightness[e] = 100.0f * v;
     }
 }
 
@@ -284,30 +300,31 @@ static void lightnessArrayHelperLinearRGB(float* lightness, size_t n, const T* s
 {
     #pragma omp parallel for
     for (size_t e = 0; e < n; e++) {
-        float r = src[e * cc + cr];
-        float g = src[e * cc + cg];
-        float b = src[e * cc + cb];
+        float r = normalize(src[e * cc + cr]);
+        float g = normalize(src[e * cc + cg]);
+        float b = normalize(src[e * cc + cb]);
         lightness[e] = rgbToL(r, g, b);
     }
 }
 
 template<typename T>
-static void lightnessArrayHelperSGray(float* lightness, size_t n, const T* src, int cc, int c, float normalizationFactor)
+static void lightnessArrayHelperSGray(float* lightness, size_t n, const T* src, int cc, int c)
 {
     #pragma omp parallel for
     for (size_t e = 0; e < n; e++) {
-        lightness[e] = 100.0f * toLinear(src[e * cc + c] * normalizationFactor);
+        float v = toLinear(normalize(src[e * cc + c]));
+        lightness[e] = 100.0f * v;
     }
 }
 
 template<typename T>
-static void lightnessArrayHelperSRGB(float* lightness, size_t n, const T* src, int cc, int cr, int cg, int cb, float normalizationFactor)
+static void lightnessArrayHelperSRGB(float* lightness, size_t n, const T* src, int cc, int cr, int cg, int cb)
 {
     #pragma omp parallel for
     for (size_t e = 0; e < n; e++) {
-        float r = toLinear(src[e * cc + cr] * normalizationFactor);
-        float g = toLinear(src[e * cc + cg] * normalizationFactor);
-        float b = toLinear(src[e * cc + cb] * normalizationFactor);
+        float r = toLinear(normalize(src[e * cc + cr]));
+        float g = toLinear(normalize(src[e * cc + cg]));
+        float b = toLinear(normalize(src[e * cc + cb]));
         lightness[e] = rgbToL(r, g, b);
     }
 }
@@ -317,7 +334,10 @@ static void lightnessArrayHelperY(float* lightness, size_t n, const T* src, int 
 {
     #pragma omp parallel for
     for (size_t e = 0; e < n; e++) {
-        lightness[e] = YToL(src[e * cc + c]);
+        float v = normalize(src[e * cc + c]);
+        if (std::is_integral<T>::value)
+            v *= 100.0f;
+        lightness[e] = YToL(v);
     }
 }
 
@@ -400,74 +420,72 @@ const TAD::Array<float>& Frame::lightnessArray()
             }
         } else if (colorSpace() == ColorSpaceSGray) {
             int c = colorChannelIndex(0);
-            float normalizationFactor = 1.0f / maxVal(ColorChannelIndex);
             switch (type()) {
             case TAD::int8:
-                lightnessArrayHelperSGray(lightness, n, static_cast<const int8_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                lightnessArrayHelperSGray(lightness, n, static_cast<const int8_t*>(_originalArray.data()), cc, c);
                 break;
             case TAD::uint8:
-                lightnessArrayHelperSGray(lightness, n, static_cast<const uint8_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                lightnessArrayHelperSGray(lightness, n, static_cast<const uint8_t*>(_originalArray.data()), cc, c);
                 break;
             case TAD::int16:
-                lightnessArrayHelperSGray(lightness, n, static_cast<const int16_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                lightnessArrayHelperSGray(lightness, n, static_cast<const int16_t*>(_originalArray.data()), cc, c);
                 break;
             case TAD::uint16:
-                lightnessArrayHelperSGray(lightness, n, static_cast<const uint16_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                lightnessArrayHelperSGray(lightness, n, static_cast<const uint16_t*>(_originalArray.data()), cc, c);
                 break;
             case TAD::int32:
-                lightnessArrayHelperSGray(lightness, n, static_cast<const int32_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                lightnessArrayHelperSGray(lightness, n, static_cast<const int32_t*>(_originalArray.data()), cc, c);
                 break;
             case TAD::uint32:
-                lightnessArrayHelperSGray(lightness, n, static_cast<const uint32_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                lightnessArrayHelperSGray(lightness, n, static_cast<const uint32_t*>(_originalArray.data()), cc, c);
                 break;
             case TAD::int64:
-                lightnessArrayHelperSGray(lightness, n, static_cast<const int64_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                lightnessArrayHelperSGray(lightness, n, static_cast<const int64_t*>(_originalArray.data()), cc, c);
                 break;
             case TAD::uint64:
-                lightnessArrayHelperSGray(lightness, n, static_cast<const uint64_t*>(_originalArray.data()), cc, c, normalizationFactor);
+                lightnessArrayHelperSGray(lightness, n, static_cast<const uint64_t*>(_originalArray.data()), cc, c);
                 break;
             case TAD::float32:
-                lightnessArrayHelperSGray(lightness, n, static_cast<const float*>(_originalArray.data()), cc, c, normalizationFactor);
+                lightnessArrayHelperSGray(lightness, n, static_cast<const float*>(_originalArray.data()), cc, c);
                 break;
             case TAD::float64:
-                lightnessArrayHelperSGray(lightness, n, static_cast<const double*>(_originalArray.data()), cc, c, normalizationFactor);
+                lightnessArrayHelperSGray(lightness, n, static_cast<const double*>(_originalArray.data()), cc, c);
                 break;
             }
         } else if (colorSpace() == ColorSpaceSRGB) {
             int cr = colorChannelIndex(0);
             int cg = colorChannelIndex(1);
             int cb = colorChannelIndex(2);
-            float normalizationFactor = 1.0f / maxVal(ColorChannelIndex);
             switch (type()) {
             case TAD::int8:
-                lightnessArrayHelperSRGB(lightness, n, static_cast<const int8_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                lightnessArrayHelperSRGB(lightness, n, static_cast<const int8_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
             case TAD::uint8:
-                lightnessArrayHelperSRGB(lightness, n, static_cast<const uint8_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                lightnessArrayHelperSRGB(lightness, n, static_cast<const uint8_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
             case TAD::int16:
-                lightnessArrayHelperSRGB(lightness, n, static_cast<const int16_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                lightnessArrayHelperSRGB(lightness, n, static_cast<const int16_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
             case TAD::uint16:
-                lightnessArrayHelperSRGB(lightness, n, static_cast<const uint16_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                lightnessArrayHelperSRGB(lightness, n, static_cast<const uint16_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
             case TAD::int32:
-                lightnessArrayHelperSRGB(lightness, n, static_cast<const int32_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                lightnessArrayHelperSRGB(lightness, n, static_cast<const int32_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
             case TAD::uint32:
-                lightnessArrayHelperSRGB(lightness, n, static_cast<const uint32_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                lightnessArrayHelperSRGB(lightness, n, static_cast<const uint32_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
             case TAD::int64:
-                lightnessArrayHelperSRGB(lightness, n, static_cast<const int64_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                lightnessArrayHelperSRGB(lightness, n, static_cast<const int64_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
             case TAD::uint64:
-                lightnessArrayHelperSRGB(lightness, n, static_cast<const uint64_t*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                lightnessArrayHelperSRGB(lightness, n, static_cast<const uint64_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
             case TAD::float32:
-                lightnessArrayHelperSRGB(lightness, n, static_cast<const float*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                lightnessArrayHelperSRGB(lightness, n, static_cast<const float*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
             case TAD::float64:
-                lightnessArrayHelperSRGB(lightness, n, static_cast<const double*>(_originalArray.data()), cc, cr, cg, cb, normalizationFactor);
+                lightnessArrayHelperSRGB(lightness, n, static_cast<const double*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
             }
         } else if (colorSpace() == ColorSpaceY || colorSpace() == ColorSpaceXYZ) {

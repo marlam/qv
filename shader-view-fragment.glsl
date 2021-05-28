@@ -80,7 +80,11 @@ float v_prime(vec3 xyz)
 
 vec3 adjust_y(vec3 xyz, float new_y)
 {
+    if (xyz.y <= 0.0)
+        return vec3(0.0);
     float sum = xyz.x + xyz.y + xyz.z;
+    if (sum <= 0.0)
+        return vec3(0.0);
     // keep old chromaticity in terms of x, y
     float x = xyz.x / sum;
     float y = xyz.y / sum;
@@ -137,10 +141,9 @@ vec3 xyz_to_luv(vec3 xyz)
 
 vec3 adjust_l(vec3 luv, float new_l)
 {
-    vec3 xyz = luv_to_xyz(luv);
-    float new_y = l_to_y(new_l);
-    xyz = adjust_y(xyz, new_y);
-    return xyz_to_luv(xyz);
+    float tmpu = (luv[0] > 0.0 ? luv[1] / (13.0 * luv[0]) : 0.0);
+    float tmpv = (luv[0] > 0.0 ? luv[2] / (13.0 * luv[0]) : 0.0);
+    return vec3(new_l, 13.0 * new_l * tmpu, 13.0 * new_l * tmpv);
 }
 
 /* Linear RGB */

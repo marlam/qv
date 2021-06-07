@@ -121,6 +121,8 @@ float l_to_y(float l)
 
 vec3 luv_to_xyz(vec3 luv)
 {
+    if (!(luv[0] > 0.0))
+        return vec3(0.0);
     vec3 xyz;
     xyz.y = l_to_y(luv[0]);
     float u_prime = luv[1] / (13.0 * luv[0]) + d65_u_prime;
@@ -141,8 +143,10 @@ vec3 xyz_to_luv(vec3 xyz)
 
 vec3 adjust_l(vec3 luv, float new_l)
 {
-    float tmpu = (luv[0] > 0.0 ? luv[1] / (13.0 * luv[0]) : 0.0);
-    float tmpv = (luv[0] > 0.0 ? luv[2] / (13.0 * luv[0]) : 0.0);
+    if (!(luv[0] > 0.0))
+        return vec3(new_l, 0.0, 0.0);
+    float tmpu = luv[1] / (13.0 * luv[0]);
+    float tmpv = luv[2] / (13.0 * luv[0]);
     return vec3(new_l, 13.0 * new_l * tmpu, 13.0 * new_l * tmpv);
 }
 
@@ -197,7 +201,7 @@ float uniformRationalQuantization(float v /* in [0,1] */)
 
 void main(void)
 {
-    vec3 srgb;
+    vec3 rgb;
 
     if (vDataCoord.x >= dataWidth || vDataCoord.y >= dataHeight)
         discard;
@@ -216,10 +220,9 @@ void main(void)
         }
         // Apply color map
         if (colorMap) {
-            srgb = rgb_to_srgb(texture(colorMapTex, vec2(v, 0.5)).rgb);
+            rgb = texture(colorMapTex, vec2(v, 0.5)).rgb;
         } else {
-            vec3 xyz = adjust_y(d65_xyz, l_to_y(100.0 * v));
-            srgb = rgb_to_srgb(xyz_to_rgb(xyz));
+            rgb = vec3(v);
         }
     } else {
         // Read data into canonical form
@@ -269,15 +272,14 @@ void main(void)
         luv = adjust_l(luv, 100.0 * l);
         // Apply color map
         if (colorMap) {
-            srgb = rgb_to_srgb(texture(colorMapTex, vec2(0.01 * luv[0], 0.5)).rgb);
+            rgb = texture(colorMapTex, vec2(0.01 * luv[0], 0.5)).rgb;
         } else {
-            vec3 rgb = xyz_to_rgb(luv_to_xyz(luv));
+            rgb = xyz_to_rgb(luv_to_xyz(luv));
             if (alphaChannelIndex >= 0) {
                 float alpha = clamp(data[3], 0.0, 1.0);
                 rgb = clamp(rgb, vec3(0.0), vec3(1.0));
                 rgb = rgb * alpha + vec3(1.0 - alpha);
             }
-            srgb = rgb_to_srgb(rgb);
         }
     }
 
@@ -287,9 +289,12 @@ void main(void)
         vec2 fragmentSizeInTexels = vec2(dFdx(texelCoord.x), dFdy(texelCoord.y));
         if (all(lessThan(fragmentSizeInTexels, vec2(0.5)))
                 && any(lessThanEqual(fract(texelCoord), fragmentSizeInTexels))) {
-            float l = dot(srgb, srgb);
-            srgb = vec3(1.0 - l);
+            vec3 tmp = vec3(
+                    rgb.r < 0.5 ? 1.0 : 0.8,
+                    rgb.g < 0.5 ? 1.0 : 0.8,
+                    rgb.b < 0.5 ? 1.0 : 0.8);
+            rgb = tmp - 0.8 * rgb;
         }
     }
-    fcolor = vec4(srgb, 1.0);
+    fcolor = vec4(rgb_to_srgb(rgb), 1.0);
 }

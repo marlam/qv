@@ -248,16 +248,16 @@ void main(void)
                     data[i] = s_to_linear(data[i]);
         }
         // Get color
-        vec3 luv;
-        if (colorSpace == ColorSpaceLinearGray || colorSpace == ColorSpaceSGray) {
-            luv = xyz_to_luv(adjust_y(d65_xyz, l_to_y(100.0 * data[0])));
-        } else if (colorSpace == ColorSpaceLinearRGB || colorSpace == ColorSpaceSRGB) {
-            luv = xyz_to_luv(rgb_to_xyz(data.rgb));
+        vec3 xyz;
+        if (colorSpace == ColorSpaceLinearGray || colorSpace == ColorSpaceSGray
+                || colorSpace == ColorSpaceLinearRGB || colorSpace == ColorSpaceSRGB) {
+            xyz = rgb_to_xyz(data.rgb);
         } else if (colorSpace == ColorSpaceY) {
-            luv = xyz_to_luv(adjust_y(d65_xyz, data[0]));
+            xyz = adjust_y(d65_xyz, data[0]);
         } else if (colorSpace == ColorSpaceXYZ) {
-            luv = xyz_to_luv(data.xyz);
+            xyz = data.xyz;
         }
+        vec3 luv = xyz_to_luv(xyz);
         // Apply range selection
         float l = luv[0];
         l = (l - visMinVal) / (visMaxVal - visMinVal);

@@ -155,19 +155,21 @@ vec3 adjust_l(vec3 luv, float new_l)
 vec3 rgb_to_xyz(vec3 rgb)
 {
     // values from http://terathon.com/blog/rgb-xyz-conversion-matrix-accuracy/
-    return 100.0 * vec3(
-            (0.412391 * rgb.r + 0.357584 * rgb.g + 0.180481 * rgb.b),
-            (0.212639 * rgb.r + 0.715169 * rgb.g + 0.072192 * rgb.b),
-            (0.019331 * rgb.r + 0.119195 * rgb.g + 0.950532 * rgb.b));
+    mat3 M = mat3(
+            0.412391, 0.212639, 0.019331,
+            0.357584, 0.715169, 0.119195,
+            0.180481, 0.072192, 0.950532);
+    return 100.0 * (M * rgb);
 }
 
 vec3 xyz_to_rgb(vec3 xyz)
 {
     // values from http://terathon.com/blog/rgb-xyz-conversion-matrix-accuracy/
-    return 0.01 * vec3(
-            (+3.240970 * xyz.x - 1.537383 * xyz.y - 0.498611 * xyz.z),
-            (-0.969244 * xyz.x + 1.875968 * xyz.y + 0.041555 * xyz.z),
-            (+0.055630 * xyz.x - 0.203977 * xyz.y + 1.056972 * xyz.z));
+    mat3 M = mat3(
+            +3.240970, -0.969244, +0.055630,
+            -1.537383, +1.875968, -0.203977,
+            -0.498611, +0.041555, +1.056972);
+    return 0.01 * (M * xyz);
 }
 
 /* sRGB */

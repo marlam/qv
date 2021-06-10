@@ -291,7 +291,7 @@ static void lightnessArrayHelperLinearGray(float* lightness, size_t n, const T* 
     #pragma omp parallel for
     for (size_t e = 0; e < n; e++) {
         float v = normalize(src[e * cc + c]);
-        lightness[e] = 100.0f * v;
+        lightness[e] = rgbToL(v, v, v);
     }
 }
 
@@ -313,7 +313,7 @@ static void lightnessArrayHelperSGray(float* lightness, size_t n, const T* src, 
     #pragma omp parallel for
     for (size_t e = 0; e < n; e++) {
         float v = toLinear(normalize(src[e * cc + c]));
-        lightness[e] = 100.0f * v;
+        lightness[e] = rgbToL(v, v, v);
     }
 }
 

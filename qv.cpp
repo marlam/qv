@@ -284,8 +284,10 @@ void QV::prepareQuadRendering(Frame* frame, int quadTreeLevel,
     _viewPrg.setUniformValue("colorChannel1Index", frame->colorChannelIndex(1));
     _viewPrg.setUniformValue("colorChannel2Index", frame->colorChannelIndex(2));
     _viewPrg.setUniformValue("alphaChannelIndex", frame->alphaChannelIndex());
-    _viewPrg.setUniformValue("srgbWas8Bit", frame->type() == TAD::uint8);
-    _viewPrg.setUniformValue("srgbWas16Bit", frame->type() == TAD::uint16);
+    _viewPrg.setUniformValue("colorWas8Bit", frame->type() == TAD::uint8);
+    _viewPrg.setUniformValue("colorWas16Bit", frame->type() == TAD::uint16);
+    _viewPrg.setUniformValue("texIsSRGB", frame->channelCount() <= 4 && frame->type() == TAD::uint8
+            && (frame->colorSpace() == ColorSpaceSGray || frame->colorSpace() == ColorSpaceSRGB));
     // Textures
     _viewPrg.setUniformValue("tex0", 0);
     _viewPrg.setUniformValue("tex1", 1);

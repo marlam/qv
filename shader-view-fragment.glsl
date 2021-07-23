@@ -206,10 +206,9 @@ void main(void)
 {
     vec3 rgb;
 
-    if (vDataCoord.x >= dataWidth || vDataCoord.y >= dataHeight)
-        discard;
-
-    if (!showColor) {
+    if (vDataCoord.x >= dataWidth || vDataCoord.y >= dataHeight) {
+        rgb = vec3(0.0);
+    } else if (!showColor) {
         // Get value
         float v = texture(tex0, vTexCoord)[dataChannelIndex];
         if (texIsSRGB)
@@ -299,10 +298,13 @@ void main(void)
             bool gridFragment = any(lessThanEqual(fract(texelCoord), fragmentSizeInTexels));
             // additionally add a border at the right end of the data
             gridFragment = gridFragment || (round(vDataCoord.x) == dataWidth
-                    && fract(texelCoord.x) + 1.5 * fragmentSizeInTexels.x > 1.0);
+                    && fract(texelCoord.x) + fragmentSizeInTexels.x >= 1.0);
             // additionally add a border at the top end of the data
             gridFragment = gridFragment || (round(vDataCoord.y) == dataHeight
-                    && fract(texelCoord.y) + 1.5 * fragmentSizeInTexels.y > 1.0);
+                    && fract(texelCoord.y) + fragmentSizeInTexels.y >= 1.0);
+            // do not draw a grid outside of the data (can happend with quads)
+            gridFragment = gridFragment
+                && !(vDataCoord.x >= dataWidth || vDataCoord.y >= dataHeight);
             // give the grid a color that gives some contrast
             if (gridFragment) {
                 vec3 tmp = vec3(

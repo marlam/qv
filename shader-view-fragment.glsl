@@ -290,15 +290,27 @@ void main(void)
 
     // Apply grid
     if (magGrid) {
-        vec2 texelCoord = vTexCoord * vec2(textureSize(tex0, 0));
+        vec2 texSize = vec2(textureSize(tex0, 0));
+        vec2 texelCoord = vTexCoord * texSize;
         vec2 fragmentSizeInTexels = vec2(dFdx(texelCoord.x), dFdy(texelCoord.y));
-        if (all(lessThan(fragmentSizeInTexels, vec2(0.5)))
-                && any(lessThanEqual(fract(texelCoord), fragmentSizeInTexels))) {
-            vec3 tmp = vec3(
-                    rgb.r < 0.5 ? 1.0 : 0.8,
-                    rgb.g < 0.5 ? 1.0 : 0.8,
-                    rgb.b < 0.5 ? 1.0 : 0.8);
-            rgb = tmp - 0.8 * rgb;
+        // only display grid if data texels are large enough on screen
+        if (all(lessThan(fragmentSizeInTexels, vec2(0.5)))) {
+            // check if this fragment should be considered part of the grid
+            bool gridFragment = any(lessThanEqual(fract(texelCoord), fragmentSizeInTexels));
+            // additionally add a border at the right end of the data
+            gridFragment = gridFragment || (round(vDataCoord.x) == dataWidth
+                    && fract(texelCoord.x) + 1.5 * fragmentSizeInTexels.x > 1.0);
+            // additionally add a border at the top end of the data
+            gridFragment = gridFragment || (round(vDataCoord.y) == dataHeight
+                    && fract(texelCoord.y) + 1.5 * fragmentSizeInTexels.y > 1.0);
+            // give the grid a color that gives some contrast
+            if (gridFragment) {
+                vec3 tmp = vec3(
+                        rgb.r < 0.5 ? 1.0 : 0.8,
+                        rgb.g < 0.5 ? 1.0 : 0.8,
+                        rgb.b < 0.5 ? 1.0 : 0.8);
+                rgb = tmp - 0.8 * rgb;
+            }
         }
     }
     fcolor = vec4(rgb_to_srgb(rgb), 1.0);

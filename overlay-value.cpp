@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -55,15 +56,33 @@ void OverlayValue::update(int widthInPixels, const QPoint& arrayCoordinates, Set
 
     if (!outside) {
         QString val;
-        int fieldWidth = (
-                  frame->type() == TAD::int8   ? 4
-                : frame->type() == TAD::uint8  ? 3
-                : frame->type() == TAD::int16  ? 6
-                : frame->type() == TAD::uint16 ? 5
-                : 11);
         for (int i = 0; i < frame->channelCount(); i++) {
+            val += QString("ch%1=").arg(frame->channelName(i).c_str());
             float v = frame->value(arrayCoordinates.x(), arrayCoordinates.y(), i);
-            val += QString("ch%1=%2 ").arg(frame->channelName(i).c_str()).arg(v, fieldWidth, 'g');
+            QString vv;
+            switch (frame->type()) {
+            case TAD::int8:
+                vv = QString::number(v, 'f', 6);
+                val += vv.rightJustified(4);
+                break;
+            case TAD::uint8:
+                vv = QString::number(v, 'f', 6);
+                val += vv.rightJustified(3);
+                break;
+            case TAD::int16:
+                vv = QString::number(v, 'f', 6);
+                val += vv.rightJustified(6);
+                break;
+            case TAD::uint16:
+                vv = QString::number(v, 'f', 6);
+                val += vv.rightJustified(5);
+                break;
+            default:
+                vv = QString::number(v, 'g', 7);
+                val += vv.rightJustified(13); // 7 significant digits + sign + dot + 'e' + sign of exponent + 2 digits for exponent
+                break;
+            }
+            val += ' ';
         }
         if (frame->colorSpace() != ColorSpaceNone) {
             float v = frame->value(arrayCoordinates.x(), arrayCoordinates.y(), ColorChannelIndex);

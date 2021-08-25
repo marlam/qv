@@ -206,7 +206,8 @@ void main(void)
 {
     vec3 rgb;
 
-    if (vDataCoord.x >= dataWidth || vDataCoord.y >= dataHeight) {
+    if (vDataCoord.x >= dataWidth || vDataCoord.y >= dataHeight
+            || vTexCoord.x >= 1.0 || vTexCoord.y >= 1.0) {
         rgb = vec3(0.0);
     } else if (!showColor) {
         // Get value

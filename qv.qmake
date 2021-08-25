@@ -57,8 +57,8 @@ win32 {
 		-lgta -lpfs -lpng -ljpeg -lmatio -lhdf5_cpp -lhdf5 \
 		-lIlmImf -lImath -lHalf -lIex -lIexMath -lIlmThread \
 		-lavformat -lavcodec -lavutil -lswscale -lswresample -lbcrypt -lsecur32 \
-		-lgdal -lxml2 -llzma -liconv -lgta -lgif -lmfhdf -ldf -lportablexdr -lhdf5_cpp -lhdf5 -lgeos_c -lgeos -ljson-c -lexpat -lpsapi \
+		-lgdal -lxml2 -llzma -liconv -lgta -lgif -lmfhdf -ldf -lportablexdr -lhdf5_cpp -lhdf5 -lgeos_c -lgeos -ljson-c -lexpat \
 		-ltiff -lwebp -lzstd -llzma -ljpeg \
-		-lexiv2 -lmman \
+		-lexiv2 -lmman -lpsapi \
 		-lcfitsio
 }

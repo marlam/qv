@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021 Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,6 +24,7 @@
 #ifndef TEXTURE_HOLDER_HPP
 #define TEXTURE_HOLDER_HPP
 
+#include <cstddef>
 #include <vector>
 
 class TextureHolder

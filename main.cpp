@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019, 2020  Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -121,6 +122,11 @@ int main(int argc, char* argv[])
 
     // Set the OpenGL context parameters
     QSurfaceFormat format;
+    format.setRedBufferSize(10);
+    format.setGreenBufferSize(10);
+    format.setBlueBufferSize(10);
+    format.setAlphaBufferSize(0);
+    format.setStencilBufferSize(0);
     if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
         format.setVersion(3, 0);
     } else {

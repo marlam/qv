@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019, 2020, 2021
+ * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
@@ -117,6 +117,13 @@ void QV::initializeGL()
         QMessageBox::critical(this, "Error", "Insufficient OpenGL capabilities.");
         std::exit(1);
     }
+#if 0
+    int red_bits, green_bits, blue_bits;
+    gl->glGetIntegerv(GL_RED_BITS, &red_bits);
+    gl->glGetIntegerv(GL_GREEN_BITS, &green_bits);
+    gl->glGetIntegerv(GL_BLUE_BITS, &blue_bits);
+    fprintf(stderr, "%d %d %d\n", red_bits, green_bits, blue_bits);
+#endif
 
     gl->glGenFramebuffers(1, &_fbo);
     gl->glGenTextures(1, &_fboTex);

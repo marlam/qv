@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019, 2020, 2021
+ * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
@@ -225,7 +225,9 @@ void main(void)
         if (colorMap) {
             rgb = texture(colorMapTex, vec2(v, 0.5)).rgb;
         } else {
-            rgb = vec3(v);
+            vec3 luv = xyz_to_luv(d65_xyz);
+            luv = adjust_l(luv, 100.0 * v);
+            rgb = xyz_to_rgb(luv_to_xyz(luv));
         }
     } else {
         // Read data into canonical form

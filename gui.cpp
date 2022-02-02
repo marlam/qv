@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2020 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -715,12 +716,14 @@ void Gui::updateFromParameters()
     _frameToggleInfoAction->setChecked(_qv->overlayInfoActive);
     _frameToggleValueAction->setEnabled(frame);
     _frameToggleValueAction->setChecked(_qv->overlayValueActive);
-    _frameNextAction->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() < file->frameCount(dummy) - 1);
-    _framePrevAction->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() > 0);
-    _frameNext10Action->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() < file->frameCount(dummy) - 1);
-    _framePrev10Action->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() > 0);
-    _frameNext100Action->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() < file->frameCount(dummy) - 1);
-    _framePrev100Action->setEnabled(file && file->frameCount(dummy) > 1 && file->frameIndex() > 0);
+    bool canGoForward = file && (file->frameCount(dummy) < 0 || (file->frameCount(dummy) > 1 && file->frameIndex() < file->frameCount(dummy) - 1));
+    bool canGoBackward = file && file->frameCount(dummy) != 0 && file->frameIndex() > 0;
+    _frameNextAction->setEnabled(canGoForward);
+    _framePrevAction->setEnabled(canGoBackward);
+    _frameNext10Action->setEnabled(canGoForward);
+    _framePrev10Action->setEnabled(canGoBackward);
+    _frameNext100Action->setEnabled(canGoForward);
+    _framePrev100Action->setEnabled(canGoBackward);
     _channelToggleStatisticsAction->setEnabled(frame);
     _channelToggleStatisticsAction->setChecked(_qv->overlayStatisticActive);
     _channelColorAction->setEnabled(frame && frame->colorSpace() != ColorSpaceNone);

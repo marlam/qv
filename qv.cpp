@@ -639,7 +639,7 @@ void QV::adjustFrameIndex(int offset)
     File* file = _set.currentFile();
     std::string errMsg;
     int fc = file->frameCount(errMsg);
-    if (fc < 1) {
+    if (fc == 0) {
         QMessageBox::critical(this, "Error", (errMsg
                     + ".\n\nClosing this file.").c_str());
         _set.removeFile(_set.fileIndex());
@@ -649,17 +649,45 @@ void QV::adjustFrameIndex(int offset)
     int ni = i + offset;
     if (ni < 0)
         ni = 0;
-    else if (ni >= fc)
+    else if (fc > 0 && ni >= fc)
         ni = fc - 1;
     if (ni != i) {
-        if (file->setFrameIndex(ni, errMsg)) {
+        if (fc > 0 || ni < i || ni <= file->maxFrameIndexSoFar()) {
+            // we know the frame exists so we can jump right to it
+            if (file->setFrameIndex(ni, errMsg)) {
+                this->updateTitle();
+                this->updateView();
+            } else {
+                QMessageBox::critical(this, "Error", (errMsg
+                            + ".\n\nClosing this file.").c_str());
+                _set.removeFile(_set.fileIndex());
+                return;
+            }
+        } else {
+            // we do not know the frame exists so we need to go
+            // forward as long as there are more frames
+            // first jump to the highest known frame index
+            if (i < file->maxFrameIndexSoFar()) {
+                if (!file->setFrameIndex(file->maxFrameIndexSoFar(), errMsg)) {
+                    QMessageBox::critical(this, "Error", (errMsg
+                                + ".\n\nClosing this file.").c_str());
+                    _set.removeFile(_set.fileIndex());
+                    return;
+                }
+                i = file->maxFrameIndexSoFar();
+            }
+            // then go forward frame by frame
+            while (i < ni && file->hasMore()) {
+                if (!file->setFrameIndex(i + 1, errMsg)) {
+                    QMessageBox::critical(this, "Error", (errMsg
+                                + ".\n\nClosing this file.").c_str());
+                    _set.removeFile(_set.fileIndex());
+                    return;
+                }
+                i++;
+            }
             this->updateTitle();
             this->updateView();
-        } else {
-            QMessageBox::critical(this, "Error", (errMsg
-                        + ".\n\nClosing this file.").c_str());
-            _set.removeFile(_set.fileIndex());
-            return;
         }
     }
 }

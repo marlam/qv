@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019, 2020, 2021
+ * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
@@ -27,7 +27,7 @@
 #include "file.hpp"
 
 
-File::File() : _frameIndex(-1)
+File::File() : _frameIndex(-1), _maxFrameIndexSoFar(-1)
 {
 }
 
@@ -51,21 +51,30 @@ bool File::init(const std::string& fileName, const TAD::TagList& importerHints, 
     _description = TAD::ArrayDescription();
     _frame.reset();
     _frameIndex = -1;
+    _maxFrameIndexSoFar = -1;
     return true;
 }
 
 int File::frameCount(std::string& errorMessage)
 {
     int arrayCount = importer().arrayCount();
-    if (arrayCount < 0) {
-        errorMessage = fileName() + ": unknown number of frames";
-        return -1;
-    } else if (arrayCount == 0) {
+    if (arrayCount == 0) {
         errorMessage = fileName() + ": no frames";
-        return -1;
-    } else {
-        return arrayCount;
+        _maxFrameIndexSoFar = -1;
+    } else if (arrayCount > 0) {
+        _maxFrameIndexSoFar = arrayCount - 1;
     }
+    return arrayCount;
+}
+
+bool File::hasMore()
+{
+    return importer().hasMore();
+}
+
+int File::maxFrameIndexSoFar()
+{
+    return _maxFrameIndexSoFar;
 }
 
 static bool isCompatible(const TAD::ArrayDescription& desc0, const TAD::ArrayDescription& desc1)
@@ -94,9 +103,17 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
         return true;
     }
     int frCnt = frameCount(errorMessage);
-    if (frCnt < 1)
+    if (frCnt == 0)
         return false;
-    if (index >= frCnt) {
+    if (frCnt > 0 && index >= frCnt) {
+        errorMessage = fileName() + ": " + "array " + std::to_string(index) + " does not exist";
+        return false;
+    }
+    if (frCnt < 0 && index > _frameIndex + 1 && index > maxFrameIndexSoFar()) {
+        errorMessage = fileName() + ": " + "array " + std::to_string(index) + " may not exist";
+        return false;
+    }
+    if (frCnt < 0 && index == _frameIndex + 1 && !hasMore()) {
         errorMessage = fileName() + ": " + "array " + std::to_string(index) + " does not exist";
         return false;
     }
@@ -130,6 +147,8 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
     int channelIndex = (currentFrame() ? currentFrame()->channelIndex() : -1);
     _frame.init(a);
     _frameIndex = index;
+    if (_frameIndex > _maxFrameIndexSoFar)
+        _maxFrameIndexSoFar = _frameIndex;
     if ((channelIndex == ColorChannelIndex && _frame.colorSpace() == ColorSpaceNone)
             || (channelIndex != ColorChannelIndex && channelIndex >= _frame.channelCount()))
         channelIndex = -1;
@@ -170,6 +189,7 @@ bool File::reload(std::string& errorMessage)
         _description = a;
         _frame.init(a);
         _frameIndex = 0;
+        _maxFrameIndexSoFar = 0;
         if ((channelIndex == ColorChannelIndex && _frame.colorSpace() == ColorSpaceNone)
                 || (channelIndex != ColorChannelIndex && channelIndex >= _frame.channelCount()))
             channelIndex = -1;
@@ -178,13 +198,16 @@ bool File::reload(std::string& errorMessage)
         return true;
     } else {
         int frCnt = frameCount(errorMessage);
-        if (frCnt < 1)
+        if (frCnt == 0)
             return false;
+        if (frCnt < 0)
+            index = 0;
         if (index >= frCnt)
             index = frCnt - 1;
         _importer = newImporter;
         _description = a;
         _frameIndex = -1;
+        _maxFrameIndexSoFar = -1;
         if (setFrameIndex(index, errorMessage)) {
             if ((channelIndex == ColorChannelIndex && _frame.colorSpace() == ColorSpaceNone)
                     || (channelIndex != ColorChannelIndex && channelIndex >= _frame.channelCount()))

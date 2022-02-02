@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -115,9 +116,11 @@ bool Set::setFileIndex(int index, std::string& errorMessage)
         frameIndex = 0;
     } else {
         int frameCount = _files[index].frameCount(errorMessage);
-        if (frameCount < 1)
+        if (frameCount == 0)
             return false;
-        if (frameIndex >= frameCount)
+        if (frameCount < 0)
+            frameIndex = 0;
+        else if (frameIndex >= frameCount)
             frameIndex = frameCount - 1;
     }
 
@@ -160,6 +163,9 @@ std::string Set::currentDescription()
         if (currentFile()->frameCount(dummyErrorMsg) > 1) {
             desc += std::to_string(currentFile()->frameIndex() + 1)
                 + '/' + std::to_string(currentFile()->frameCount(dummyErrorMsg)) + ' ';
+        } else if (currentFile()->frameCount(dummyErrorMsg) < 0) {
+            desc += std::to_string(currentFile()->frameIndex() + 1)
+                + '/' + '?' + ' ';
         }
         if (currentFile()->currentFrame()->channelCount() > 1) {
             desc += currentFile()->currentFrame()->currentChannelName();

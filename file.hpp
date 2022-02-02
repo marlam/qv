@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -38,6 +39,7 @@ private:
     TAD::ArrayDescription _description;
     Frame _frame;
     int _frameIndex;
+    int _maxFrameIndexSoFar;
 
     TAD::Importer& importer();
 
@@ -47,7 +49,9 @@ public:
     bool init(const std::string& fileName, const TAD::TagList& importerHints, std::string& errorMessage);
 
     const std::string& fileName() const { return _fileName; }
-    int frameCount(std::string& errorMessage); // returns < 1 on error
+    int frameCount(std::string& errorMessage); // returns -1 if unknown, 0 if there are no frames (error), or > 0
+    bool hasMore(); // only use if frameCount() returns -1. returns true if there is a next frame
+    int maxFrameIndexSoFar(); // returns the maximum frame index that is known to be valid, useful for seeking when frameCount() returns -1
 
     bool setFrameIndex(int index, std::string& errorMessage); // index=-1 is allowed and frees resources; this cannot fail
     int frameIndex() const { return _frameIndex; }

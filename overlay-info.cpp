@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -83,6 +84,8 @@ void OverlayInfo::update(int widthInPixels, Set& set)
         .arg(humanReadableMemsize(frame->array().dataSize()).c_str());
     if (file->frameCount(errMsg) > 1) {
         line.prepend(QString(" frame %1/%2:").arg(file->frameIndex() + 1).arg(file->frameCount(errMsg)));
+    } else if (file->frameCount(errMsg) < 0) {
+        line.prepend(QString(" frame %1/?:").arg(file->frameIndex() + 1));
     }
     sl << line;
     sl << QString(" current channel: %1").arg(frame->currentChannelName().c_str());

@@ -160,12 +160,16 @@ std::string Set::currentDescription()
         }
         std::string fileName = std::filesystem::path(currentFile()->fileName()).filename().string();
         desc += fileName + ' ';
-        if (currentFile()->frameCount(dummyErrorMsg) > 1) {
-            desc += std::to_string(currentFile()->frameIndex() + 1)
-                + '/' + std::to_string(currentFile()->frameCount(dummyErrorMsg)) + ' ';
-        } else if (currentFile()->frameCount(dummyErrorMsg) < 0) {
-            desc += std::to_string(currentFile()->frameIndex() + 1)
-                + '/' + '?' + ' ';
+        if (currentFile()->frameCount(dummyErrorMsg) != 1) {
+            desc += std::to_string(currentFile()->frameIndex() + 1) + '/';
+            if (currentFile()->frameCount(dummyErrorMsg) > 1) {
+                desc += std::to_string(currentFile()->frameCount(dummyErrorMsg));
+            } else {
+                if (!currentFile()->haveSeenLastFrame())
+                    desc += ">=";
+                desc += std::to_string(currentFile()->maxFrameIndexSoFar() + 1);
+            }
+            desc += ' ';
         }
         if (currentFile()->currentFrame()->channelCount() > 1) {
             desc += currentFile()->currentFrame()->currentChannelName();

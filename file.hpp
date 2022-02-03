@@ -40,6 +40,7 @@ private:
     Frame _frame;
     int _frameIndex;
     int _maxFrameIndexSoFar;
+    bool _haveSeenLastFrame;
 
     TAD::Importer& importer();
 
@@ -50,8 +51,11 @@ public:
 
     const std::string& fileName() const { return _fileName; }
     int frameCount(std::string& errorMessage); // returns -1 if unknown, 0 if there are no frames (error), or > 0
-    bool hasMore(); // only use if frameCount() returns -1. returns true if there is a next frame
-    int maxFrameIndexSoFar(); // returns the maximum frame index that is known to be valid, useful for seeking when frameCount() returns -1
+    // only use the following 3 functions if frameCount() returns -1:
+    bool hasMore(); // returns true if there is a next frame
+    int maxFrameIndexSoFar(); // returns the maximum frame index that is known to be valid, useful for seeking
+    bool haveSeenLastFrame(); // returns true if the last frame of the file has been seen, in which case
+                              // maxFrameIndexSoFar() returns the last valid frame index
 
     bool setFrameIndex(int index, std::string& errorMessage); // index=-1 is allowed and frees resources; this cannot fail
     int frameIndex() const { return _frameIndex; }

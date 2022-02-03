@@ -27,7 +27,7 @@
 #include "file.hpp"
 
 
-File::File() : _frameIndex(-1), _maxFrameIndexSoFar(-1)
+File::File() : _frameIndex(-1), _maxFrameIndexSoFar(-1), _haveSeenLastFrame(false)
 {
 }
 
@@ -52,6 +52,7 @@ bool File::init(const std::string& fileName, const TAD::TagList& importerHints, 
     _frame.reset();
     _frameIndex = -1;
     _maxFrameIndexSoFar = -1;
+    _haveSeenLastFrame = false;
     return true;
 }
 
@@ -75,6 +76,11 @@ bool File::hasMore()
 int File::maxFrameIndexSoFar()
 {
     return _maxFrameIndexSoFar;
+}
+
+bool File::haveSeenLastFrame()
+{
+    return _haveSeenLastFrame;
 }
 
 static bool isCompatible(const TAD::ArrayDescription& desc0, const TAD::ArrayDescription& desc1)
@@ -147,8 +153,12 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
     int channelIndex = (currentFrame() ? currentFrame()->channelIndex() : -1);
     _frame.init(a);
     _frameIndex = index;
-    if (_frameIndex > _maxFrameIndexSoFar)
+    if (_frameIndex > _maxFrameIndexSoFar) {
         _maxFrameIndexSoFar = _frameIndex;
+        std::string dummyErrorMsg;
+        if (frameCount(dummyErrorMsg) < 0 && !hasMore())
+            _haveSeenLastFrame = true;
+    }
     if ((channelIndex == ColorChannelIndex && _frame.colorSpace() == ColorSpaceNone)
             || (channelIndex != ColorChannelIndex && channelIndex >= _frame.channelCount()))
         channelIndex = -1;
@@ -190,6 +200,7 @@ bool File::reload(std::string& errorMessage)
         _frame.init(a);
         _frameIndex = 0;
         _maxFrameIndexSoFar = 0;
+        _haveSeenLastFrame = false;
         if ((channelIndex == ColorChannelIndex && _frame.colorSpace() == ColorSpaceNone)
                 || (channelIndex != ColorChannelIndex && channelIndex >= _frame.channelCount()))
             channelIndex = -1;
@@ -208,6 +219,7 @@ bool File::reload(std::string& errorMessage)
         _description = a;
         _frameIndex = -1;
         _maxFrameIndexSoFar = -1;
+        _haveSeenLastFrame = false;
         if (setFrameIndex(index, errorMessage)) {
             if ((channelIndex == ColorChannelIndex && _frame.colorSpace() == ColorSpaceNone)
                     || (channelIndex != ColorChannelIndex && channelIndex >= _frame.channelCount()))

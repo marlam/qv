@@ -82,10 +82,17 @@ void OverlayInfo::update(int widthInPixels, Set& set)
     line = QString(" %1x%2, %3 x %4 (%5)").arg(frame->width()).arg(frame->height())
         .arg(frame->channelCount()).arg(TAD::typeToString(frame->type()))
         .arg(humanReadableMemsize(frame->array().dataSize()).c_str());
-    if (file->frameCount(errMsg) > 1) {
-        line.prepend(QString(" frame %1/%2:").arg(file->frameIndex() + 1).arg(file->frameCount(errMsg)));
-    } else if (file->frameCount(errMsg) < 0) {
-        line.prepend(QString(" frame %1/?:").arg(file->frameIndex() + 1));
+    if (file->frameCount(errMsg) != 1) {
+        QString frameDesc = QString(" frame %1/").arg(file->frameIndex() + 1);
+        if (file->frameCount(errMsg) > 1) {
+            frameDesc += QString("%1").arg(file->frameCount(errMsg));
+        } else {
+            if (!file->haveSeenLastFrame())
+                frameDesc += QString(">=");
+            frameDesc += QString("%1").arg(file->maxFrameIndexSoFar() + 1);
+        }
+        frameDesc += QString(":");
+        line.prepend(frameDesc);
     }
     sl << line;
     sl << QString(" current channel: %1").arg(frame->currentChannelName().c_str());

@@ -60,5 +60,6 @@ win32 {
 		-lgdal -lxml2 -llzma -liconv -lgta -lgif -lmfhdf -ldf -lportablexdr -lhdf5_cpp -lhdf5 -lgeos_c -lgeos -ljson-c -lexpat \
 		-ltiff -lwebp -lzstd -llzma -ljpeg \
 		-lexiv2 -lmman -lpsapi \
-		-lcfitsio
+		-lcfitsio \
+		-lMagick++-7.Q16HDRI -lMagickWand-7.Q16HDRI -lMagickCore-7.Q16HDRI -lfontconfig -lharfbuzz -lfreetype -lharfbuzz_too -lfreetype_too -lglib-2.0 -luuid -lintl -pthread -lwinmm -lpcre -lole32 -lshlwapi -lexpat -lbz2 -lopenjp2 -lpng16 -lstdc++ -fopenmp -llcms2 -ltiff -lpthread -lwebp -ljpeg -lxml2 -L/s0/martin/mxe/usr/x86_64-w64-mingw32.static/lib/lib -liconv -lz -lgdi32 -lws2_32  -lgomp -lm -lMagickCore-7.Q16HDRI -lwebpmux -lIlmImf -lImath -lHalf -lIex -lIexMath -lIlmThread -llqr-1 -lfftw3 -lraw_r -ljasper -llzma
 }

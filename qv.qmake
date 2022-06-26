@@ -43,7 +43,7 @@ RESOURCES = resources.qrc
 
 CONFIG += release
 
-QT += widgets
+QT += openglwidgets
 
 QMAKE_CXXFLAGS += -std=c++17 -fopenmp
 

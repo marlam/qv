@@ -21,7 +21,7 @@ find_package(libtad 2.0 REQUIRED)
 if(QV_USE_QT5)
     find_package(Qt5 5.11.0 COMPONENTS Widgets)
 else()
-    find_package(Qt6 6.2.0 COMPONENTS Widgets OpenGL OpenGLWidgets)
+    find_package(Qt6 6.2.0 COMPONENTS OpenGLWidgets)
 endif()
 find_package(OpenMP)
 
@@ -58,8 +58,6 @@ add_executable(qv
 if(QV_USE_QT5)
     target_link_libraries(qv -lstdc++fs ${TAD_LIBRARIES} Qt5::Widgets OpenMP::OpenMP_CXX)
 else()
-    target_link_libraries(qv -lstdc++fs ${TAD_LIBRARIES}
-        Qt6::Widgets Qt6::OpenGL Qt6::OpenGLWidgets
-        OpenMP::OpenMP_CXX)
+    target_link_libraries(qv -lstdc++fs ${TAD_LIBRARIES} Qt6::OpenGLWidgets OpenMP::OpenMP_CXX)
 endif()
 install(TARGETS qv RUNTIME DESTINATION bin)

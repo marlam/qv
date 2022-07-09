@@ -53,8 +53,8 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
 
     int maxParts = omp_get_max_threads();
     std::vector<unsigned long long> partFiniteValues(maxParts, 0);
-    std::vector<double> partMinVals(maxParts, std::numeric_limits<float>::quiet_NaN());
-    std::vector<double> partMaxVals(maxParts, std::numeric_limits<float>::quiet_NaN());
+    std::vector<float> partMinVals(maxParts, std::numeric_limits<float>::quiet_NaN());
+    std::vector<float> partMaxVals(maxParts, std::numeric_limits<float>::quiet_NaN());
     std::vector<double> partSums(maxParts, 0.0);
     std::vector<double> partSumsOfSquares(maxParts, 0.0);
     int parts;

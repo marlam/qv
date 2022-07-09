@@ -632,12 +632,12 @@ const Statistic& Frame::statistic(int channelIndex)
 const Histogram& Frame::histogram(int channelIndex)
 {
     if (channelIndex == ColorChannelIndex) {
-        if (_colorHistogram.binCount() == 0) {
+        if (!_colorHistogram.initialized()) {
             _colorHistogram.init(lightnessArray(), 0, visMinVal(ColorChannelIndex), visMaxVal(ColorChannelIndex));
         }
         return _colorHistogram;
     } else {
-        if (_histograms[channelIndex].binCount() == 0) {
+        if (!_histograms[channelIndex].initialized()) {
             _histograms[channelIndex].init(_originalArray, channelIndex,
                     type() == TAD::uint8 ?   0.0f : minVal(channelIndex),
                     type() == TAD::uint8 ? 255.0f : maxVal(channelIndex));
@@ -949,8 +949,8 @@ bool Frame::haveStatistic(int channelIndex) const
 bool Frame::haveHistogram(int channelIndex) const
 {
     if (channelIndex == ColorChannelIndex) {
-        return _colorHistogram.binCount() > 0;
+        return _colorHistogram.initialized();
     } else {
-        return _histograms[channelIndex].binCount() > 0;
+        return _histograms[channelIndex].initialized();
     }
 }

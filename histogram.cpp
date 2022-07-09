@@ -30,7 +30,7 @@
 #include "histogram.hpp"
 
 
-Histogram::Histogram()
+Histogram::Histogram() : _initialized(false)
 {
 }
 
@@ -127,4 +127,5 @@ void Histogram::init(const TAD::ArrayContainer& array, size_t componentIndex, fl
         initHelper<double>(TAD::Array<double>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
         break;
     }
+    _initialized = true;
 }

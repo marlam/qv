@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -30,12 +31,14 @@
 
 class Histogram {
 private:
+    bool _initialized;
     float _minVal, _maxVal;
     std::vector<unsigned long long> _bins;
     unsigned long long _maxBinVal;
 
 public:
     Histogram();
+    bool initialized() const { return _initialized; }
     void init(const TAD::ArrayContainer& array, size_t componentIndex, float minVal, float maxVal);
     float minVal() const { return _minVal; }
     float maxVal() const { return _maxVal; }

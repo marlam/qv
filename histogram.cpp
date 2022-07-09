@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -53,20 +54,18 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
         float _minVal, float _maxVal,
         std::vector<unsigned long long>& _bins, unsigned long long& _maxBinVal)
 {
-    _bins.resize(BINS, 0);
     size_t n = array.elementCount();
     size_t cc = array.componentCount();
     const T* data = array[0];
 
+    int maxParts = omp_get_max_threads();
+    std::vector<unsigned long long> partBins(maxParts * BINS, 0);
+    int parts;
     #pragma omp parallel
     {
-        int parts = omp_get_num_threads();
+        parts = omp_get_num_threads();
         size_t partSize = n / parts + (n % parts == 0 ? 0 : 1);
         int p = omp_get_thread_num();
-
-        unsigned long long partBins[BINS];
-        for (size_t b = 0; b < BINS; b++)
-            partBins[b] = 0;
 
         for (size_t pe = 0; pe < partSize; pe++) {
             size_t e = p * partSize + pe;
@@ -74,16 +73,16 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
                 break;
             T val = data[e * cc + componentIndex];
             if (std::isfinite(val)) {
-                partBins[binIndexHelper(val, _minVal, _maxVal, BINS)]++;
+                partBins[p * BINS + binIndexHelper(val, _minVal, _maxVal, BINS)]++;
             }
-        }
-
-        #pragma omp critical
-        for (size_t b = 0; b < BINS; b++) {
-            _bins[b] += partBins[b];
         }
     }
 
+    _bins.resize(BINS, 0);
+    for (int p = 0; p < parts; p++) {
+        for (size_t b = 0; b < BINS; b++)
+            _bins[b] += partBins[p * BINS + b];
+    }
     _maxBinVal = _bins[0];
     for (size_t b = 1; b < BINS; b++) {
         if (_bins[b] > _maxBinVal)

@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -31,7 +32,7 @@
 
 
 Statistic::Statistic() :
-    _finiteValues(-1),
+    _finiteValues(0),
     _minVal(std::numeric_limits<float>::quiet_NaN()),
     _maxVal(std::numeric_limits<float>::quiet_NaN()),
     _sampleMean(std::numeric_limits<float>::quiet_NaN()),
@@ -49,20 +50,18 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
     size_t cc = array.componentCount();
     const T* data = array[0];
 
-    double sum = 0.0;
-    double sumOfSquares = 0.0;
-    _finiteValues = 0;
+    int maxParts = omp_get_max_threads();
+    std::vector<long long> partFiniteValues(maxParts, 0);
+    std::vector<double> partMinVals(maxParts, std::numeric_limits<float>::quiet_NaN());
+    std::vector<double> partMaxVals(maxParts, std::numeric_limits<float>::quiet_NaN());
+    std::vector<double> partSums(maxParts, 0.0);
+    std::vector<double> partSumsOfSquares(maxParts, 0.0);
+    int parts;
     #pragma omp parallel
     {
-        int parts = omp_get_num_threads();
+        parts = omp_get_num_threads();
         size_t partSize = n / parts + (n % parts == 0 ? 0 : 1);
         int p = omp_get_thread_num();
-
-        float partMinVal = std::numeric_limits<float>::quiet_NaN();
-        float partMaxVal = std::numeric_limits<float>::quiet_NaN();
-        double partSum = 0.0;
-        double partSumOfSquares = 0.0;
-        long long partFiniteValues = 0;
 
         for (size_t pe = 0; pe < partSize; pe++) {
             size_t e = p * partSize + pe;
@@ -71,38 +70,32 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
             T val = data[e * cc + componentIndex];
             if (std::isfinite(val)) {
                 float fval = val;
-                partFiniteValues++;;
-                if (partFiniteValues == 1) {
-                    partMinVal = fval;
-                    partMaxVal = fval;
-                } else if (fval < partMinVal) {
-                    partMinVal = fval;
-                } else if (fval > partMaxVal) {
-                    partMaxVal = fval;
+                partFiniteValues[p]++;
+                if (partFiniteValues[p] == 1) {
+                    partMinVals[p] = fval;
+                    partMaxVals[p] = fval;
+                } else if (fval < partMinVals[p]) {
+                    partMinVals[p] = fval;
+                } else if (fval > partMaxVals[p]) {
+                    partMaxVals[p] = fval;
                 }
-                partSum += fval;
-                partSumOfSquares += fval * fval;
-            }
-        }
-
-        if (partFiniteValues > 0) {
-            #pragma omp critical
-            {
-                if (_finiteValues == 0) {
-                    _minVal = partMinVal;
-                    _maxVal = partMaxVal;
-                } else if (partMinVal < _minVal) {
-                    _minVal = partMinVal;
-                } else if (partMaxVal > _maxVal) {
-                    _maxVal = partMaxVal;
-                }
-                _finiteValues += partFiniteValues;
-                sum += partSum;
-                sumOfSquares += partSumOfSquares;
+                partSums[p] += fval;
+                partSumsOfSquares[p] += fval * fval;
             }
         }
     }
 
+    double sum = 0.0;
+    double sumOfSquares = 0.0;
+    for (int p = 0; p < parts; p++) {
+        _finiteValues += partFiniteValues[p];
+        sum += partSums[p];
+        sumOfSquares += partSumsOfSquares[p];
+        if (std::isfinite(partMinVals[p]) && (!std::isfinite(_minVal) || _minVal > partMinVals[p]))
+            _minVal = partMinVals[p];
+        if (std::isfinite(partMaxVals[p]) && (!std::isfinite(_maxVal) || _maxVal < partMaxVals[p]))
+            _maxVal = partMaxVals[p];
+    }
     if (_finiteValues > 0) {
         _sampleMean = sum / _finiteValues;
         if (_finiteValues > 1) {

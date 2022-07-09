@@ -30,7 +30,7 @@
 class Statistic {
 private:
     bool _initialized;
-    long long _finiteValues;
+    unsigned long long _finiteValues;
     float _minVal;
     float _maxVal;
     float _sampleMean;
@@ -43,7 +43,7 @@ public:
     void init(const TAD::ArrayContainer& array, size_t componentIndex);
 
     bool initialized() const { return _initialized; }
-    long long finiteValues() const { return _finiteValues; }
+    unsigned long long finiteValues() const { return _finiteValues; }
     float minVal() const { return _minVal; }
     float maxVal() const { return _maxVal; }
     float sampleMean() const { return _sampleMean; }

@@ -44,7 +44,7 @@ Statistic::Statistic() :
 
 template<typename T>
 static void initHelper(const TAD::Array<T> array, size_t componentIndex,
-        long long& _finiteValues, float& _minVal, float& _maxVal,
+        unsigned long long& _finiteValues, float& _minVal, float& _maxVal,
         float& _sampleMean, float& _sampleVariance, float& _sampleDeviation)
 {
     size_t n = array.elementCount();
@@ -52,7 +52,7 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
     const T* data = array[0];
 
     int maxParts = omp_get_max_threads();
-    std::vector<long long> partFiniteValues(maxParts, 0);
+    std::vector<unsigned long long> partFiniteValues(maxParts, 0);
     std::vector<double> partMinVals(maxParts, std::numeric_limits<float>::quiet_NaN());
     std::vector<double> partMaxVals(maxParts, std::numeric_limits<float>::quiet_NaN());
     std::vector<double> partSums(maxParts, 0.0);

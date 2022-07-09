@@ -32,6 +32,7 @@
 
 
 Statistic::Statistic() :
+    _initialized(false),
     _finiteValues(0),
     _minVal(std::numeric_limits<float>::quiet_NaN()),
     _maxVal(std::numeric_limits<float>::quiet_NaN()),
@@ -112,7 +113,7 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
 
 void Statistic::init(const TAD::ArrayContainer& array, size_t componentIndex)
 {
-    assert(_finiteValues == -1);
+    assert(!_initialized);
     switch (array.componentType()) {
     case TAD::int8:
         initHelper(TAD::Array<int8_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
@@ -145,4 +146,5 @@ void Statistic::init(const TAD::ArrayContainer& array, size_t componentIndex)
         initHelper(TAD::Array<double>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
         break;
     }
+    _initialized = true;
 }

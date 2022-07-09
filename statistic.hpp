@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -28,6 +29,7 @@
 
 class Statistic {
 private:
+    bool _initialized;
     long long _finiteValues;
     float _minVal;
     float _maxVal;
@@ -40,6 +42,7 @@ public:
 
     void init(const TAD::ArrayContainer& array, size_t componentIndex);
 
+    bool initialized() const { return _initialized; }
     long long finiteValues() const { return _finiteValues; }
     float minVal() const { return _minVal; }
     float maxVal() const { return _maxVal; }

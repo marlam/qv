@@ -1,5 +1,6 @@
 /*
- * Copyright (C) 2019, 2020, 2021  Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -616,12 +617,12 @@ float Frame::visMaxVal(int channelIndex)
 const Statistic& Frame::statistic(int channelIndex)
 {
     if (channelIndex == ColorChannelIndex) {
-        if (_colorStatistic.finiteValues() < 0) {
+        if (!_colorStatistic.initialized()) {
             _colorStatistic.init(lightnessArray(), 0);
         }
         return _colorStatistic;
     } else {
-        if (_statistics[channelIndex].finiteValues() < 0) {
+        if (!_statistics[channelIndex].initialized()) {
             _statistics[channelIndex].init(_originalArray, channelIndex);
         }
         return _statistics[channelIndex];
@@ -939,9 +940,9 @@ bool Frame::haveLightness() const
 bool Frame::haveStatistic(int channelIndex) const
 {
     if (channelIndex == ColorChannelIndex) {
-        return _colorStatistic.finiteValues() >= 0;
+        return _colorStatistic.initialized();
     } else {
-        return _statistics[channelIndex].finiteValues() >= 0;
+        return _statistics[channelIndex].initialized();
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019, 2020, 2021
+ * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
@@ -39,8 +39,13 @@ void OverlayStatistic::update(int widthInPixels, Set& set)
     else
         s += frame->currentChannelName().c_str();
     const Statistic& S = frame->currentStatistic();
-    s += QString(" min=%1 max=%2 mean=%3 var=%4 dev=%5").
-        arg(S.minVal()).arg(S.maxVal()).arg(S.sampleMean()).arg(S.sampleVariance()).arg(S.sampleDeviation());
+    s += QString(" min=%1 max=%2 mean=%3 var=%4 dev=%5 invalid=%6")
+        .arg(S.minVal())
+        .arg(S.maxVal())
+        .arg(S.sampleMean())
+        .arg(S.sampleVariance())
+        .arg(S.sampleDeviation())
+        .arg(frame->width() * frame->height() - S.finiteValues());
     float xOffset = 0.0f;
     float yOffset = 1.25f * _painter->fontInfo().pixelSize();
     _painter->drawText(xOffset, yOffset, s);

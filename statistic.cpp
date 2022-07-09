@@ -70,18 +70,17 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
                 break;
             T val = data[e * cc + componentIndex];
             if (std::isfinite(val)) {
-                float fval = val;
                 partFiniteValues[p]++;
                 if (partFiniteValues[p] == 1) {
-                    partMinVals[p] = fval;
-                    partMaxVals[p] = fval;
-                } else if (fval < partMinVals[p]) {
-                    partMinVals[p] = fval;
-                } else if (fval > partMaxVals[p]) {
-                    partMaxVals[p] = fval;
+                    partMinVals[p] = val;
+                    partMaxVals[p] = val;
+                } else if (val < partMinVals[p]) {
+                    partMinVals[p] = val;
+                } else if (val > partMaxVals[p]) {
+                    partMaxVals[p] = val;
                 }
-                partSums[p] += fval;
-                partSumsOfSquares[p] += fval * fval;
+                partSums[p] += val;
+                partSumsOfSquares[p] += val * val;
             }
         }
     }

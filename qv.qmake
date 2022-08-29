@@ -43,7 +43,7 @@ RESOURCES = resources.qrc
 
 CONFIG += release
 
-QT += openglwidgets
+QT += widgets
 
 QMAKE_CXXFLAGS += -std=c++17 -fopenmp
 
@@ -55,11 +55,11 @@ win32 {
 	LIBS += -Wl,--allow-multiple-definition \
 		-lpoppler-cpp -lpoppler -llcms2 -lopenjp2 -lfreetype -lharfbuzz -lfreetype \
 		-lgta -lpfs -lpng -ljpeg -lmatio -lhdf5_cpp -lhdf5 \
-		-lIlmImf -lImath -lHalf -lIex -lIexMath -lIlmThread \
+		-lOpenEXR-3_1 -lImath-3_1 -lIlmThread-3_1 -lIex-3_1 \
 		-lavformat -lavcodec -lavutil -lswscale -lswresample -lbcrypt -lsecur32 \
 		-lgdal -lxml2 -llzma -liconv -lgta -lgif -lmfhdf -ldf -lportablexdr -lhdf5_cpp -lhdf5 -lgeos_c -lgeos -ljson-c -lexpat \
 		-ltiff -lwebp -lzstd -llzma -ljpeg \
 		-lexiv2 -lmman -lpsapi \
 		-lcfitsio \
-		-lMagick++-7.Q16HDRI -lMagickWand-7.Q16HDRI -lMagickCore-7.Q16HDRI -lfontconfig -lharfbuzz -lfreetype -lharfbuzz_too -lfreetype_too -lglib-2.0 -luuid -lintl -pthread -lwinmm -lpcre -lole32 -lshlwapi -lexpat -lbz2 -lopenjp2 -lpng16 -lstdc++ -fopenmp -llcms2 -ltiff -lpthread -lwebp -ljpeg -lxml2 -L/s0/martin/mxe/usr/x86_64-w64-mingw32.static/lib/lib -liconv -lz -lgdi32 -lws2_32  -lgomp -lm -lMagickCore-7.Q16HDRI -lwebpmux -lIlmImf -lImath -lHalf -lIex -lIexMath -lIlmThread -llqr-1 -lfftw3 -lraw_r -ljasper -llzma
+		-lMagick++-7.Q16HDRI -lMagickWand-7.Q16HDRI -lMagickCore-7.Q16HDRI -lharfbuzz -lfreetype -lharfbuzz_too -lfreetype_too -lglib-2.0 -luuid -lintl -pthread -lwinmm -lpcre -lole32 -lshlwapi -lexpat -lbz2 -lopenjp2 -lpng16 -lstdc++ -fopenmp -llcms2 -ltiff -lpthread -lwebp -ljpeg -lxml2 -L/s0/martin/mxe/usr/x86_64-w64-mingw32.static/lib/lib -liconv -lz -lgdi32 -lws2_32  -lgomp -lm -lMagickCore-7.Q16HDRI -lwebpmux -llqr-1 -lfftw3 -lraw_r -ljasper -llzma -lfontconfig
 }

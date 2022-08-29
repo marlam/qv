@@ -61,19 +61,19 @@ void OverlayValue::update(int widthInPixels, const QPoint& arrayCoordinates, Set
             float v = frame->value(arrayCoordinates.x(), arrayCoordinates.y(), i);
             QString vv;
             switch (frame->type()) {
-            case TAD::int8:
+            case TGD::int8:
                 vv = QString::number(v, 'f', 6);
                 val += vv.rightJustified(4);
                 break;
-            case TAD::uint8:
+            case TGD::uint8:
                 vv = QString::number(v, 'f', 6);
                 val += vv.rightJustified(3);
                 break;
-            case TAD::int16:
+            case TGD::int16:
                 vv = QString::number(v, 'f', 6);
                 val += vv.rightJustified(6);
                 break;
-            case TAD::uint16:
+            case TGD::uint16:
                 vv = QString::number(v, 'f', 6);
                 val += vv.rightJustified(5);
                 break;

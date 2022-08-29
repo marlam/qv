@@ -36,7 +36,7 @@ Frame::Frame() :
 {
 }
 
-static int componentIndex(const TAD::ArrayContainer& a, const std::string& interpretationValue)
+static int componentIndex(const TGD::ArrayContainer& a, const std::string& interpretationValue)
 {
     int ret = -1;
     for (size_t i = 0; i < a.componentCount(); i++) {
@@ -48,7 +48,7 @@ static int componentIndex(const TAD::ArrayContainer& a, const std::string& inter
     return ret;
 }
 
-void Frame::init(const TAD::ArrayContainer& a)
+void Frame::init(const TGD::ArrayContainer& a)
 {
     reset();
     _originalArray = a;
@@ -131,12 +131,12 @@ void Frame::init(const TAD::ArrayContainer& a)
         _colorVisMinVal = statistic(ColorChannelIndex).minVal();
         _colorVisMaxVal = statistic(ColorChannelIndex).maxVal();
     } else if (_colorSpace == ColorSpaceSGray || _colorSpace == ColorSpaceSRGB) {
-        if (type() == TAD::uint8) {
+        if (type() == TGD::uint8) {
             _colorMinVal = 0.0f;
             _colorMaxVal = 255.0f;
             _colorVisMinVal = 0.0f;
             _colorVisMaxVal = 100.0f;
-        } else if (type() == TAD::uint16) {
+        } else if (type() == TGD::uint16) {
             _colorMinVal = 0.0f;
             _colorMaxVal = 65535.0f;
             _colorVisMinVal = 0.0f;
@@ -167,17 +167,17 @@ void Frame::init(const TAD::ArrayContainer& a)
     _channelIndex = (_colorSpace != ColorSpaceNone ? ColorChannelIndex : 0);
     // Initialize quadtree representation. Quads in level 0 are never explicitly
     // stored in order to not duplicate the original data in memory
-    TAD::Type quadType = TAD::float32;
+    TGD::Type quadType = TGD::float32;
     if (channelCount() <= 4) {
         // single texture
         GLenum formats[4] = { GL_RED, GL_RG, GL_RGB, GL_RGBA };
         _texFormat = formats[channelCount() - 1];
-        if (type() == TAD::uint8 && (colorSpace() == ColorSpaceSGray || colorSpace() == ColorSpaceSRGB)) {
+        if (type() == TGD::uint8 && (colorSpace() == ColorSpaceSGray || colorSpace() == ColorSpaceSRGB)) {
             _texInternalFormat = (colorSpace() == ColorSpaceSGray ? GL_SRGB8
                     : colorSpace() == ColorSpaceSRGB && !hasAlpha() ? GL_SRGB8
                     : GL_SRGB8_ALPHA8);
             _texType = GL_UNSIGNED_BYTE;
-            quadType = TAD::uint8;
+            quadType = TGD::uint8;
         } else {
             GLint internalFormats[4] = { GL_R32F, GL_RG32F, GL_RGB32F, GL_RGBA32F };
             _texInternalFormat = internalFormats[channelCount() - 1];
@@ -197,7 +197,7 @@ void Frame::init(const TAD::ArrayContainer& a)
         quadDims[0] = width();
         quadDims[1] = height();
     }
-    _quadLevel0Description = TAD::ArrayDescription(quadDims, channelCount(), quadType);
+    _quadLevel0Description = TGD::ArrayDescription(quadDims, channelCount(), quadType);
     int level = 0;
     int quadsX = std::max(width() / quadWidth() + (width() % quadWidth() ? 1 : 0), 1);
     int quadsY = std::max(height() / quadHeight() + (height() % quadHeight() ? 1 : 0), 1);
@@ -342,44 +342,44 @@ static void lightnessArrayHelperY(float* lightness, size_t n, const T* src, int 
     }
 }
 
-const TAD::Array<float>& Frame::lightnessArray()
+const TGD::Array<float>& Frame::lightnessArray()
 {
     if (_lightnessArray.elementCount() == 0) {
-        _lightnessArray = TAD::Array<float>(_originalArray.dimensions(), 1);
+        _lightnessArray = TGD::Array<float>(_originalArray.dimensions(), 1);
         float* lightness = static_cast<float*>(_lightnessArray.data());
         size_t n = _lightnessArray.elementCount();
         int cc = _originalArray.componentCount();
         if (colorSpace() == ColorSpaceLinearGray) {
             int c = colorChannelIndex(0);
             switch (type()) {
-            case TAD::int8:
+            case TGD::int8:
                 lightnessArrayHelperLinearGray(lightness, n, static_cast<const int8_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::uint8:
+            case TGD::uint8:
                 lightnessArrayHelperLinearGray(lightness, n, static_cast<const uint8_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::int16:
+            case TGD::int16:
                 lightnessArrayHelperLinearGray(lightness, n, static_cast<const int16_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::uint16:
+            case TGD::uint16:
                 lightnessArrayHelperLinearGray(lightness, n, static_cast<const uint16_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::int32:
+            case TGD::int32:
                 lightnessArrayHelperLinearGray(lightness, n, static_cast<const int32_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::uint32:
+            case TGD::uint32:
                 lightnessArrayHelperLinearGray(lightness, n, static_cast<const uint32_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::int64:
+            case TGD::int64:
                 lightnessArrayHelperLinearGray(lightness, n, static_cast<const int64_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::uint64:
+            case TGD::uint64:
                 lightnessArrayHelperLinearGray(lightness, n, static_cast<const uint64_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::float32:
+            case TGD::float32:
                 lightnessArrayHelperLinearGray(lightness, n, static_cast<const float*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::float64:
+            case TGD::float64:
                 lightnessArrayHelperLinearGray(lightness, n, static_cast<const double*>(_originalArray.data()), cc, c);
                 break;
             }
@@ -388,68 +388,68 @@ const TAD::Array<float>& Frame::lightnessArray()
             int cg = colorChannelIndex(1);
             int cb = colorChannelIndex(2);
             switch (type()) {
-            case TAD::int8:
+            case TGD::int8:
                 lightnessArrayHelperLinearRGB(lightness, n, static_cast<const int8_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::uint8:
+            case TGD::uint8:
                 lightnessArrayHelperLinearRGB(lightness, n, static_cast<const uint8_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::int16:
+            case TGD::int16:
                 lightnessArrayHelperLinearRGB(lightness, n, static_cast<const int16_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::uint16:
+            case TGD::uint16:
                 lightnessArrayHelperLinearRGB(lightness, n, static_cast<const uint16_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::int32:
+            case TGD::int32:
                 lightnessArrayHelperLinearRGB(lightness, n, static_cast<const int32_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::uint32:
+            case TGD::uint32:
                 lightnessArrayHelperLinearRGB(lightness, n, static_cast<const uint32_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::int64:
+            case TGD::int64:
                 lightnessArrayHelperLinearRGB(lightness, n, static_cast<const int64_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::uint64:
+            case TGD::uint64:
                 lightnessArrayHelperLinearRGB(lightness, n, static_cast<const uint64_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::float32:
+            case TGD::float32:
                 lightnessArrayHelperLinearRGB(lightness, n, static_cast<const float*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::float64:
+            case TGD::float64:
                 lightnessArrayHelperLinearRGB(lightness, n, static_cast<const double*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
             }
         } else if (colorSpace() == ColorSpaceSGray) {
             int c = colorChannelIndex(0);
             switch (type()) {
-            case TAD::int8:
+            case TGD::int8:
                 lightnessArrayHelperSGray(lightness, n, static_cast<const int8_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::uint8:
+            case TGD::uint8:
                 lightnessArrayHelperSGray(lightness, n, static_cast<const uint8_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::int16:
+            case TGD::int16:
                 lightnessArrayHelperSGray(lightness, n, static_cast<const int16_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::uint16:
+            case TGD::uint16:
                 lightnessArrayHelperSGray(lightness, n, static_cast<const uint16_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::int32:
+            case TGD::int32:
                 lightnessArrayHelperSGray(lightness, n, static_cast<const int32_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::uint32:
+            case TGD::uint32:
                 lightnessArrayHelperSGray(lightness, n, static_cast<const uint32_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::int64:
+            case TGD::int64:
                 lightnessArrayHelperSGray(lightness, n, static_cast<const int64_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::uint64:
+            case TGD::uint64:
                 lightnessArrayHelperSGray(lightness, n, static_cast<const uint64_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::float32:
+            case TGD::float32:
                 lightnessArrayHelperSGray(lightness, n, static_cast<const float*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::float64:
+            case TGD::float64:
                 lightnessArrayHelperSGray(lightness, n, static_cast<const double*>(_originalArray.data()), cc, c);
                 break;
             }
@@ -458,68 +458,68 @@ const TAD::Array<float>& Frame::lightnessArray()
             int cg = colorChannelIndex(1);
             int cb = colorChannelIndex(2);
             switch (type()) {
-            case TAD::int8:
+            case TGD::int8:
                 lightnessArrayHelperSRGB(lightness, n, static_cast<const int8_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::uint8:
+            case TGD::uint8:
                 lightnessArrayHelperSRGB(lightness, n, static_cast<const uint8_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::int16:
+            case TGD::int16:
                 lightnessArrayHelperSRGB(lightness, n, static_cast<const int16_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::uint16:
+            case TGD::uint16:
                 lightnessArrayHelperSRGB(lightness, n, static_cast<const uint16_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::int32:
+            case TGD::int32:
                 lightnessArrayHelperSRGB(lightness, n, static_cast<const int32_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::uint32:
+            case TGD::uint32:
                 lightnessArrayHelperSRGB(lightness, n, static_cast<const uint32_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::int64:
+            case TGD::int64:
                 lightnessArrayHelperSRGB(lightness, n, static_cast<const int64_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::uint64:
+            case TGD::uint64:
                 lightnessArrayHelperSRGB(lightness, n, static_cast<const uint64_t*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::float32:
+            case TGD::float32:
                 lightnessArrayHelperSRGB(lightness, n, static_cast<const float*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
-            case TAD::float64:
+            case TGD::float64:
                 lightnessArrayHelperSRGB(lightness, n, static_cast<const double*>(_originalArray.data()), cc, cr, cg, cb);
                 break;
             }
         } else if (colorSpace() == ColorSpaceY || colorSpace() == ColorSpaceXYZ) {
             int c = colorChannelIndex(colorSpace() == ColorSpaceY ? 0 : 1);
             switch (type()) {
-            case TAD::int8:
+            case TGD::int8:
                 lightnessArrayHelperY(lightness, n, static_cast<const int8_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::uint8:
+            case TGD::uint8:
                 lightnessArrayHelperY(lightness, n, static_cast<const uint8_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::int16:
+            case TGD::int16:
                 lightnessArrayHelperY(lightness, n, static_cast<const int16_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::uint16:
+            case TGD::uint16:
                 lightnessArrayHelperY(lightness, n, static_cast<const uint16_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::int32:
+            case TGD::int32:
                 lightnessArrayHelperY(lightness, n, static_cast<const int32_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::uint32:
+            case TGD::uint32:
                 lightnessArrayHelperY(lightness, n, static_cast<const uint32_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::int64:
+            case TGD::int64:
                 lightnessArrayHelperY(lightness, n, static_cast<const int64_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::uint64:
+            case TGD::uint64:
                 lightnessArrayHelperY(lightness, n, static_cast<const uint64_t*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::float32:
+            case TGD::float32:
                 lightnessArrayHelperY(lightness, n, static_cast<const float*>(_originalArray.data()), cc, c);
                 break;
-            case TAD::float64:
+            case TGD::float64:
                 lightnessArrayHelperY(lightness, n, static_cast<const double*>(_originalArray.data()), cc, c);
                 break;
             }
@@ -536,34 +536,34 @@ float Frame::value(int x, int y, int channelIndex)
             v = lightnessArray()[{ size_t(x), size_t(y) }][0];
         } else {
             switch (type()) {
-            case TAD::int8:
+            case TGD::int8:
                 v = _originalArray.get<int8_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
                 break;
-            case TAD::uint8:
+            case TGD::uint8:
                 v = _originalArray.get<uint8_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
                 break;
-            case TAD::int16:
+            case TGD::int16:
                 v = _originalArray.get<int16_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
                 break;
-            case TAD::uint16:
+            case TGD::uint16:
                 v = _originalArray.get<uint16_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
                 break;
-            case TAD::int32:
+            case TGD::int32:
                 v = _originalArray.get<int32_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
                 break;
-            case TAD::uint32:
+            case TGD::uint32:
                 v = _originalArray.get<uint32_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
                 break;
-            case TAD::int64:
+            case TGD::int64:
                 v = _originalArray.get<int64_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
                 break;
-            case TAD::uint64:
+            case TGD::uint64:
                 v = _originalArray.get<uint64_t>({ size_t(x), size_t(y) }, size_t(channelIndex));
                 break;
-            case TAD::float32:
+            case TGD::float32:
                 v = _originalArray.get<float>({ size_t(x), size_t(y) }, size_t(channelIndex));
                 break;
-            case TAD::float64:
+            case TGD::float64:
                 v = _originalArray.get<double>({ size_t(x), size_t(y) }, size_t(channelIndex));
                 break;
             }
@@ -578,7 +578,7 @@ float Frame::minVal(int channelIndex)
         return _colorMinVal;
     } else {
         if (!std::isfinite(_minVals[channelIndex])) {
-            if (type() == TAD::uint8 && colorSpace() != ColorSpaceNone)
+            if (type() == TGD::uint8 && colorSpace() != ColorSpaceNone)
                 _minVals[channelIndex] = 0.0f;
             _originalArray.componentTagList(channelIndex).value("MINVAL", &(_minVals[channelIndex]));
             if (!std::isfinite(_minVals[channelIndex]))
@@ -594,7 +594,7 @@ float Frame::maxVal(int channelIndex)
         return _colorMaxVal;
     } else {
         if (!std::isfinite(_maxVals[channelIndex])) {
-            if (type() == TAD::uint8 && colorSpace() != ColorSpaceNone)
+            if (type() == TGD::uint8 && colorSpace() != ColorSpaceNone)
                 _maxVals[channelIndex] = 255.0f;
             _originalArray.componentTagList(channelIndex).value("MAXVAL", &(_maxVals[channelIndex]));
             if (!std::isfinite(_maxVals[channelIndex]))
@@ -639,8 +639,8 @@ const Histogram& Frame::histogram(int channelIndex)
     } else {
         if (!_histograms[channelIndex].initialized()) {
             _histograms[channelIndex].init(_originalArray, channelIndex,
-                    type() == TAD::uint8 ?   0.0f : minVal(channelIndex),
-                    type() == TAD::uint8 ? 255.0f : maxVal(channelIndex));
+                    type() == TGD::uint8 ?   0.0f : minVal(channelIndex),
+                    type() == TGD::uint8 ? 255.0f : maxVal(channelIndex));
         }
         return _histograms[channelIndex];
     }
@@ -655,7 +655,7 @@ void Frame::setChannelIndex(int index)
     _channelIndex = index;
 }
 
-TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
+TGD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
 {
     assert(qx >= 0 && qx < quadTreeLevelWidth(0));
     assert(qy >= 0 && qy < quadTreeLevelHeight(0));
@@ -669,9 +669,9 @@ TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
     }
 
     /* First create quad using original data type */
-    TAD::ArrayContainer q(_quadLevel0Description.dimensions(),
+    TGD::ArrayContainer q(_quadLevel0Description.dimensions(),
             _quadLevel0Description.componentCount(), type());
-    const TAD::ArrayContainer& src = _originalArray;
+    const TGD::ArrayContainer& src = _originalArray;
     int srcX = qx * quadWidth() - quadBorderSize(0);
     int srcY = qy * quadHeight() - quadBorderSize(0);
 
@@ -773,7 +773,7 @@ TAD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
 
 bool Frame::textureChannelIsS(int texChannel)
 {
-    return (channelCount() <= 4 && type() == TAD::uint8
+    return (channelCount() <= 4 && type() == TGD::uint8
             && ((colorSpace() == ColorSpaceSGray && colorChannelIndex(0) == texChannel)
                 || (colorSpace() == ColorSpaceSRGB &&
                     (colorChannelIndex(0) == texChannel
@@ -781,7 +781,7 @@ bool Frame::textureChannelIsS(int texChannel)
                      || colorChannelIndex(2) == texChannel))));
 }
 
-static void uploadArrayToTexture(const TAD::ArrayContainer& array,
+static void uploadArrayToTexture(const TGD::ArrayContainer& array,
         unsigned int texture,
         GLint internalFormat, GLenum format, GLenum type)
 {
@@ -836,8 +836,8 @@ unsigned int Frame::quadTexture(int level, int qx, int qy, int channelIndex,
             } else {
                 // one texture per channel
                 if (_textureTransferArray.dimensionCount() == 0)
-                    _textureTransferArray = TAD::Array<float>({ size_t(quadWidth()), size_t(quadHeight()) }, 1);
-                const TAD::Array<float> origQuad = quadFromLevel0(qx, qy);
+                    _textureTransferArray = TGD::Array<float>({ size_t(quadWidth()), size_t(quadHeight()) }, 1);
+                const TGD::Array<float> origQuad = quadFromLevel0(qx, qy);
                 for (size_t e = 0; e < _textureTransferArray.elementCount(); e++)
                     _textureTransferArray.set<float>(e, 0, origQuad.get<float>(e, channelIndex));
                 uploadArrayToTexture(_textureTransferArray, _textureHolder->texture(textureIndex),

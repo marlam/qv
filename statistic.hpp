@@ -25,7 +25,7 @@
 #ifndef QV_STATISTIC_HPP
 #define QV_STATISTIC_HPP
 
-#include <tad/array.hpp>
+#include <tgd/array.hpp>
 
 class Statistic {
 private:
@@ -40,7 +40,7 @@ private:
 public:
     Statistic();
 
-    void init(const TAD::ArrayContainer& array, size_t componentIndex);
+    void init(const TGD::ArrayContainer& array, size_t componentIndex);
 
     bool initialized() const { return _initialized; }
     unsigned long long finiteValues() const { return _finiteValues; }

@@ -291,9 +291,9 @@ void QV::prepareQuadRendering(Frame* frame, int quadTreeLevel,
     _viewPrg.setUniformValue("colorChannel1Index", frame->colorChannelIndex(1));
     _viewPrg.setUniformValue("colorChannel2Index", frame->colorChannelIndex(2));
     _viewPrg.setUniformValue("alphaChannelIndex", frame->alphaChannelIndex());
-    _viewPrg.setUniformValue("colorWas8Bit", frame->type() == TAD::uint8);
-    _viewPrg.setUniformValue("colorWas16Bit", frame->type() == TAD::uint16);
-    _viewPrg.setUniformValue("texIsSRGB", frame->channelCount() <= 4 && frame->type() == TAD::uint8
+    _viewPrg.setUniformValue("colorWas8Bit", frame->type() == TGD::uint8);
+    _viewPrg.setUniformValue("colorWas16Bit", frame->type() == TGD::uint16);
+    _viewPrg.setUniformValue("texIsSRGB", frame->channelCount() <= 4 && frame->type() == TGD::uint8
             && (frame->colorSpace() == ColorSpaceSGray || frame->colorSpace() == ColorSpaceSRGB));
     // Textures
     _viewPrg.setUniformValue("tex0", 0);
@@ -406,7 +406,7 @@ QImage QV::renderFrameToImage(Frame* frame)
     gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _fboTex, 0);
     gl->glViewport(0, 0, frame->quadWidth(), frame->quadHeight());
     QImage img(frame->width(), frame->height(), QImage::Format_RGB888);
-    TAD::Array<uint8_t> tmpArray({ size_t(frame->quadWidth()), size_t(frame->quadHeight()) }, 3);
+    TGD::Array<uint8_t> tmpArray({ size_t(frame->quadWidth()), size_t(frame->quadHeight()) }, 3);
     size_t lineSize = tmpArray.dimension(0) * tmpArray.elementSize();
     if (lineSize % 4 == 0)
         gl->glPixelStorei(GL_PACK_ALIGNMENT, 4);

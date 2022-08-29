@@ -27,7 +27,7 @@
 
 #include <vector>
 
-#include <tad/array.hpp>
+#include <tgd/array.hpp>
 
 class Histogram {
 private:
@@ -39,7 +39,7 @@ private:
 public:
     Histogram();
     bool initialized() const { return _initialized; }
-    void init(const TAD::ArrayContainer& array, size_t componentIndex, float minVal, float maxVal);
+    void init(const TGD::ArrayContainer& array, size_t componentIndex, float minVal, float maxVal);
     float minVal() const { return _minVal; }
     float maxVal() const { return _maxVal; }
     float maxBinVal() const { return _maxBinVal; }

@@ -47,11 +47,11 @@ QT += openglwidgets
 
 QMAKE_CXXFLAGS += -std=c++17 -fopenmp
 
-LIBS += -ltad -fopenmp
+LIBS += -ltgd -fopenmp
 
 win32 {
 	# For building a static qv.exe using MXE, we need to explicitly link in
-	# all the libraries required by static libtad
+	# all the libraries required by static libtgd
 	LIBS += -Wl,--allow-multiple-definition \
 		-lpoppler-cpp -lpoppler -llcms2 -lopenjp2 -lfreetype -lharfbuzz -lfreetype \
 		-lgta -lpfs -lpng -ljpeg -lmatio -lhdf5_cpp -lhdf5 \

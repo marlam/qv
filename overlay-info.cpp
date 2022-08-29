@@ -52,7 +52,7 @@ static std::string humanReadableMemsize(unsigned long long size)
     return s;
 }
 
-static QStringList createList(const TAD::TagList& tl, QString& interpretation)
+static QStringList createList(const TGD::TagList& tl, QString& interpretation)
 {
     QStringList list;
     for (auto it = tl.cbegin(); it != tl.cend(); it++) {
@@ -69,7 +69,7 @@ void OverlayInfo::update(int widthInPixels, Set& set)
 {
     File* file = set.currentFile();
     Frame* frame = file->currentFrame();
-    const TAD::ArrayContainer& array = frame->array();
+    const TGD::ArrayContainer& array = frame->array();
 
     std::string errMsg;
     QStringList sl;
@@ -80,7 +80,7 @@ void OverlayInfo::update(int widthInPixels, Set& set)
         line.prepend(QString(" file %1/%2:").arg(set.fileIndex() + 1).arg(set.fileCount()));
     sl << line;
     line = QString(" %1x%2, %3 x %4 (%5)").arg(frame->width()).arg(frame->height())
-        .arg(frame->channelCount()).arg(TAD::typeToString(frame->type()))
+        .arg(frame->channelCount()).arg(TGD::typeToString(frame->type()))
         .arg(humanReadableMemsize(frame->array().dataSize()).c_str());
     if (file->frameCount(errMsg) != 1) {
         QString frameDesc = QString(" frame %1/").arg(file->frameIndex() + 1);

@@ -25,7 +25,7 @@
 #ifndef QV_FILE_HPP
 #define QV_FILE_HPP
 
-#include <tad/io.hpp>
+#include <tgd/io.hpp>
 
 #include "frame.hpp"
 
@@ -34,20 +34,20 @@
 class File {
 private:
     std::string _fileName;
-    TAD::TagList _importerHints;
-    TAD::Importer _importer;
-    TAD::ArrayDescription _description;
+    TGD::TagList _importerHints;
+    TGD::Importer _importer;
+    TGD::ArrayDescription _description;
     Frame _frame;
     int _frameIndex;
     int _maxFrameIndexSoFar;
     bool _haveSeenLastFrame;
 
-    TAD::Importer& importer();
+    TGD::Importer& importer();
 
 public:
     File();
 
-    bool init(const std::string& fileName, const TAD::TagList& importerHints, std::string& errorMessage);
+    bool init(const std::string& fileName, const TGD::TagList& importerHints, std::string& errorMessage);
 
     const std::string& fileName() const { return _fileName; }
     int frameCount(std::string& errorMessage); // returns -1 if unknown, 0 if there are no frames (error), or > 0

@@ -66,7 +66,7 @@ int main(int argc, char* argv[])
     QStringList posArgs = parser.positionalArguments();
 
     // Evaluate the -i|--input option
-    TAD::TagList importerHints;
+    TGD::TagList importerHints;
     QStringList tags = parser.values("input");
     for (int i = 0; i < tags.size(); i++) {
         std::string tag = qPrintable(tags[i]);

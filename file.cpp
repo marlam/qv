@@ -31,7 +31,7 @@ File::File() : _frameIndex(-1), _maxFrameIndexSoFar(-1), _haveSeenLastFrame(fals
 {
 }
 
-TAD::Importer& File::importer()
+TGD::Importer& File::importer()
 {
     if (_importer.fileName().size() == 0) {
         _importer.initialize(fileName(), _importerHints);
@@ -39,16 +39,16 @@ TAD::Importer& File::importer()
     return _importer;
 }
 
-bool File::init(const std::string& fileName, const TAD::TagList& importerHints, std::string& errorMessage)
+bool File::init(const std::string& fileName, const TGD::TagList& importerHints, std::string& errorMessage)
 {
     _fileName = fileName;
     _importerHints = importerHints;
-    TAD::Error tadError = importer().checkAccess();
-    if (tadError != TAD::ErrorNone) {
-        errorMessage = fileName + ": " + TAD::strerror(tadError);
+    TGD::Error tgdError = importer().checkAccess();
+    if (tgdError != TGD::ErrorNone) {
+        errorMessage = fileName + ": " + TGD::strerror(tgdError);
         return false;
     }
-    _description = TAD::ArrayDescription();
+    _description = TGD::ArrayDescription();
     _frame.reset();
     _frameIndex = -1;
     _maxFrameIndexSoFar = -1;
@@ -83,7 +83,7 @@ bool File::haveSeenLastFrame()
     return _haveSeenLastFrame;
 }
 
-static bool isCompatible(const TAD::ArrayDescription& desc0, const TAD::ArrayDescription& desc1)
+static bool isCompatible(const TGD::ArrayDescription& desc0, const TGD::ArrayDescription& desc1)
 {
     if (desc1.componentType() != desc0.componentType())
         return false;
@@ -103,7 +103,7 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
         return true;
     }
     if (index < 0) {
-        _importer = TAD::Importer();
+        _importer = TGD::Importer();
         _frame.reset();
         _frameIndex = -1;
         return true;
@@ -123,11 +123,11 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
         errorMessage = fileName() + ": " + "array " + std::to_string(index) + " does not exist";
         return false;
     }
-    TAD::Error tadError;
-    TAD::ArrayContainer a;
-    a = importer().readArray(&tadError, index);
-    if (tadError != TAD::ErrorNone) {
-        errorMessage = fileName() + ": " + TAD::strerror(tadError);
+    TGD::Error tgdError;
+    TGD::ArrayContainer a;
+    a = importer().readArray(&tgdError, index);
+    if (tgdError != TGD::ErrorNone) {
+        errorMessage = fileName() + ": " + TGD::strerror(tgdError);
         return false;
     }
     if (_description.dimensionCount() == 0) {
@@ -174,17 +174,17 @@ bool File::reload(std::string& errorMessage)
         return setFrameIndex(0, errorMessage);
     }
 
-    TAD::ArrayDescription origDescription = _description;
-    TAD::Importer newImporter(fileName(), _importerHints);
-    TAD::Error tadError = newImporter.checkAccess();
-    if (tadError != TAD::ErrorNone) {
-        errorMessage = fileName() + ": " + TAD::strerror(tadError);
+    TGD::ArrayDescription origDescription = _description;
+    TGD::Importer newImporter(fileName(), _importerHints);
+    TGD::Error tgdError = newImporter.checkAccess();
+    if (tgdError != TGD::ErrorNone) {
+        errorMessage = fileName() + ": " + TGD::strerror(tgdError);
         return false;
     }
-    TAD::ArrayContainer a;
-    a = newImporter.readArray(&tadError);
-    if (tadError != TAD::ErrorNone) {
-        errorMessage = fileName() + ": " + TAD::strerror(tadError);
+    TGD::ArrayContainer a;
+    a = newImporter.readArray(&tgdError);
+    if (tgdError != TGD::ErrorNone) {
+        errorMessage = fileName() + ": " + TGD::strerror(tgdError);
         return false;
     }
     if (!isCompatible(origDescription, a)) {

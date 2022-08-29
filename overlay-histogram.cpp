@@ -95,7 +95,7 @@ void OverlayHistogram::update(int widthInPixels, const QPoint& arrayCoordinates,
         if (thisBinWidth < 1 || binX == borderX1 - 1)
             thisBinWidth = 1;
         float normalizedBinHeight = float(H.binVal(bin)) / H.maxBinVal();
-        if (frame->type() != TAD::int8 && frame->type() != TAD::uint8) {
+        if (frame->type() != TGD::int8 && frame->type() != TGD::uint8) {
             normalizedBinHeight = logtransf(normalizedBinHeight);
         }
         int binHeight = std::round(normalizedBinHeight * availableHeight);

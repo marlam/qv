@@ -50,7 +50,7 @@ int Histogram::binIndex(float v) const
 }
 
 template<typename T>
-static void initHelper(const TAD::Array<T> array, size_t componentIndex,
+static void initHelper(const TGD::Array<T> array, size_t componentIndex,
         float _minVal, float _maxVal, size_t binCount,
         std::vector<unsigned long long>& _bins, unsigned long long& _maxBinVal)
 {
@@ -90,41 +90,41 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
     }
 }
 
-void Histogram::init(const TAD::ArrayContainer& array, size_t componentIndex, float minVal, float maxVal)
+void Histogram::init(const TGD::ArrayContainer& array, size_t componentIndex, float minVal, float maxVal)
 {
     assert(_bins.size() == 0);
     _minVal = minVal;
     _maxVal = maxVal;
     switch (array.componentType()) {
-    case TAD::int8:
-        initHelper<int8_t>(TAD::Array<int8_t>(array), componentIndex, _minVal, _maxVal, 256, _bins, _maxBinVal);
+    case TGD::int8:
+        initHelper<int8_t>(TGD::Array<int8_t>(array), componentIndex, _minVal, _maxVal, 256, _bins, _maxBinVal);
         break;
-    case TAD::uint8:
-        initHelper<uint8_t>(TAD::Array<uint8_t>(array), componentIndex, _minVal, _maxVal, 256, _bins, _maxBinVal);
+    case TGD::uint8:
+        initHelper<uint8_t>(TGD::Array<uint8_t>(array), componentIndex, _minVal, _maxVal, 256, _bins, _maxBinVal);
         break;
-    case TAD::int16:
-        initHelper<int16_t>(TAD::Array<int16_t>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
+    case TGD::int16:
+        initHelper<int16_t>(TGD::Array<int16_t>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
         break;
-    case TAD::uint16:
-        initHelper<uint16_t>(TAD::Array<uint16_t>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
+    case TGD::uint16:
+        initHelper<uint16_t>(TGD::Array<uint16_t>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
         break;
-    case TAD::int32:
-        initHelper<int32_t>(TAD::Array<int32_t>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
+    case TGD::int32:
+        initHelper<int32_t>(TGD::Array<int32_t>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
         break;
-    case TAD::uint32:
-        initHelper<uint32_t>(TAD::Array<uint32_t>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
+    case TGD::uint32:
+        initHelper<uint32_t>(TGD::Array<uint32_t>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
         break;
-    case TAD::int64:
-        initHelper<int64_t>(TAD::Array<int64_t>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
+    case TGD::int64:
+        initHelper<int64_t>(TGD::Array<int64_t>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
         break;
-    case TAD::uint64:
-        initHelper<uint64_t>(TAD::Array<uint64_t>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
+    case TGD::uint64:
+        initHelper<uint64_t>(TGD::Array<uint64_t>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
         break;
-    case TAD::float32:
-        initHelper<float>(TAD::Array<float>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
+    case TGD::float32:
+        initHelper<float>(TGD::Array<float>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
         break;
-    case TAD::float64:
-        initHelper<double>(TAD::Array<double>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
+    case TGD::float64:
+        initHelper<double>(TGD::Array<double>(array), componentIndex, _minVal, _maxVal, 1024, _bins, _maxBinVal);
         break;
     }
     _initialized = true;

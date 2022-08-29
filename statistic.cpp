@@ -43,7 +43,7 @@ Statistic::Statistic() :
 }
 
 template<typename T>
-static void initHelper(const TAD::Array<T> array, size_t componentIndex,
+static void initHelper(const TGD::Array<T> array, size_t componentIndex,
         unsigned long long& _finiteValues, float& _minVal, float& _maxVal,
         float& _sampleMean, float& _sampleVariance, float& _sampleDeviation)
 {
@@ -110,39 +110,39 @@ static void initHelper(const TAD::Array<T> array, size_t componentIndex,
     }
 }
 
-void Statistic::init(const TAD::ArrayContainer& array, size_t componentIndex)
+void Statistic::init(const TGD::ArrayContainer& array, size_t componentIndex)
 {
     assert(!_initialized);
     switch (array.componentType()) {
-    case TAD::int8:
-        initHelper(TAD::Array<int8_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
+    case TGD::int8:
+        initHelper(TGD::Array<int8_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
         break;
-    case TAD::uint8:
-        initHelper(TAD::Array<uint8_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
+    case TGD::uint8:
+        initHelper(TGD::Array<uint8_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
         break;
-    case TAD::int16:
-        initHelper(TAD::Array<int16_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
+    case TGD::int16:
+        initHelper(TGD::Array<int16_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
         break;
-    case TAD::uint16:
-        initHelper(TAD::Array<uint16_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
+    case TGD::uint16:
+        initHelper(TGD::Array<uint16_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
         break;
-    case TAD::int32:
-        initHelper(TAD::Array<int32_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
+    case TGD::int32:
+        initHelper(TGD::Array<int32_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
         break;
-    case TAD::uint32:
-        initHelper(TAD::Array<uint32_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
+    case TGD::uint32:
+        initHelper(TGD::Array<uint32_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
         break;
-    case TAD::int64:
-        initHelper(TAD::Array<int64_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
+    case TGD::int64:
+        initHelper(TGD::Array<int64_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
         break;
-    case TAD::uint64:
-        initHelper(TAD::Array<uint64_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
+    case TGD::uint64:
+        initHelper(TGD::Array<uint64_t>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
         break;
-    case TAD::float32:
-        initHelper(TAD::Array<float>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
+    case TGD::float32:
+        initHelper(TGD::Array<float>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
         break;
-    case TAD::float64:
-        initHelper(TAD::Array<double>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
+    case TGD::float64:
+        initHelper(TGD::Array<double>(array), componentIndex, _finiteValues, _minVal, _maxVal, _sampleMean, _sampleVariance, _sampleDeviation);
         break;
     }
     _initialized = true;

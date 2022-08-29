@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019, 2020, 2021
+ * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
@@ -30,7 +30,7 @@
 
 #include <QOpenGLShaderProgram>
 
-#include <tad/array.hpp>
+#include <tgd/array.hpp>
 
 #include "color.hpp"
 #include "statistic.hpp"
@@ -41,8 +41,8 @@
 class Frame {
 private:
     /* data: */
-    TAD::ArrayContainer _originalArray;
-    TAD::Array<float> _lightnessArray; // perceptually linear lightness from CIELUV
+    TGD::ArrayContainer _originalArray;
+    TGD::Array<float> _lightnessArray; // perceptually linear lightness from CIELUV
     /* per channel: */
     std::vector<float> _minVals, _maxVals;
     std::vector<Statistic> _statistics;
@@ -58,19 +58,19 @@ private:
     int _channelIndex;
     /* quadtree: */
     int _quadLevel0BorderSize;
-    TAD::ArrayDescription _quadLevel0Description;
+    TGD::ArrayDescription _quadLevel0Description;
     std::vector<int> _quadTreeWidths;
     std::vector<int> _quadTreeHeights;
-    TAD::ArrayContainer _invalidQuad;
+    TGD::ArrayContainer _invalidQuad;
     /* textures: */
     unsigned int _texInternalFormat;
     unsigned int _texFormat;
     unsigned int _texType;
     std::shared_ptr<TextureHolder> _textureHolder;
-    TAD::Array<float> _textureTransferArray;
+    TGD::Array<float> _textureTransferArray;
 
-    const TAD::Array<float>& lightnessArray();
-    TAD::ArrayContainer quadFromLevel0(int qx, int qy);
+    const TGD::Array<float>& lightnessArray();
+    TGD::ArrayContainer quadFromLevel0(int qx, int qy);
     bool textureChannelIsS(int index);
 
 public:
@@ -79,11 +79,11 @@ public:
 
     Frame();
 
-    void init(const TAD::ArrayContainer& a);
+    void init(const TGD::ArrayContainer& a);
     void reset();
 
-    const TAD::ArrayContainer& array() const { return _originalArray; }
-    TAD::Type type() const { return _originalArray.componentType(); }
+    const TGD::ArrayContainer& array() const { return _originalArray; }
+    TGD::Type type() const { return _originalArray.componentType(); }
     int channelCount() const { return _originalArray.componentCount(); }
     int width() const { return _originalArray.elementCount() > 0 ? _originalArray.dimension(0) : 0; }
     int height() const { return _originalArray.elementCount() > 0 ? _originalArray.dimension(1) : 0; }

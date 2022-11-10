@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>de.marlam.qv</id>
+  
+  <name>qv</name>
+  <summary>2D Data Visualizer</summary>
+  
+  <metadata_license>FSFAP</metadata_license>
+  <project_license>MIT</project_license>
+  
+  <description>
+    <p>
+      Qv is a viewer for 2D scalar data such as images, renderings, sensor data, simulations, videos etc. It provides analysis tools such as statistics, histogram, range selection, dynamic range reduction, value inspection, and color maps.
+    </p>
+  </description>
+  
+  <launchable type="desktop-id">de.marlam.qv.desktop</launchable>
+
+  <screenshots>
+    <screenshot type="default">
+      <caption>A time-of-flight distance image of Tux, taken with a PMD sensor, with histogram and range selection, pixel value inspection and color map:</caption>
+      <image>https://marlam.de/qv/qv-screenshot-1.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>A SAR amplitude image with dynamic range reduction and a color map (full data: Copyright © European Space Agency):</caption>
+      <image>https://marlam.de/qv/qv-screenshot-2.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>A rendered image with histogram, pixel value inspection, and statistics:</caption>
+      <image>https://marlam.de/qv/qv-screenshot-3.png</image>
+    </screenshot>
+  </screenshots>
+
+  <content_rating type="oars-1.1" />
+
+  <url type="homepage">https://marlam.de/qv</url>
+
+  <releases>
+    <release version="5.1" date="2022-11-10">
+      <description>
+        <p>Improved integration into desktop environments.</p>
+      </description>
+    </release>
+  </releases>
+
+
+</component>

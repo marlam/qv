@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=qv
+GenericName=2D Data Visualizer
+Icon=de.marlam.qv
+Categories=DataVisualization;Education;Science
+Type=Application
+Exec=qv %F
+StartupNotify=true
+Terminal=false

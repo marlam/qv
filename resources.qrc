@@ -1,6 +1,6 @@
 <!DOCTYPE RCC><RCC version="1.0">
 <qresource>
-    <file compress-algo="none">cg-logo.png</file>
+    <file compress-algo="none">aux/qv-logo-512.png</file>
     <file compress-algo="best" threshold="1">shader-quadtree-vertex.glsl</file>
     <file compress-algo="best" threshold="1">shader-quadtree-fragment.glsl</file>
     <file compress-algo="best" threshold="1">shader-view-vertex.glsl</file>

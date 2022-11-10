@@ -52,7 +52,7 @@ QV::QV(Set& set, QWidget* parent) :
     overlayColorMapActive(false)
 {
     setMouseTracking(true);
-    window()->setWindowIcon(QIcon(":cg-logo.png"));
+    window()->setWindowIcon(QIcon(":aux/qv-logo-512.png"));
     updateTitle();
 
     setMinimumSize(_overlayFallback.size());

@@ -54,10 +54,26 @@ add_executable(qv
     overlay-colormap.hpp overlay-colormap.cpp
     qv.hpp qv.cpp
     gui.hpp gui.cpp
-    ${RESOURCES})
+    ${RESOURCES} appicon.rc)
+set_target_properties(qv PROPERTIES WIN32_EXECUTABLE TRUE)
 if(QV_USE_QT5)
     target_link_libraries(qv -lstdc++fs ${TGD_LIBRARIES} Qt5::Widgets OpenMP::OpenMP_CXX)
 else()
     target_link_libraries(qv -lstdc++fs ${TGD_LIBRARIES} Qt6::OpenGLWidgets OpenMP::OpenMP_CXX)
 endif()
 install(TARGETS qv RUNTIME DESTINATION bin)
+
+# Add auxiliary files for Linux-ish systems
+if(UNIX)
+    install(FILES "aux/qv-logo-16.png"  RENAME "de.marlam.qv.png" DESTINATION share/icons/hicolor/16x16/apps)
+    install(FILES "aux/qv-logo-22.png"  RENAME "de.marlam.qv.png" DESTINATION share/icons/hicolor/22x22/apps)
+    install(FILES "aux/qv-logo-32.png"  RENAME "de.marlam.qv.png" DESTINATION share/icons/hicolor/32x32/apps)
+    install(FILES "aux/qv-logo-48.png"  RENAME "de.marlam.qv.png" DESTINATION share/icons/hicolor/48x48/apps)
+    install(FILES "aux/qv-logo-64.png"  RENAME "de.marlam.qv.png" DESTINATION share/icons/hicolor/64x64/apps)
+    install(FILES "aux/qv-logo-128.png" RENAME "de.marlam.qv.png" DESTINATION share/icons/hicolor/128x128/apps)
+    install(FILES "aux/qv-logo-256.png" RENAME "de.marlam.qv.png" DESTINATION share/icons/hicolor/256x256/apps)
+    install(FILES "aux/qv-logo-512.png" RENAME "de.marlam.qv.png" DESTINATION share/icons/hicolor/512x512/apps)
+    install(FILES "aux/qv-logo.svg"     RENAME "de.marlam.qv.svg" DESTINATION share/icons/hicolor/scalable/apps)
+    install(FILES "aux/de.marlam.qv.desktop" DESTINATION share/applications)
+    install(FILES "aux/de.marlam.qv.metainfo.xml" DESTINATION share/metainfo)
+endif()

@@ -9,29 +9,18 @@ set(CMAKE_FIND_PACKAGE_SORT_ORDER NATURAL)
 set(CMAKE_FIND_PACKAGE_SORT_DIRECTION DEC)
 set(CMAKE_AUTOMOC ON)
 
-project(qv)
-
-option(QV_USE_QT5 "Use Qt5 instead of Qt6" OFF)
+project(qv LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
 find_package(libtgd 4.0 REQUIRED)
-if(QV_USE_QT5)
-    find_package(Qt5 5.11.0 COMPONENTS Widgets)
-else()
-    find_package(Qt6 6.2.0 COMPONENTS OpenGLWidgets)
-endif()
+find_package(Qt6 6.2.0 COMPONENTS OpenGLWidgets)
 find_package(OpenMP)
 
 include_directories(${TGD_INCLUDE_DIRS})
 link_directories(${TGD_LIBRARY_DIRS})
-if(QV_USE_QT5)
-    qt5_add_resources(RESOURCES resources.qrc)
-else()
-    qt6_add_resources(RESOURCES resources.qrc)
-endif()
+qt6_add_resources(RESOURCES resources.qrc)
 add_executable(qv
     main.cpp
     version.hpp
@@ -54,13 +43,27 @@ add_executable(qv
     overlay-colormap.hpp overlay-colormap.cpp
     qv.hpp qv.cpp
     gui.hpp gui.cpp
-    ${RESOURCES} appicon.rc)
+    appicon.rc)
+qt6_add_resources(qv "misc" PREFIX "/" FILES
+    shader-quadtree-vertex.glsl
+    shader-quadtree-fragment.glsl
+    shader-view-vertex.glsl
+    shader-view-fragment.glsl
+    shader-overlay-vertex.glsl
+    shader-overlay-fragment.glsl
+    colormap-sequential-0.png
+    colormap-sequential-1.png
+    colormap-sequential-2.png
+    colormap-sequential-3.png
+    colormap-diverging-0.png
+    colormap-diverging-1.png
+    colormap-diverging-2.png
+    colormap-diverging-3.png
+    colormap-qualitative-0.png
+    colormap-qualitative-1.png
+    aux/qv-logo-512.png)
 set_target_properties(qv PROPERTIES WIN32_EXECUTABLE TRUE)
-if(QV_USE_QT5)
-    target_link_libraries(qv -lstdc++fs ${TGD_LIBRARIES} Qt5::Widgets OpenMP::OpenMP_CXX)
-else()
-    target_link_libraries(qv -lstdc++fs ${TGD_LIBRARIES} Qt6::OpenGLWidgets OpenMP::OpenMP_CXX)
-endif()
+target_link_libraries(qv -lstdc++fs ${TGD_LIBRARIES} Qt6::OpenGLWidgets OpenMP::OpenMP_CXX)
 install(TARGETS qv RUNTIME DESTINATION bin)
 
 # Add auxiliary files for Linux-ish systems

@@ -22,45 +22,45 @@ include_directories(${TGD_INCLUDE_DIRS})
 link_directories(${TGD_LIBRARY_DIRS})
 qt6_add_resources(RESOURCES resources.qrc)
 add_executable(qv
-    main.cpp
-    version.hpp
-    gl.hpp gl.cpp
-    textureholder.hpp textureholder.cpp
-    color.hpp
-    statistic.hpp statistic.cpp
-    histogram.hpp histogram.cpp
-    colormap.hpp colormap.cpp
-    frame.hpp frame.cpp
-    file.hpp file.cpp
-    set.hpp set.cpp
-    parameters.hpp parameters.cpp
-    overlay.hpp overlay.cpp
-    overlay-fallback.hpp overlay-fallback.cpp
-    overlay-info.hpp overlay-info.cpp
-    overlay-value.hpp overlay-value.cpp
-    overlay-statistic.hpp overlay-statistic.cpp
-    overlay-histogram.hpp overlay-histogram.cpp
-    overlay-colormap.hpp overlay-colormap.cpp
-    qv.hpp qv.cpp
-    gui.hpp gui.cpp
-    appicon.rc)
+    src/main.cpp
+    src/version.hpp
+    src/gl.hpp src/gl.cpp
+    src/textureholder.hpp src/textureholder.cpp
+    src/color.hpp
+    src/statistic.hpp src/statistic.cpp
+    src/histogram.hpp src/histogram.cpp
+    src/colormap.hpp src/colormap.cpp
+    src/frame.hpp src/frame.cpp
+    src/file.hpp src/file.cpp
+    src/set.hpp src/set.cpp
+    src/parameters.hpp src/parameters.cpp
+    src/overlay.hpp src/overlay.cpp
+    src/overlay-fallback.hpp src/overlay-fallback.cpp
+    src/overlay-info.hpp src/overlay-info.cpp
+    src/overlay-value.hpp src/overlay-value.cpp
+    src/overlay-statistic.hpp src/overlay-statistic.cpp
+    src/overlay-histogram.hpp src/overlay-histogram.cpp
+    src/overlay-colormap.hpp src/overlay-colormap.cpp
+    src/qv.hpp src/qv.cpp
+    src/gui.hpp src/gui.cpp
+    src/appicon.rc)
 qt6_add_resources(qv "misc" PREFIX "/" FILES
-    shader-quadtree-vertex.glsl
-    shader-quadtree-fragment.glsl
-    shader-view-vertex.glsl
-    shader-view-fragment.glsl
-    shader-overlay-vertex.glsl
-    shader-overlay-fragment.glsl
-    colormap-sequential-0.png
-    colormap-sequential-1.png
-    colormap-sequential-2.png
-    colormap-sequential-3.png
-    colormap-diverging-0.png
-    colormap-diverging-1.png
-    colormap-diverging-2.png
-    colormap-diverging-3.png
-    colormap-qualitative-0.png
-    colormap-qualitative-1.png
+    src/shader-quadtree-vertex.glsl
+    src/shader-quadtree-fragment.glsl
+    src/shader-view-vertex.glsl
+    src/shader-view-fragment.glsl
+    src/shader-overlay-vertex.glsl
+    src/shader-overlay-fragment.glsl
+    colormaps/sequential-0.png
+    colormaps/sequential-1.png
+    colormaps/sequential-2.png
+    colormaps/sequential-3.png
+    colormaps/diverging-0.png
+    colormaps/diverging-1.png
+    colormaps/diverging-2.png
+    colormaps/diverging-3.png
+    colormaps/qualitative-0.png
+    colormaps/qualitative-1.png
     aux/qv-logo-512.png)
 set_target_properties(qv PROPERTIES WIN32_EXECUTABLE TRUE)
 target_link_libraries(qv -lstdc++fs ${TGD_LIBRARIES} Qt6::OpenGLWidgets OpenMP::OpenMP_CXX)

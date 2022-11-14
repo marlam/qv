@@ -164,8 +164,8 @@ void QV::initializeGL()
 
     ASSERT_GLCHECK();
 
-    QString quadTreeVsSource = readFile(":shader-quadtree-vertex.glsl");
-    QString quadTreeFsSource  = readFile(":shader-quadtree-fragment.glsl");
+    QString quadTreeVsSource = readFile(":src/shader-quadtree-vertex.glsl");
+    QString quadTreeFsSource  = readFile(":src/shader-quadtree-fragment.glsl");
     if (isOpenGLES()) {
         quadTreeVsSource.prepend("#version 300 es\n");
         quadTreeFsSource.prepend("precision highp float;\n");
@@ -178,8 +178,8 @@ void QV::initializeGL()
     _quadTreePrg.addShaderFromSourceCode(QOpenGLShader::Fragment, quadTreeFsSource);
     _quadTreePrg.link();
 
-    QString viewVsSource = readFile(":shader-view-vertex.glsl");
-    QString viewFsSource  = readFile(":shader-view-fragment.glsl");
+    QString viewVsSource = readFile(":src/shader-view-vertex.glsl");
+    QString viewFsSource  = readFile(":src/shader-view-fragment.glsl");
     if (isOpenGLES()) {
         viewVsSource.prepend("#version 300 es\n");
         viewFsSource.prepend("precision highp float;\n");
@@ -192,8 +192,8 @@ void QV::initializeGL()
     _viewPrg.addShaderFromSourceCode(QOpenGLShader::Fragment, viewFsSource);
     _viewPrg.link();
 
-    QString overlayVsSource = readFile(":shader-overlay-vertex.glsl");
-    QString overlayFsSource  = readFile(":shader-overlay-fragment.glsl");
+    QString overlayVsSource = readFile(":src/shader-overlay-vertex.glsl");
+    QString overlayFsSource  = readFile(":src/shader-overlay-fragment.glsl");
     if (isOpenGLES()) {
         overlayVsSource.prepend("#version 300 es\n");
         overlayFsSource.prepend("precision highp float;\n");

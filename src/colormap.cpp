@@ -84,7 +84,7 @@ void ColorMap::reload()
                 _sRgbData.clear();
         }
     } else {
-        QString fileName = QString(":colormap-%1-%2.png").arg(
+        QString fileName = QString(":colormaps/%1-%2.png").arg(
                 _type == ColorMapSequential ? "sequential"
                 : _type == ColorMapDiverging ? "diverging"
                 : "qualitative").arg(_index[_type]);

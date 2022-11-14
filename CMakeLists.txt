@@ -20,7 +20,6 @@ find_package(OpenMP)
 
 include_directories(${TGD_INCLUDE_DIRS})
 link_directories(${TGD_LIBRARY_DIRS})
-qt6_add_resources(RESOURCES resources.qrc)
 add_executable(qv
     src/main.cpp
     src/version.hpp

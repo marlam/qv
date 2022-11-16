@@ -62,7 +62,7 @@ qt6_add_resources(qv "misc" PREFIX "/" FILES
     colormaps/qualitative-1.png
     aux/qv-logo-512.png)
 set_target_properties(qv PROPERTIES WIN32_EXECUTABLE TRUE)
-target_link_libraries(qv -lstdc++fs ${TGD_LIBRARIES} Qt6::OpenGLWidgets OpenMP::OpenMP_CXX)
+target_link_libraries(qv ${TGD_LIBRARIES} Qt6::OpenGLWidgets OpenMP::OpenMP_CXX)
 install(TARGETS qv RUNTIME DESTINATION bin)
 
 # Add auxiliary files for Linux-ish systems

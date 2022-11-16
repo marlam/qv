@@ -10,7 +10,13 @@
   
   <description>
     <p>
-      Qv is a viewer for 2D scalar data such as images, renderings, sensor data, simulations, videos etc. It provides analysis tools such as statistics, histogram, range selection, dynamic range reduction, value inspection, and color maps.
+      Qv is a viewer for 2D scalar data such as images, sensor data,
+      simulations, renderings, videos etc.
+
+      It provides analysis tools including statistics, histogram, range
+      selection, dynamic range reduction, value inspection, and color maps.
+
+      Most file formats are supported.
     </p>
   </description>
   

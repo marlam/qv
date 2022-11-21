@@ -1,11 +1,13 @@
-# qv (quick view): a viewer for 2D data (images, renderings, sensor data, ...)
+# qv (quick view): a viewer for 2D data (images, sensor data, ...)
 
-qv shows images and image-like data and provides analysis tools such as
-statistics, histogram, range selection, dynamic range reduction, and color maps.
+Qv is a viewer for 2D scalar data such as images, sensor data,
+simulations, renderings, videos etc.
 
-It is useful for all kinds of 2D data from sensors, simulation, rendering, or
-high dynamic range imaging.
+It provides analysis tools including statistics, histogram, range
+selection, dynamic range reduction, value inspection, and color maps.
 
-qv requires Qt and [tgd](https://marlam.de/tgd).
+Most file formats are supported.
+
+Qv requires Qt and [tgd](https://marlam.de/tgd).
 
 This project uses the MIT license.

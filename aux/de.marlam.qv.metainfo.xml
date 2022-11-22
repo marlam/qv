@@ -2,7 +2,7 @@
 <component type="desktop-application">
   <id>de.marlam.qv</id>
   
-  <name>qv</name>
+  <name>qv (quickview)</name>
   <summary>2D Data Visualizer</summary>
   
   <metadata_license>FSFAP</metadata_license>
@@ -24,15 +24,15 @@
 
   <screenshots>
     <screenshot type="default">
-      <caption>A time-of-flight distance image of Tux, taken with a PMD sensor, with histogram and range selection, pixel value inspection and color map:</caption>
+      <caption>Time-of-flight distance data, with histogram, range selection, pixel value inspection and color map</caption>
       <image>https://marlam.de/qv/qv-screenshot-1.png</image>
     </screenshot>
     <screenshot>
-      <caption>A SAR amplitude image with dynamic range reduction and a color map (full data: Copyright © European Space Agency):</caption>
+      <caption>SAR amplitude data with dynamic range reduction and a color map (full data: Copyright © ESA)</caption>
       <image>https://marlam.de/qv/qv-screenshot-2.png</image>
     </screenshot>
     <screenshot>
-      <caption>A rendered image with histogram, pixel value inspection, and statistics:</caption>
+      <caption>Rendered image with histogram, pixel value inspection, and statistics</caption>
       <image>https://marlam.de/qv/qv-screenshot-3.png</image>
     </screenshot>
   </screenshots>

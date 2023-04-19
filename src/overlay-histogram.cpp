@@ -2,6 +2,8 @@
  * Copyright (C) 2019 Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
+ * Copyright (C) 2023 Martin Lambers <marlam@marlam.de>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -47,7 +49,7 @@ static float logtransf(float x)
 
 void OverlayHistogram::update(int widthInPixels, const QPoint& arrayCoordinates, Set& set)
 {
-    prepare(widthInPixels, 64);
+    prepare(widthInPixels, 64 * _scaleFactor);
 
     Frame* frame = set.currentFile()->currentFrame();
     const Histogram& H = frame->currentHistogram();

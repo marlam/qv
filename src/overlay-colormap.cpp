@@ -2,6 +2,8 @@
  * Copyright (C) 2019 Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
+ * Copyright (C) 2023 Martin Lambers <marlam@marlam.de>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -31,7 +33,7 @@
 
 void OverlayColorMap::update(int widthInPixels, Parameters& parameters)
 {
-    prepare(widthInPixels, 32);
+    prepare(widthInPixels, 32 * _scaleFactor);
 
     // Border
     const int borderSize = 5;

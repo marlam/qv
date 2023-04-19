@@ -2,6 +2,8 @@
  * Copyright (C) 2019 Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
+ * Copyright (C) 2023 Martin Lambers <marlam@marlam.de>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -37,6 +39,7 @@ private:
     std::shared_ptr<TextureHolder> _textureHolder;
 
 protected:
+    float _scaleFactor;
     QImage* _image;
     QPainter* _painter;
 
@@ -49,6 +52,7 @@ public:
     Overlay();
     virtual ~Overlay();
 
+    void initialize(float scaleFactor);
     int heightInPixels() const { return _image->height(); }
     unsigned int texture() const { return _textureHolder->texture(0); }
 };

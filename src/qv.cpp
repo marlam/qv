@@ -3,6 +3,9 @@
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
+ * Copyright (C) 2023
+ * Martin Lambers <marlam@marlam.de>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -54,6 +57,14 @@ QV::QV(Set& set, QWidget* parent) :
     setMouseTracking(true);
     window()->setWindowIcon(QIcon(":aux/qv-logo-512.png"));
     updateTitle();
+
+    float overlayScaleFactor = window()->devicePixelRatioF();
+    _overlayFallback.initialize(overlayScaleFactor);
+    _overlayInfo.initialize(overlayScaleFactor);
+    _overlayValue.initialize(overlayScaleFactor);
+    _overlayStatistic.initialize(overlayScaleFactor);
+    _overlayHistogram.initialize(overlayScaleFactor);
+    _overlayColorMap.initialize(overlayScaleFactor);
 
     setMinimumSize(_overlayFallback.size());
     File* file = _set.currentFile();
@@ -449,9 +460,12 @@ void QV::resizeGL(int w, int h)
 
 void QV::paintGL()
 {
+    int w = _w * devicePixelRatioF();
+    int h = _h * devicePixelRatioF();
+
     ASSERT_GLCHECK();
     auto gl = getGlFunctionsFromCurrentContext();
-    gl->glViewport(0, 0, _w, _h);
+    gl->glViewport(0, 0, w, h);
     gl->glClear(GL_COLOR_BUFFER_BIT);
     ASSERT_GLCHECK();
 
@@ -461,18 +475,18 @@ void QV::paintGL()
     QPoint dataCoords(-1, -1);
     if (frame) {
         float xFactor, yFactor, xOffset, yOffset;
-        navigationParameters(frame, _w, _h, xFactor, yFactor, xOffset, yOffset);
+        navigationParameters(frame, w, h, xFactor, yFactor, xOffset, yOffset);
         // which part of the data do we cover?
-        QPoint dataA = dataCoordinates(QPoint(0, 0), _w, _h,
+        QPoint dataA = dataCoordinates(QPoint(0, 0), w, h,
                 frame->width(), frame->height(),
                 xFactor, yFactor, xOffset, yOffset);
-        QPoint dataO = dataCoordinates(QPoint(_w, _h), _w, _h,
+        QPoint dataO = dataCoordinates(QPoint(w, h), w, h,
                 frame->width(), frame->height(),
                 xFactor, yFactor, xOffset, yOffset);
         int dataWidth = std::max(dataA.x(), dataO.x()) - std::min(dataA.x(), dataO.x()) + 1;
         int dataHeight = std::max(dataA.y(), dataO.y()) - std::min(dataA.y(), dataO.y()) + 1;
-        float widthRatio = float(dataWidth) / _w;
-        float heightRatio = float(dataHeight) / _h;
+        float widthRatio = float(dataWidth) / w;
+        float heightRatio = float(dataHeight) / h;
         float ratio = std::min(widthRatio, heightRatio);
         int qLevel = 0;
         if (ratio > 1.0f)
@@ -481,7 +495,7 @@ void QV::paintGL()
             qLevel = frame->quadTreeLevels() - 1;
         // render
         renderFrame(frame, qLevel, xFactor, yFactor, xOffset, yOffset);
-        dataCoords = dataCoordinates(_mousePos, _w, _h,
+        dataCoords = dataCoordinates(_mousePos, w, h,
                 frame->width(), frame->height(),
                 xFactor, yFactor, xOffset, yOffset);
         if (dataCoords.x() < 0 || dataCoords.x() >= frame->width()
@@ -495,9 +509,9 @@ void QV::paintGL()
     gl->glEnable(GL_BLEND);
     gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     if (!frame) {
-        _overlayFallback.update(_w);
-        int overlayYOffset = std::max((_h - _overlayFallback.heightInPixels()) / 2, 0);
-        gl->glViewport(0, overlayYOffset, _w, _overlayFallback.heightInPixels());
+        _overlayFallback.update(w);
+        int overlayYOffset = std::max((h - _overlayFallback.heightInPixels()) / 2, 0);
+        gl->glViewport(0, overlayYOffset, w, _overlayFallback.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
         gl->glBindTexture(GL_TEXTURE_2D, _overlayFallback.texture());
@@ -505,8 +519,8 @@ void QV::paintGL()
     } else {
         int overlayYOffset = 0;
         if (overlayColorMapActive) {
-            _overlayColorMap.update(_w, *(_set.currentParameters()));
-            gl->glViewport(0, overlayYOffset, _w, _overlayColorMap.heightInPixels());
+            _overlayColorMap.update(w, *(_set.currentParameters()));
+            gl->glViewport(0, overlayYOffset, w, _overlayColorMap.heightInPixels());
             gl->glUseProgram(_overlayPrg.programId());
             gl->glActiveTexture(GL_TEXTURE0);
             gl->glBindTexture(GL_TEXTURE_2D, _overlayColorMap.texture());
@@ -514,8 +528,8 @@ void QV::paintGL()
             overlayYOffset += _overlayColorMap.heightInPixels();
         }
         if (overlayHistogramActive) {
-            _overlayHistogram.update(_w, dataCoords, _set);
-            gl->glViewport(0, overlayYOffset, _w, _overlayHistogram.heightInPixels());
+            _overlayHistogram.update(w, dataCoords, _set);
+            gl->glViewport(0, overlayYOffset, w, _overlayHistogram.heightInPixels());
             gl->glUseProgram(_overlayPrg.programId());
             gl->glActiveTexture(GL_TEXTURE0);
             gl->glBindTexture(GL_TEXTURE_2D, _overlayHistogram.texture());
@@ -523,8 +537,8 @@ void QV::paintGL()
             overlayYOffset += _overlayHistogram.heightInPixels();
         }
         if (overlayStatisticActive) {
-            _overlayStatistic.update(_w, _set);
-            gl->glViewport(0, overlayYOffset, _w, _overlayStatistic.heightInPixels());
+            _overlayStatistic.update(w, _set);
+            gl->glViewport(0, overlayYOffset, w, _overlayStatistic.heightInPixels());
             gl->glUseProgram(_overlayPrg.programId());
             gl->glActiveTexture(GL_TEXTURE0);
             gl->glBindTexture(GL_TEXTURE_2D, _overlayStatistic.texture());
@@ -532,8 +546,8 @@ void QV::paintGL()
             overlayYOffset += _overlayStatistic.heightInPixels();
         }
         if (overlayValueActive) {
-            _overlayValue.update(_w, dataCoords, _set);
-            gl->glViewport(0, overlayYOffset, _w, _overlayValue.heightInPixels());
+            _overlayValue.update(w, dataCoords, _set);
+            gl->glViewport(0, overlayYOffset, w, _overlayValue.heightInPixels());
             gl->glUseProgram(_overlayPrg.programId());
             gl->glActiveTexture(GL_TEXTURE0);
             gl->glBindTexture(GL_TEXTURE_2D, _overlayValue.texture());
@@ -541,8 +555,8 @@ void QV::paintGL()
             overlayYOffset += _overlayValue.heightInPixels();
         }
         if (overlayInfoActive) {
-            _overlayInfo.update(_w, _set);
-            gl->glViewport(0, overlayYOffset, _w, _overlayInfo.heightInPixels());
+            _overlayInfo.update(w, _set);
+            gl->glViewport(0, overlayYOffset, w, _overlayInfo.heightInPixels());
             gl->glUseProgram(_overlayPrg.programId());
             gl->glActiveTexture(GL_TEXTURE0);
             gl->glBindTexture(GL_TEXTURE_2D, _overlayInfo.texture());

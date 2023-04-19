@@ -2,6 +2,8 @@
  * Copyright (C) 2019 Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
  *
+ * Copyright (C) 2023 Martin Lambers <marlam@marlam.de>
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -31,15 +33,20 @@
 #include "gl.hpp"
 
 
-Overlay::Overlay() : _image(nullptr), _painter(nullptr)
+Overlay::Overlay() : _scaleFactor(1.0f), _image(nullptr), _painter(nullptr)
 {
-    prepare(1, 1); // to get an initial valid _painter
 }
 
 Overlay::~Overlay()
 {
     delete _painter;
     delete _image;
+}
+
+void Overlay::initialize(float scaleFactor)
+{
+    _scaleFactor = scaleFactor;
+    prepare(1, 1); // to get an initial valid _painter
 }
 
 void Overlay::prepare(int widthInPixels, int heightInPixels)
@@ -57,6 +64,7 @@ void Overlay::prepare(int widthInPixels, int heightInPixels)
         font.setFamily("Monospace");
         font.setStyleHint(QFont::TypeWriter, QFont::PreferAntialias);
         font.setWeight(QFont::DemiBold);
+        font.setPointSizeF(font.pointSizeF() * _scaleFactor);
         _painter->setFont(font);
         _painter->setRenderHint(QPainter::Antialiasing);
         _painter->setRenderHint(QPainter::TextAntialiasing);

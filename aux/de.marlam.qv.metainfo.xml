@@ -4,7 +4,11 @@
   
   <name>qv (quickview)</name>
   <summary>2D Data Visualizer</summary>
-  
+
+  <developer id="de.marlam">
+    <name>Martin Lambers</name>
+  </developer>
+
   <metadata_license>FSFAP</metadata_license>
   <project_license>MIT</project_license>
   
@@ -42,6 +46,11 @@
   <url type="homepage">https://marlam.de/qv</url>
 
   <releases>
+    <release version="5.2" date="2024-06-03">
+      <description>
+        <p>Add support for HighDPI output.</p>
+      </description>
+    </release>
     <release version="5.1" date="2022-11-21">
       <description>
         <p>Improved integration into desktop environments.</p>

@@ -61,7 +61,7 @@ resources.files = \
         colormaps/diverging-3.png \
         colormaps/qualitative-0.png \
         colormaps/qualitative-1.png \
-        aux/qv-logo-512.png
+        res/qv-logo-512.png
 resources.prefix = /
 
 RESOURCES = resources

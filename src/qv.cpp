@@ -55,7 +55,7 @@ QV::QV(Set& set, QWidget* parent) :
     overlayColorMapActive(false)
 {
     setMouseTracking(true);
-    window()->setWindowIcon(QIcon(":aux/qv-logo-512.png"));
+    window()->setWindowIcon(QIcon(":res/qv-logo-512.png"));
     updateTitle();
 
     float overlayScaleFactor = window()->devicePixelRatioF();

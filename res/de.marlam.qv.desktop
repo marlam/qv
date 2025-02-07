@@ -2,8 +2,9 @@
 Name=qv
 GenericName=2D Data Visualizer
 Icon=de.marlam.qv
-Categories=DataVisualization;Education;Science
+Categories=DataVisualization;Education;Science;Graphics;Viewer
 Type=Application
 Exec=qv %F
 StartupNotify=true
 Terminal=false
+MimeType=image/jpeg;image/png;image/bmp;image/aces;image/vnd.radiance;image/x-targa;image/x-portable-pixmap;image/x-portable-graymap;image/x-portable-anymap;

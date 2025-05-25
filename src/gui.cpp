@@ -2,6 +2,8 @@
  * Copyright (C) 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -678,14 +680,11 @@ void Gui::helpAbout()
     QMessageBox::about(this, "About qv",
                 QString("<p>qv version %1<br>"
                     "   <a href=\"https://marlam.de/qv\">https://marlam.de/qv</a></p>"
-                    "<p>Copyright (C) %2<br>"
-                    "   <a href=\"https://www.cg.informatik.uni-siegen.de/\">"
-                    "   Computer Graphics Group, University of Siegen</a>.<br>"
-                    "   Written by <a href=\"https://marlam.de/\">Martin Lambers</a>.<br>"
+                    "<p>Copyright (C) %2 Martin Lambers.<br>"
                     "   This is free software under the terms of the "
                     "<a href=\"https://www.debian.org/legal/licenses/mit\">MIT/Expat License</a>. "
                     "   There is NO WARRANTY, to the extent permitted by law."
-                    "</p>").arg(QV_VERSION).arg(2022));
+                    "</p>").arg(QV_VERSION).arg(2025));
 }
 
 void Gui::updateFromParameters()

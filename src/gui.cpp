@@ -681,8 +681,7 @@ void Gui::helpAbout()
                 QString("<p>qv version %1<br>"
                     "   <a href=\"https://marlam.de/qv\">https://marlam.de/qv</a></p>"
                     "<p>Copyright (C) %2 Martin Lambers.<br>"
-                    "   This is free software under the terms of the "
-                    "<a href=\"https://www.debian.org/legal/licenses/mit\">MIT/Expat License</a>. "
+                    "   This is free software under the terms of the MIT/Expat License.<br>"
                     "   There is NO WARRANTY, to the extent permitted by law."
                     "</p>").arg(QV_VERSION).arg(2025));
 }

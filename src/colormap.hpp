@@ -1,6 +1,9 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,8 +30,6 @@
 #include <vector>
 #include <memory>
 
-#include "textureholder.hpp"
-
 
 typedef enum {
     ColorMapSequential = 0,
@@ -44,7 +45,6 @@ private:
     ColorMapType _type;
     int _index[5];
     std::vector<unsigned char> _sRgbData;
-    std::shared_ptr<TextureHolder> _textureHolder;
 
     void reload();
 
@@ -56,7 +56,7 @@ public:
     void cycle();
 
     const std::vector<unsigned char> sRgbData() const { return _sRgbData; }
-    unsigned int texture();
+    void uploadTexture(unsigned int tex) const;
 };
 
 #endif

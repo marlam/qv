@@ -1,6 +1,9 @@
 /*
- * Copyright (C) 2019, 2020 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -36,7 +39,7 @@ private:
 public:
     OverlayFallback();
 
-    void update(int widthInPixels);
+    void update(unsigned int tex, int widthInPixels);
 
     QSize size() const;
 };

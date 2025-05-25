@@ -2,6 +2,8 @@
  * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +27,7 @@
 #include <limits>
 
 #include "file.hpp"
+#include "alloc.hpp"
 
 
 File::File() : _frameIndex(-1), _maxFrameIndexSoFar(-1), _haveSeenLastFrame(false)
@@ -125,7 +128,7 @@ bool File::setFrameIndex(int index, std::string& errorMessage)
     }
     TGD::Error tgdError;
     TGD::ArrayContainer a;
-    a = importer().readArray(&tgdError, index);
+    a = importer().readArray(&tgdError, index, defaultAllocator());
     if (tgdError != TGD::ErrorNone) {
         errorMessage = fileName() + ": " + TGD::strerror(tgdError);
         return false;
@@ -182,7 +185,7 @@ bool File::reload(std::string& errorMessage)
         return false;
     }
     TGD::ArrayContainer a;
-    a = newImporter.readArray(&tgdError);
+    a = newImporter.readArray(&tgdError, -1, defaultAllocator());
     if (tgdError != TGD::ErrorNone) {
         errorMessage = fileName() + ": " + TGD::strerror(tgdError);
         return false;

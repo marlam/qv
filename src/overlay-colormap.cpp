@@ -31,7 +31,7 @@
 #include "overlay-colormap.hpp"
 
 
-void OverlayColorMap::update(int widthInPixels, Parameters& parameters)
+void OverlayColorMap::update(unsigned int tex, int widthInPixels, Parameters& parameters)
 {
     prepare(widthInPixels, 32 * _scaleFactor);
 
@@ -70,5 +70,5 @@ void OverlayColorMap::update(int widthInPixels, Parameters& parameters)
         fixFormat();
     }
 
-    uploadImageToTexture();
+    uploadImageToTexture(tex);
 }

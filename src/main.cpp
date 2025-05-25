@@ -2,6 +2,8 @@
  * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +45,7 @@
 #include <QOpenGLContext>
 
 #include "version.hpp"
+#include "alloc.hpp"
 #include "set.hpp"
 #include "gl.hpp"
 #include "gui.hpp"
@@ -61,6 +64,7 @@ int main(int argc, char* argv[])
     parser.addPositionalArgument("[directory|file...]", "Data to display.");
     parser.addOptions({
             { { "i", "input" }, "Set tag for import (can be given more than once).", "KEY=VALUE" },
+            { { "C", "cache-dir" }, "Set directory for cache files.", "directory" },
     });
     parser.process(app);
     QStringList posArgs = parser.positionalArguments();
@@ -77,6 +81,9 @@ int main(int argc, char* argv[])
             importerHints.set(tag.substr(0, j), tag.substr(j + 1));
         }
     }
+
+    // Initialize the TGD Allocator (must be done before initializing the set)
+    Allocator alloc(parser.isSet("cache-dir") ? qPrintable(parser.value("cache-dir")) : ".");
 
     // Build the set of files to view
     Set set;

@@ -41,8 +41,6 @@ ColorMap::ColorMap() :
 
 void ColorMap::reload()
 {
-    if (_textureHolder.get())
-        _textureHolder->clear();
     _sRgbData.clear();
 
     bool haveData = false;
@@ -136,25 +134,15 @@ void ColorMap::cycle()
     reload();
 }
 
-unsigned int ColorMap::texture()
+void ColorMap::uploadTexture(unsigned int tex) const
 {
-    if (type() == ColorMapNone)
-        return 0;
-
-    if (!_textureHolder.get())
-        _textureHolder = std::make_shared<TextureHolder>();
-
-    if (_textureHolder->size() != 1) {
-        _textureHolder->create(1);
-        ASSERT_GLCHECK();
-        auto gl = getGlFunctionsFromCurrentContext();
-        gl->glBindTexture(GL_TEXTURE_2D, _textureHolder->texture(0));
-        gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, _sRgbData.size() / 3, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, _sRgbData.data());
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        ASSERT_GLCHECK();
-    }
-    return _textureHolder->texture(0);
+    ASSERT_GLCHECK();
+    auto gl = getGlFunctionsFromCurrentContext();
+    gl->glBindTexture(GL_TEXTURE_2D, tex);
+    gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8, _sRgbData.size() / 3, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, _sRgbData.data());
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    ASSERT_GLCHECK();
 }

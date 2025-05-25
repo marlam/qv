@@ -1,8 +1,9 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
- *
- * Copyright (C) 2023 Martin Lambers <marlam@marlam.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -109,21 +110,15 @@ void Overlay::fixFormat(int opaqueBlockX, int opaqueBlockY, int opaqueBlockW, in
     }
 }
 
-void Overlay::uploadImageToTexture()
+void Overlay::uploadImageToTexture(unsigned int tex) const
 {
     ASSERT_GLCHECK();
     auto gl = getGlFunctionsFromCurrentContext();
-    if (!_textureHolder.get())
-        _textureHolder = std::make_shared<TextureHolder>();
-    if (_textureHolder->size() != 1) {
-        _textureHolder->create(1);
-        gl->glBindTexture(GL_TEXTURE_2D, texture());
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    }
-    gl->glBindTexture(GL_TEXTURE_2D, texture());
+    gl->glBindTexture(GL_TEXTURE_2D, tex);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     gl->glTexImage2D(GL_TEXTURE_2D, 0, GL_SRGB8_ALPHA8,
             _image->width(), _image->height(), 0,
             GL_RGBA, GL_UNSIGNED_BYTE, _image->constBits());

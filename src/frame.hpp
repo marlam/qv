@@ -2,6 +2,8 @@
  * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +37,6 @@
 #include "color.hpp"
 #include "statistic.hpp"
 #include "histogram.hpp"
-#include "textureholder.hpp"
 
 
 class Frame {
@@ -61,17 +62,18 @@ private:
     TGD::ArrayDescription _quadLevel0Description;
     std::vector<int> _quadTreeWidths;
     std::vector<int> _quadTreeHeights;
-    TGD::ArrayContainer _invalidQuad;
+    std::vector<TGD::ArrayContainer> _quads;
     /* textures: */
     unsigned int _texInternalFormat;
     unsigned int _texFormat;
     unsigned int _texType;
-    std::shared_ptr<TextureHolder> _textureHolder;
     TGD::Array<float> _textureTransferArray;
 
     const TGD::Array<float>& lightnessArray();
-    TGD::ArrayContainer quadFromLevel0(int qx, int qy);
-    bool textureChannelIsS(int index);
+    int quadIndex(int level, int qx, int qy) const; // returns -1 if nonexistent
+    TGD::ArrayContainer quadFromLevel0(int qx, int qy) const;
+    TGD::ArrayContainer quadFromLevel(int l, int qx, int qy) const;
+    bool textureChannelIsS(int index) const;
 
 public:
     // OpenGL is required to support at least the following as GL_MAX_TEXTURE_SIZE:
@@ -122,8 +124,7 @@ public:
     int quadTreeLevels() const { return _quadTreeWidths.size(); }
     int quadTreeLevelWidth(int level) const { return _quadTreeWidths[level]; }
     int quadTreeLevelHeight(int level) const { return _quadTreeHeights[level]; }
-    unsigned int quadTexture(int level, int qx, int qy, int channelIndex,
-            unsigned int fbo, unsigned int vao, QOpenGLShaderProgram& quadTreePrg);
+    void uploadQuadToTexture(unsigned int tex, int level, int qx, int qy, int channelIndex);
 
     // Query whether some information is already computed or not yet
     bool haveLightness() const;

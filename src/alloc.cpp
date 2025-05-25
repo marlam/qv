@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
- * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2025 Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,35 +20,27 @@
  * SOFTWARE.
  */
 
-#include "textureholder.hpp"
-#include "gl.hpp"
+#include <tgd/alloc.hpp>
 
+#include "alloc.hpp"
 
-TextureHolder::TextureHolder()
+static TGD::Allocator* alloc;
+
+Allocator::Allocator(const std::string& directory)
 {
-}
-
-TextureHolder::~TextureHolder()
-{
-    clear();
-}
-
-void TextureHolder::create(size_t n)
-{
-    clear();
-    _textures.resize(n);
-    _flags.resize(n, false);
-    auto gl = getGlFunctionsFromCurrentContext();
-    gl->glGenTextures(n, _textures.data());
-}
-
-void TextureHolder::clear()
-{
-    if (_textures.size() > 0) {
-        auto gl = getGlFunctionsFromCurrentContext();
-        if (gl) // the context might vanish at program termination
-            gl->glDeleteTextures(_textures.size(), _textures.data());
-        _textures.clear();
-        _flags.clear();
+    if (TGD::MmapAllocator::isAvailableOnThisSystem()) {
+        alloc = new TGD::MmapAllocator(directory);
+    } else {
+        alloc = new TGD::Allocator();
     }
+}
+
+Allocator::~Allocator()
+{
+    delete alloc;
+}
+
+const TGD::Allocator& defaultAllocator()
+{
+    return *alloc;
 }

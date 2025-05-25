@@ -1,4 +1,4 @@
-# Copyright (C) 2019, 2020, 2021, 2022, 2023, 2024 Martin Lambers <marlam@marlam.de>
+# Copyright (C) 2019, 2020, 2021, 2022, 2023, 2024, 2025 Martin Lambers <marlam@marlam.de>
 #
 # Copying and distribution of this file, with or without modification, are
 # permitted in any medium without royalty provided the copyright notice and this
@@ -14,7 +14,7 @@ project(qv LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE)
 
-find_package(libtgd 4.0 REQUIRED)
+find_package(libtgd 5.0 REQUIRED)
 find_package(Qt6 6.2.0 COMPONENTS OpenGLWidgets)
 find_package(OpenMP)
 
@@ -23,8 +23,8 @@ link_directories(${TGD_LIBRARY_DIRS})
 add_executable(qv
     src/main.cpp
     src/version.hpp
+    src/alloc.hpp src/alloc.cpp
     src/gl.hpp src/gl.cpp
-    src/textureholder.hpp src/textureholder.cpp
     src/color.hpp
     src/statistic.hpp src/statistic.cpp
     src/histogram.hpp src/histogram.cpp
@@ -44,8 +44,6 @@ add_executable(qv
     src/gui.hpp src/gui.cpp
     src/appicon.rc)
 qt6_add_resources(qv "misc" PREFIX "/" FILES
-    src/shader-quadtree-vertex.glsl
-    src/shader-quadtree-fragment.glsl
     src/shader-view-vertex.glsl
     src/shader-view-fragment.glsl
     src/shader-overlay-vertex.glsl

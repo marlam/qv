@@ -2,6 +2,8 @@
  * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -65,7 +67,7 @@ static QStringList createList(const TGD::TagList& tl, QString& interpretation)
     return list;
 }
 
-void OverlayInfo::update(int widthInPixels, Set& set)
+void OverlayInfo::update(unsigned int tex, int widthInPixels, Set& set)
 {
     File* file = set.currentFile();
     Frame* frame = file->currentFrame();
@@ -140,5 +142,5 @@ void OverlayInfo::update(int widthInPixels, Set& set)
     }
 
     fixFormat();
-    uploadImageToTexture();
+    uploadImageToTexture(tex);
 }

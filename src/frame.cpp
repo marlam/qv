@@ -2,6 +2,8 @@
  * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +29,7 @@
 #include <cmath>
 
 #include "frame.hpp"
+#include "alloc.hpp"
 #include "gl.hpp"
 
 
@@ -214,8 +217,6 @@ void Frame::init(const TGD::ArrayContainer& a)
 
 void Frame::reset()
 {
-    if (_textureHolder.get())
-        _textureHolder->clear();
     *this = Frame();
 }
 
@@ -345,7 +346,7 @@ static void lightnessArrayHelperY(float* lightness, size_t n, const T* src, int 
 const TGD::Array<float>& Frame::lightnessArray()
 {
     if (_lightnessArray.elementCount() == 0) {
-        _lightnessArray = TGD::Array<float>(_originalArray.dimensions(), 1);
+        _lightnessArray = TGD::Array<float>(_originalArray.dimensions(), 1, defaultAllocator());
         float* lightness = static_cast<float*>(_lightnessArray.data());
         size_t n = _lightnessArray.elementCount();
         int cc = _originalArray.componentCount();
@@ -655,7 +656,20 @@ void Frame::setChannelIndex(int index)
     _channelIndex = index;
 }
 
-TGD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
+int Frame::quadIndex(int level, int qx, int qy) const // returns -1 if nonexistent
+{
+    int i = -1;
+    if (qx >= 0 && qx < quadTreeLevelWidth(level)
+            && qy >= 0 && qy < quadTreeLevelHeight(level)) {
+        i = 0;
+        for (int l = 0; l < level; l++)
+            i += quadTreeLevelWidth(l) * quadTreeLevelHeight(l);
+        i += qy * quadTreeLevelWidth(level) + qx;
+    }
+    return i;
+}
+
+TGD::ArrayContainer Frame::quadFromLevel0(int qx, int qy) const
 {
     assert(qx >= 0 && qx < quadTreeLevelWidth(0));
     assert(qy >= 0 && qy < quadTreeLevelHeight(0));
@@ -665,12 +679,12 @@ TGD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
             && _quadLevel0Description.dimension(0) == _originalArray.dimension(0)
             && _quadLevel0Description.dimension(1) == _originalArray.dimension(1)
             && _quadLevel0Description.componentCount() == _originalArray.componentCount()) {
-        return convert(_originalArray, _quadLevel0Description.componentType());
+        return convert(_originalArray, _quadLevel0Description.componentType(), defaultAllocator());
     }
 
     /* First create quad using original data type */
     TGD::ArrayContainer q(_quadLevel0Description.dimensions(),
-            _quadLevel0Description.componentCount(), type());
+            _quadLevel0Description.componentCount(), type(), defaultAllocator());
     const TGD::ArrayContainer& src = _originalArray;
     int srcX = qx * quadWidth() - quadBorderSize(0);
     int srcY = qy * quadHeight() - quadBorderSize(0);
@@ -768,10 +782,10 @@ TGD::ArrayContainer Frame::quadFromLevel0(int qx, int qy)
 #endif
 
     /* Then convert if necessary */
-    return convert(q, _quadLevel0Description.componentType());
+    return convert(q, _quadLevel0Description.componentType(), defaultAllocator());
 }
 
-bool Frame::textureChannelIsS(int texChannel)
+bool Frame::textureChannelIsS(int texChannel) const
 {
     return (channelCount() <= 4 && type() == TGD::uint8
             && ((colorSpace() == ColorSpaceSGray && colorChannelIndex(0) == texChannel)
@@ -779,6 +793,129 @@ bool Frame::textureChannelIsS(int texChannel)
                     (colorChannelIndex(0) == texChannel
                      || colorChannelIndex(1) == texChannel
                      || colorChannelIndex(2) == texChannel))));
+}
+
+static float sToLinear(float x)
+{
+    const float c0 = 0.077399380805f; // 1.0 / 12.92
+    const float c1 = 0.947867298578f; // 1.0 / 1.055;
+    return (x <= 0.04045f ? (x * c0) : std::powf((x + 0.055f) * c1, 2.4f));
+}
+
+static float linearToS(float x)
+{
+    const float c0 = 0.416666666667f;
+    return (x <= 0.0031308f ? (x * 12.92f) : (1.055f * std::powf(x, c0) - 0.055f));
+}
+
+static void interpolate(TGD::ArrayContainer& dst,
+        size_t dstXOffset, size_t dstYOffset, size_t w, size_t h,
+        const TGD::ArrayContainer& src, size_t srcXOffset, size_t srcYOffset,
+        const bool isS[4])
+{
+    if (dst.componentType() == TGD::uint8) {
+        TGD::Array<uint8_t> d = dst;
+        TGD::Array<uint8_t> s = src;
+        for (size_t y = 0; y < h; y++) {
+            for (size_t x = 0; x < w; x++) {
+                size_t dste = (dstYOffset + y) * dst.dimension(0) + (dstXOffset + x);
+                size_t srce0 = (srcYOffset + 2 * y + 0) * src.dimension(0) + (srcXOffset + 2 * x + 0);
+                size_t srce1 = (srcYOffset + 2 * y + 0) * src.dimension(0) + (srcXOffset + 2 * x + 1);
+                size_t srce2 = (srcYOffset + 2 * y + 1) * src.dimension(0) + (srcXOffset + 2 * x + 0);
+                size_t srce3 = (srcYOffset + 2 * y + 1) * src.dimension(0) + (srcXOffset + 2 * x + 1);
+                for (size_t c = 0; c < dst.componentCount(); c++) {
+                    float v;
+                    if (isS[c]) {
+                        v = linearToS((sToLinear(s[srce0][c]) + sToLinear(s[srce1][c]) + sToLinear(s[srce2][c]) + sToLinear(s[srce3][c])) * 0.25f);
+                    } else {
+                        v = (s[srce0][c] + s[srce1][c] + s[srce2][c] + s[srce3][c]) * 0.25f;
+                    }
+                    d[dste][c] = std::round(v);
+                }
+            }
+        }
+    } else {
+        TGD::Array<float> d = dst;
+        TGD::Array<float> s = src;
+        for (size_t y = 0; y < h; y++) {
+            for (size_t x = 0; x < w; x++) {
+                size_t dste = (dstYOffset + y) * dst.dimension(0) + (dstXOffset + x);
+                size_t srce0 = (srcYOffset + 2 * y + 0) * src.dimension(0) + (srcXOffset + 2 * x + 0);
+                size_t srce1 = (srcYOffset + 2 * y + 0) * src.dimension(0) + (srcXOffset + 2 * x + 1);
+                size_t srce2 = (srcYOffset + 2 * y + 1) * src.dimension(0) + (srcXOffset + 2 * x + 0);
+                size_t srce3 = (srcYOffset + 2 * y + 1) * src.dimension(0) + (srcXOffset + 2 * x + 1);
+                for (size_t c = 0; c < dst.componentCount(); c++) {
+                    d[dste][c] = (s[srce0][c] + s[srce1][c] + s[srce2][c] + s[srce3][c]) * 0.25f;
+                }
+            }
+        }
+    }
+}
+
+static void setInvalid(TGD::ArrayContainer& dst,
+        size_t dstXOffset, size_t dstYOffset, size_t w, size_t h)
+{
+    if (!defaultAllocator().clearsMemory()) {
+        for (size_t y = 0; y < h; y++) {
+            size_t dste = (y + dstYOffset) * dst.dimension(0) + dstXOffset;
+            std::memset(dst.get(dste), 0, w * dst.elementSize());
+        }
+    }
+}
+
+TGD::ArrayContainer Frame::quadFromLevel(int level, int qx, int qy) const
+{
+    assert(level >= 1);
+
+    TGD::ArrayContainer q({ size_t(quadWidth()), size_t(quadHeight()) },
+            _quadLevel0Description.componentCount(),
+            _quadLevel0Description.componentType(),
+            defaultAllocator());
+    assert(q.componentType() == TGD::uint8 || q.componentType() == TGD::float32);
+
+    int q0Index = quadIndex(level - 1, 2 * qx + 0, 2 * qy + 0);
+    int q1Index = quadIndex(level - 1, 2 * qx + 1, 2 * qy + 0);
+    int q2Index = quadIndex(level - 1, 2 * qx + 0, 2 * qy + 1);
+    int q3Index = quadIndex(level - 1, 2 * qx + 1, 2 * qy + 1);
+    size_t srcXOffset = (level == 1 ? _quadLevel0BorderSize : 0);
+    size_t srcYOffset = (level == 1 ? _quadLevel0BorderSize : 0);
+    size_t w = quadWidth() / 2;
+    size_t h = quadHeight() / 2;
+    bool isS[4] = { textureChannelIsS(0), textureChannelIsS(1), textureChannelIsS(2), textureChannelIsS(3) };
+
+    size_t dstXOffset = 0;
+    size_t dstYOffset = 0;
+    if (q0Index >= 0) {
+        interpolate(q, dstXOffset, dstYOffset, w, h, _quads[q0Index], srcXOffset, srcYOffset, isS);
+    } else {
+        setInvalid(q, dstXOffset, dstYOffset, w, h);
+    }
+
+    dstXOffset = w;
+    dstYOffset = 0;
+    if (q1Index >= 0) {
+        interpolate(q, dstXOffset, dstYOffset, w, h, _quads[q1Index], srcXOffset, srcYOffset, isS);
+    } else {
+        setInvalid(q, dstXOffset, dstYOffset, w, h);
+    }
+
+    dstXOffset = 0;
+    dstYOffset = h;
+    if (q2Index >= 0) {
+        interpolate(q, dstXOffset, dstYOffset, w, h, _quads[q2Index], srcXOffset, srcYOffset, isS);
+    } else {
+        setInvalid(q, dstXOffset, dstYOffset, w, h);
+    }
+
+    dstXOffset = w;
+    dstYOffset = h;
+    if (q3Index >= 0) {
+        interpolate(q, dstXOffset, dstYOffset, w, h, _quads[q3Index], srcXOffset, srcYOffset, isS);
+    } else {
+        setInvalid(q, dstXOffset, dstYOffset, w, h);
+    }
+
+    return q;
 }
 
 static void uploadArrayToTexture(const TGD::ArrayContainer& array,
@@ -805,131 +942,72 @@ static void uploadArrayToTexture(const TGD::ArrayContainer& array,
     ASSERT_GLCHECK();
 }
 
-unsigned int Frame::quadTexture(int level, int qx, int qy, int channelIndex,
-        unsigned int fbo, unsigned int vao, QOpenGLShaderProgram& quadTreePrg)
+void Frame::uploadQuadToTexture(unsigned int tex, int level, int qx, int qy, int channelIndex)
 {
-    if (!_textureHolder.get())
-        _textureHolder = std::make_shared<TextureHolder>();
-
-    int texturesPerQuad = (channelCount() <= 4 ? 1 : channelCount());
-    if (_textureHolder->size() == 0) {
+    /* Initialize quads if not done yet */
+    if (_quads.size() == 0) {
+        // Reserve space for all quads
         int totalQuads = 0;
         for (int l = 0; l < quadTreeLevels(); l++)
             totalQuads += quadTreeLevelWidth(l) * quadTreeLevelHeight(l);
-        _textureHolder->create(totalQuads * texturesPerQuad);
+        _quads.resize(totalQuads);
+        // Compute level 0 quads in parallel
+        #pragma omp parallel for schedule(dynamic)
+        for (int q = 0; q < quadTreeLevelHeight(0) * quadTreeLevelWidth(0); q++) {
+            int qy = q / quadTreeLevelWidth(0);
+            int qx = q % quadTreeLevelWidth(0);
+            _quads[q] = quadFromLevel0(qx, qy);
+        }
+        int quadLevelBaseIndex = quadTreeLevelHeight(0) * quadTreeLevelWidth(0);
+        // Compute higher level quads, in parallel per level
+        for (int l = 1; l < quadTreeLevels(); l++) {
+            #pragma omp parallel for schedule(dynamic)
+            for (int q = 0; q < quadTreeLevelHeight(l) * quadTreeLevelWidth(l); q++) {
+                int qy = q / quadTreeLevelWidth(l);
+                int qx = q % quadTreeLevelWidth(l);
+                _quads[quadLevelBaseIndex + q] = quadFromLevel(l, qx, qy);
+            }
+            quadLevelBaseIndex += quadTreeLevelHeight(l) * quadTreeLevelWidth(l);
+        }
     }
-    int textureIndex = 0;
-    for (int l = 0; l < level; l++)
-        textureIndex += quadTreeLevelWidth(l) * quadTreeLevelHeight(l);
-    textureIndex += qy * quadTreeLevelWidth(level) + qx;
-    textureIndex *= texturesPerQuad;
-    if (texturesPerQuad != 1)
-        textureIndex += channelIndex;
 
-    if (!_textureHolder->flag(textureIndex)) {
-        auto gl = getGlFunctionsFromCurrentContext();
-        if (level == 0) {
-            if (channelCount() <= 4) {
-                // single texture
-                uploadArrayToTexture(quadFromLevel0(qx, qy), _textureHolder->texture(textureIndex),
-                        _texInternalFormat, _texFormat, _texType);
-            } else {
-                // one texture per channel
-                if (_textureTransferArray.dimensionCount() == 0)
-                    _textureTransferArray = TGD::Array<float>({ size_t(quadWidth()), size_t(quadHeight()) }, 1);
-                const TGD::Array<float> origQuad = quadFromLevel0(qx, qy);
-                for (size_t e = 0; e < _textureTransferArray.elementCount(); e++)
-                    _textureTransferArray.set<float>(e, 0, origQuad.get<float>(e, channelIndex));
-                uploadArrayToTexture(_textureTransferArray, _textureHolder->texture(textureIndex),
-                        _texInternalFormat, _texFormat, _texType);
-            }
-        } else {
-            ASSERT_GLCHECK();
-            // get source quad textures
-            unsigned int quadTex0 = 0, quadTex1 = 0, quadTex2 = 0, quadTex3 = 0;
-            if (2 * qx + 0 < quadTreeLevelWidth(level - 1) && 2 * qy + 0 < quadTreeLevelHeight(level - 1))
-                quadTex0 = quadTexture(level - 1, 2 * qx + 0, 2 * qy + 0, channelIndex, fbo, vao, quadTreePrg);
-            if (2 * qx + 1 < quadTreeLevelWidth(level - 1) && 2 * qy + 0 < quadTreeLevelHeight(level - 1))
-                quadTex1 = quadTexture(level - 1, 2 * qx + 1, 2 * qy + 0, channelIndex, fbo, vao, quadTreePrg);
-            if (2 * qx + 0 < quadTreeLevelWidth(level - 1) && 2 * qy + 1 < quadTreeLevelHeight(level - 1))
-                quadTex2 = quadTexture(level - 1, 2 * qx + 0, 2 * qy + 1, channelIndex, fbo, vao, quadTreePrg);
-            if (2 * qx + 1 < quadTreeLevelWidth(level - 1) && 2 * qy + 1 < quadTreeLevelHeight(level - 1))
-                quadTex3 = quadTexture(level - 1, 2 * qx + 1, 2 * qy + 1, channelIndex, fbo, vao, quadTreePrg);
-            // backup GL state
-            int fboBak, prgBak, vaoBak, vpBak[4];
-            gl->glGetIntegerv(GL_DRAW_FRAMEBUFFER_BINDING, &fboBak);
-            gl->glGetIntegerv(GL_CURRENT_PROGRAM, &prgBak);
-            gl->glGetIntegerv(GL_VERTEX_ARRAY_BINDING, &vaoBak);
-            gl->glGetIntegerv(GL_VIEWPORT, vpBak);
-            // create new tex
-            gl->glBindTexture(GL_TEXTURE_2D, _textureHolder->texture(textureIndex));
-            gl->glTexImage2D(GL_TEXTURE_2D, 0, _texInternalFormat, quadWidth(), quadHeight(), 0,
-                    _texFormat, _texType, nullptr);
-            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-            // setup fbo
-            gl->glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-            gl->glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _textureHolder->texture(textureIndex), 0);
-            gl->glViewport(0, 0, quadWidth(), quadHeight());
-            // render into new tex
-            gl->glUseProgram(quadTreePrg.programId());
-            quadTreePrg.setUniformValue("nan", std::numeric_limits<float>::quiet_NaN());
-            quadTreePrg.setUniformValue("quadTex0", 0);
-            quadTreePrg.setUniformValue("quadTex1", 1);
-            quadTreePrg.setUniformValue("quadTex2", 2);
-            quadTreePrg.setUniformValue("quadTex3", 3);
-            quadTreePrg.setUniformValue("haveQuadTex0", quadTex0 != 0);
-            quadTreePrg.setUniformValue("haveQuadTex1", quadTex1 != 0);
-            quadTreePrg.setUniformValue("haveQuadTex2", quadTex2 != 0);
-            quadTreePrg.setUniformValue("haveQuadTex3", quadTex3 != 0);
-            quadTreePrg.setUniformValue("toS0", textureChannelIsS(0));
-            quadTreePrg.setUniformValue("toS1", textureChannelIsS(1));
-            quadTreePrg.setUniformValue("toS2", textureChannelIsS(2));
-            quadTreePrg.setUniformValue("toS3", textureChannelIsS(3));
-            float quadWidthWithBorder = quadWidth() + 2 * quadBorderSize(level - 1);
-            float quadHeightWithBorder = quadHeight() + 2 * quadBorderSize(level - 1);
-            float texCoordFactorX = quadWidth() / quadWidthWithBorder;
-            float texCoordFactorY = quadHeight() / quadHeightWithBorder;
-            float texCoordOffsetX = quadBorderSize(level) / quadWidthWithBorder;
-            float texCoordOffsetY = quadBorderSize(level) / quadHeightWithBorder;
-            quadTreePrg.setUniformValue("texCoordFactorX", texCoordFactorX);
-            quadTreePrg.setUniformValue("texCoordFactorY", texCoordFactorY);
-            quadTreePrg.setUniformValue("texCoordOffsetX", texCoordOffsetX);
-            quadTreePrg.setUniformValue("texCoordOffsetY", texCoordOffsetY);
-            gl->glActiveTexture(GL_TEXTURE0);
-            gl->glBindTexture(GL_TEXTURE_2D, quadTex0);
-            gl->glActiveTexture(GL_TEXTURE1);
-            gl->glBindTexture(GL_TEXTURE_2D, quadTex1);
-            gl->glActiveTexture(GL_TEXTURE2);
-            gl->glBindTexture(GL_TEXTURE_2D, quadTex2);
-            gl->glActiveTexture(GL_TEXTURE3);
-            gl->glBindTexture(GL_TEXTURE_2D, quadTex3);
-            gl->glBindVertexArray(vao);
-            gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
-            // Restore GL state
-            gl->glBindFramebuffer(GL_FRAMEBUFFER, fboBak);
-            gl->glUseProgram(prgBak);
-            gl->glBindVertexArray(vaoBak);
-            gl->glViewport(vpBak[0], vpBak[1], vpBak[2], vpBak[3]);
-            ASSERT_GLCHECK();
-        }
-        // generate mipmap only for the highest level
-        if (level == quadTreeLevels() - 1) {
-            gl->glBindTexture(GL_TEXTURE_2D, _textureHolder->texture(textureIndex));
-            if (isOpenGLES()) {
-                // mipmap generation does not seem to work reliably!?
-                gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-            } else {
-                gl->glGenerateMipmap(GL_TEXTURE_2D);
-                gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-            }
-        }
-        ASSERT_GLCHECK();
-        _textureHolder->setFlag(textureIndex);
+    /* Get index of the requested quad */
+    int quadIndex = 0;
+    for (int l = 0; l < level; l++) {
+        quadIndex += quadTreeLevelHeight(l) * quadTreeLevelWidth(l);
     }
-    return _textureHolder->texture(textureIndex);
+    quadIndex += qy * quadTreeLevelWidth(level) + qx;
+
+    /* Upload requested quad data to texture */
+    auto gl = getGlFunctionsFromCurrentContext();
+    ASSERT_GLCHECK();
+    if (channelCount() <= 4) {
+        // single texture
+        uploadArrayToTexture(_quads[quadIndex], tex,
+                _texInternalFormat, _texFormat, _texType);
+    } else {
+        // one texture per channel
+        if (_textureTransferArray.dimensionCount() == 0)
+            _textureTransferArray = TGD::Array<float>({ size_t(quadWidth()), size_t(quadHeight()) }, 1,
+                    TGD::Allocator() /* we want in-memory storage here */);
+        const TGD::Array<float> origQuad = _quads[quadIndex];
+        for (size_t e = 0; e < _textureTransferArray.elementCount(); e++)
+            _textureTransferArray.set<float>(e, 0, origQuad.get<float>(e, channelIndex));
+        uploadArrayToTexture(_textureTransferArray, tex,
+                _texInternalFormat, _texFormat, _texType);
+    }
+    // generate mipmap only for the highest level
+    if (level == quadTreeLevels() - 1) {
+        gl->glBindTexture(GL_TEXTURE_2D, tex);
+        if (isOpenGLES()) {
+            // mipmap generation does not seem to work reliably!?
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        } else {
+            gl->glGenerateMipmap(GL_TEXTURE_2D);
+            gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        }
+    }
+    ASSERT_GLCHECK();
 }
 
 bool Frame::haveLightness() const

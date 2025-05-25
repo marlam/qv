@@ -1,7 +1,9 @@
 /*
- * Copyright (C) 2019, 2020, 2021
+ * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +30,7 @@
 #include "overlay-value.hpp"
 
 
-void OverlayValue::update(int widthInPixels, const QPoint& arrayCoordinates, Set& set)
+void OverlayValue::update(unsigned int tex, int widthInPixels, const QPoint& arrayCoordinates, Set& set)
 {
     prepare(widthInPixels, _painter->fontInfo().pixelSize() * 1.5f);
 
@@ -93,5 +95,5 @@ void OverlayValue::update(int widthInPixels, const QPoint& arrayCoordinates, Set
     }
 
     fixFormat();
-    uploadImageToTexture();
+    uploadImageToTexture(tex);
 }

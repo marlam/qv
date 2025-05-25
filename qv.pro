@@ -3,12 +3,12 @@
 
 HEADERS = \
         src/version.hpp \
+        src/alloc.hpp \
         src/color.hpp \
         src/colormap.hpp \
         src/file.hpp \
         src/frame.hpp \
         src/gl.hpp \
-        src/textureholder.hpp \
         src/histogram.hpp \
         src/overlay-fallback.hpp \
         src/overlay-info.hpp \
@@ -24,11 +24,11 @@ HEADERS = \
         src/gui.hpp
 
 SOURCES = \
+        src/alloc.cpp \
         src/colormap.cpp \
         src/file.cpp \
         src/frame.cpp \
         src/gl.cpp \
-        src/textureholder.cpp \
         src/histogram.cpp \
         src/overlay-fallback.cpp \
         src/overlay-info.cpp \
@@ -45,8 +45,6 @@ SOURCES = \
         src/main.cpp
 
 resources.files = \
-        src/shader-quadtree-vertex.glsl \
-        src/shader-quadtree-fragment.glsl \
         src/shader-view-vertex.glsl \
         src/shader-view-fragment.glsl \
         src/shader-overlay-vertex.glsl \

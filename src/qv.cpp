@@ -2,8 +2,7 @@
  * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
- *
- * Copyright (C) 2023
+ * Copyright (C) 2023, 2024, 2025
  * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -136,6 +135,16 @@ void QV::initializeGL()
     fprintf(stderr, "%d %d %d\n", red_bits, green_bits, blue_bits);
 #endif
 
+    gl->glGenTextures(1, &_t0);
+    gl->glGenTextures(1, &_t1);
+    gl->glGenTextures(1, &_t2);
+    gl->glGenTextures(1, &_t3);
+    gl->glGenTextures(1, &_overlayColorMapTex);
+    gl->glGenTextures(1, &_overlayFallbackTex);
+    gl->glGenTextures(1, &_overlayHistogramTex);
+    gl->glGenTextures(1, &_overlayStatisticTex);
+    gl->glGenTextures(1, &_overlayValueTex);
+    gl->glGenTextures(1, &_overlayInfoTex);
     gl->glGenFramebuffers(1, &_fbo);
     gl->glGenTextures(1, &_fboTex);
 
@@ -174,20 +183,6 @@ void QV::initializeGL()
     gl->glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
 
     ASSERT_GLCHECK();
-
-    QString quadTreeVsSource = readFile(":src/shader-quadtree-vertex.glsl");
-    QString quadTreeFsSource  = readFile(":src/shader-quadtree-fragment.glsl");
-    if (isOpenGLES()) {
-        quadTreeVsSource.prepend("#version 300 es\n");
-        quadTreeFsSource.prepend("precision highp float;\n");
-        quadTreeFsSource.prepend("#version 300 es\n");
-    } else {
-        quadTreeVsSource.prepend("#version 330\n");
-        quadTreeFsSource.prepend("#version 330\n");
-    }
-    _quadTreePrg.addShaderFromSourceCode(QOpenGLShader::Vertex, quadTreeVsSource);
-    _quadTreePrg.addShaderFromSourceCode(QOpenGLShader::Fragment, quadTreeFsSource);
-    _quadTreePrg.link();
 
     QString viewVsSource = readFile(":src/shader-view-vertex.glsl");
     QString viewFsSource  = readFile(":src/shader-view-fragment.glsl");
@@ -337,15 +332,24 @@ void QV::renderQuad(Frame* frame, int quadTreeLevel, int qx, int qy,
     _viewPrg.setUniformValue("quadOffsetX", quadOffsetX);
     _viewPrg.setUniformValue("quadOffsetY", quadOffsetY);
     bool showColor = (frame->channelIndex() == ColorChannelIndex);
-    unsigned int t0 = showColor ?
-          frame->quadTexture(quadTreeLevel, qx, qy, frame->colorChannelIndex(0), _fbo, _vao, _quadTreePrg)
-        : frame->quadTexture(quadTreeLevel, qx, qy, frame->channelIndex(), _fbo, _vao, _quadTreePrg);
-    unsigned int t1 = showColor ?
-        frame->quadTexture(quadTreeLevel, qx, qy, frame->colorChannelIndex(1), _fbo, _vao, _quadTreePrg) : 0;
-    unsigned int t2 = showColor ?
-        frame->quadTexture(quadTreeLevel, qx, qy, frame->colorChannelIndex(2), _fbo, _vao, _quadTreePrg) : 0;
-    unsigned int t3 = (showColor && frame->hasAlpha()) ?
-        frame->quadTexture(quadTreeLevel, qx, qy, frame->alphaChannelIndex(), _fbo, _vao, _quadTreePrg) : 0;
+    unsigned int t0, t1, t2, t3;
+    if (showColor) {
+        t0 = _t0;
+        t1 = _t1;
+        t2 = _t2;
+        t3 = _t3;
+        frame->uploadQuadToTexture(t0, quadTreeLevel, qx, qy, frame->colorChannelIndex(0));
+        frame->uploadQuadToTexture(t1, quadTreeLevel, qx, qy, frame->colorChannelIndex(1));
+        frame->uploadQuadToTexture(t2, quadTreeLevel, qx, qy, frame->colorChannelIndex(2));
+        frame->uploadQuadToTexture(t3, quadTreeLevel, qx, qy, frame->alphaChannelIndex());
+    } else {
+        t0 = _t0;
+        t1 = 0;
+        t2 = 0;
+        t3 = 0;
+        frame->uploadQuadToTexture(t0, quadTreeLevel, qx, qy, frame->channelIndex());
+    }
+    _set.currentParameters()->colorMap().uploadTexture(_colorMapTex);
     gl->glActiveTexture(GL_TEXTURE0);
     gl->glBindTexture(GL_TEXTURE_2D, t0);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _set.currentParameters()->magInterpolation ? GL_LINEAR : GL_NEAREST);
@@ -358,7 +362,7 @@ void QV::renderQuad(Frame* frame, int quadTreeLevel, int qx, int qy,
     gl->glActiveTexture(GL_TEXTURE3);
     gl->glBindTexture(GL_TEXTURE_2D, t3);
     gl->glActiveTexture(GL_TEXTURE4);
-    gl->glBindTexture(GL_TEXTURE_2D, _set.currentParameters()->colorMap().texture());
+    gl->glBindTexture(GL_TEXTURE_2D, _colorMapTex);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _set.currentParameters()->magInterpolation ? GL_LINEAR : GL_NEAREST);
     gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     ASSERT_GLCHECK();
@@ -509,57 +513,57 @@ void QV::paintGL()
     gl->glEnable(GL_BLEND);
     gl->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     if (!frame) {
-        _overlayFallback.update(w);
+        _overlayFallback.update(_overlayFallbackTex, w);
         int overlayYOffset = std::max((h - _overlayFallback.heightInPixels()) / 2, 0);
         gl->glViewport(0, overlayYOffset, w, _overlayFallback.heightInPixels());
         gl->glUseProgram(_overlayPrg.programId());
         gl->glActiveTexture(GL_TEXTURE0);
-        gl->glBindTexture(GL_TEXTURE_2D, _overlayFallback.texture());
+        gl->glBindTexture(GL_TEXTURE_2D, _overlayFallbackTex);
         gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     } else {
         int overlayYOffset = 0;
         if (overlayColorMapActive) {
-            _overlayColorMap.update(w, *(_set.currentParameters()));
+            _overlayColorMap.update(_overlayColorMapTex, w, *(_set.currentParameters()));
             gl->glViewport(0, overlayYOffset, w, _overlayColorMap.heightInPixels());
             gl->glUseProgram(_overlayPrg.programId());
             gl->glActiveTexture(GL_TEXTURE0);
-            gl->glBindTexture(GL_TEXTURE_2D, _overlayColorMap.texture());
+            gl->glBindTexture(GL_TEXTURE_2D, _overlayColorMapTex);
             gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
             overlayYOffset += _overlayColorMap.heightInPixels();
         }
         if (overlayHistogramActive) {
-            _overlayHistogram.update(w, dataCoords, _set);
+            _overlayHistogram.update(_overlayHistogramTex, w, dataCoords, _set);
             gl->glViewport(0, overlayYOffset, w, _overlayHistogram.heightInPixels());
             gl->glUseProgram(_overlayPrg.programId());
             gl->glActiveTexture(GL_TEXTURE0);
-            gl->glBindTexture(GL_TEXTURE_2D, _overlayHistogram.texture());
+            gl->glBindTexture(GL_TEXTURE_2D, _overlayHistogramTex);
             gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
             overlayYOffset += _overlayHistogram.heightInPixels();
         }
         if (overlayStatisticActive) {
-            _overlayStatistic.update(w, _set);
+            _overlayStatistic.update(_overlayStatisticTex, w, _set);
             gl->glViewport(0, overlayYOffset, w, _overlayStatistic.heightInPixels());
             gl->glUseProgram(_overlayPrg.programId());
             gl->glActiveTexture(GL_TEXTURE0);
-            gl->glBindTexture(GL_TEXTURE_2D, _overlayStatistic.texture());
+            gl->glBindTexture(GL_TEXTURE_2D, _overlayStatisticTex);
             gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
             overlayYOffset += _overlayStatistic.heightInPixels();
         }
         if (overlayValueActive) {
-            _overlayValue.update(w, dataCoords, _set);
+            _overlayValue.update(_overlayValueTex, w, dataCoords, _set);
             gl->glViewport(0, overlayYOffset, w, _overlayValue.heightInPixels());
             gl->glUseProgram(_overlayPrg.programId());
             gl->glActiveTexture(GL_TEXTURE0);
-            gl->glBindTexture(GL_TEXTURE_2D, _overlayValue.texture());
+            gl->glBindTexture(GL_TEXTURE_2D, _overlayValueTex);
             gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
             overlayYOffset += _overlayValue.heightInPixels();
         }
         if (overlayInfoActive) {
-            _overlayInfo.update(w, _set);
+            _overlayInfo.update(_overlayInfoTex, w, _set);
             gl->glViewport(0, overlayYOffset, w, _overlayInfo.heightInPixels());
             gl->glUseProgram(_overlayPrg.programId());
             gl->glActiveTexture(GL_TEXTURE0);
-            gl->glBindTexture(GL_TEXTURE_2D, _overlayInfo.texture());
+            gl->glBindTexture(GL_TEXTURE_2D, _overlayInfoTex);
             gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
             overlayYOffset += _overlayInfo.heightInPixels();
         }

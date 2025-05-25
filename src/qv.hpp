@@ -1,6 +1,9 @@
 /*
- * Copyright (C) 2019, 2020 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -44,12 +47,19 @@ private:
     Set& _set;
     QSize _sizeHint;
     int _w, _h;
+    unsigned int _t0, _t1, _t2, _t3;
+    unsigned int _colorMapTex;
+    unsigned int _overlayColorMapTex;
+    unsigned int _overlayFallbackTex;
+    unsigned int _overlayHistogramTex;
+    unsigned int _overlayStatisticTex;
+    unsigned int _overlayValueTex;
+    unsigned int _overlayInfoTex;
     unsigned int _fbo;
     unsigned int _fboTex;
     unsigned int _vao;
     QOpenGLShaderProgram _viewPrg;
     QOpenGLShaderProgram _overlayPrg;
-    QOpenGLShaderProgram _quadTreePrg;
     bool _dragMode;
     QPoint _dragStart;
     QPoint _mousePos;

@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2019, 2020, 2021 Computer Graphics Group, University of Siegen
- * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2025 Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,30 +20,17 @@
  * SOFTWARE.
  */
 
-#ifndef TEXTURE_HOLDER_HPP
-#define TEXTURE_HOLDER_HPP
+#ifndef QV_ALLOC_HPP
+#define QV_ALLOC_HPP
 
-#include <cstddef>
-#include <vector>
+#include <tgd/alloc.hpp>
 
-class TextureHolder
-{
-private:
-    std::vector<unsigned int> _textures;
-    std::vector<bool> _flags;
-
+class Allocator {
 public:
-    TextureHolder();
-    ~TextureHolder();
-
-    void create(size_t n);
-    void clear();
-
-    void setFlag(size_t index) { _flags[index] = true; }
-    bool flag(size_t index) const { return _flags[index]; }
-
-    int size() const { return _textures.size(); }
-    unsigned int texture(size_t index) const { return _textures[index]; }
+    Allocator(const std::string& directory);
+    ~Allocator();
 };
+
+const TGD::Allocator& defaultAllocator();
 
 #endif

@@ -1,8 +1,9 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
- *
- * Copyright (C) 2023 Martin Lambers <marlam@marlam.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,16 +29,11 @@
 
 #include <memory>
 
-#include "textureholder.hpp"
-
 
 class QImage;
 class QPainter;
 
 class Overlay {
-private:
-    std::shared_ptr<TextureHolder> _textureHolder;
-
 protected:
     float _scaleFactor;
     QImage* _image;
@@ -46,7 +42,7 @@ protected:
     void prepare(int widthInPixels, int heightInPixels);
     void fixFormat(int opaqueBlockX = -1, int opaqueBlockY = -1,
             int opaqueBlockW = -1, int opaqueBlockH = -1);
-    void uploadImageToTexture();
+    void uploadImageToTexture(unsigned int tex) const;
 
 public:
     Overlay();
@@ -54,7 +50,6 @@ public:
 
     void initialize(float scaleFactor);
     int heightInPixels() const { return _image->height(); }
-    unsigned int texture() const { return _textureHolder->texture(0); }
 };
 
 #endif

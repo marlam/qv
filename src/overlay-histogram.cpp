@@ -1,8 +1,9 @@
 /*
- * Copyright (C) 2019 Computer Graphics Group, University of Siegen
+ * Copyright (C) 2019, 2020, 2021, 2022
+ * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
- *
- * Copyright (C) 2023 Martin Lambers <marlam@marlam.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -47,7 +48,7 @@ static float logtransf(float x)
     return clamp(std::log(1.0f + x * (base - 1.0f)) / std::log(base), 0.0f, 1.0f);
 }
 
-void OverlayHistogram::update(int widthInPixels, const QPoint& arrayCoordinates, Set& set)
+void OverlayHistogram::update(unsigned int tex, int widthInPixels, const QPoint& arrayCoordinates, Set& set)
 {
     prepare(widthInPixels, 64 * _scaleFactor);
 
@@ -110,5 +111,5 @@ void OverlayHistogram::update(int widthInPixels, const QPoint& arrayCoordinates,
     }
 
     fixFormat();
-    uploadImageToTexture();
+    uploadImageToTexture(tex);
 }

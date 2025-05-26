@@ -40,6 +40,7 @@
 
 #include <QApplication>
 #include <QCommandLineParser>
+#include <QStandardPaths>
 #include <QMessageBox>
 #include <QSurfaceFormat>
 #include <QOpenGLContext>
@@ -64,7 +65,7 @@ int main(int argc, char* argv[])
     parser.addPositionalArgument("[directory|file...]", "Data to display.");
     parser.addOptions({
             { { "i", "input" }, "Set tag for import (can be given more than once).", "KEY=VALUE" },
-            { { "C", "cache-dir" }, "Set directory for cache files.", "directory" },
+            { { "t", "tmpdir" }, "Set directory for temporary files. ", "directory" },
     });
     parser.process(app);
     QStringList posArgs = parser.positionalArguments();
@@ -83,7 +84,8 @@ int main(int argc, char* argv[])
     }
 
     // Initialize the TGD Allocator (must be done before initializing the set)
-    Allocator alloc(parser.isSet("cache-dir") ? qPrintable(parser.value("cache-dir")) : ".");
+    QString defaultTmpDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
+    Allocator alloc(qPrintable(parser.isSet("tmpdir") ? parser.value("tmpdir") : defaultTmpDir));
 
     // Build the set of files to view
     Set set;

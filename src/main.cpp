@@ -116,11 +116,45 @@ int main(int argc, char* argv[])
             err = true;
         }
     }
-    if (!err && set.fileCount() > 0 && !set.setFileIndex(0, errMsg)) {
-        err = true;
+    try {
+        if (!err && set.fileCount() > 0 && !set.setFileIndex(0, errMsg)) {
+            err = true;
+        }
     }
+    catch (std::exception& e) {
+        err = true;
+        errMsg = e.what();
+    }
+
+    int r = 0;
+    if (!err) {
+        // Set the OpenGL context parameters
+        QSurfaceFormat format;
+        format.setRedBufferSize(10);
+        format.setGreenBufferSize(10);
+        format.setBlueBufferSize(10);
+        format.setAlphaBufferSize(0);
+        format.setStencilBufferSize(0);
+        if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
+            format.setVersion(3, 0);
+        } else {
+            format.setProfile(QSurfaceFormat::CoreProfile);
+            format.setVersion(3, 3);
+        }
+        QSurfaceFormat::setDefaultFormat(format);
+        // Create and show GUI
+        Gui gui(set);
+        gui.show();
+        try {
+            r = app.exec();
+        }
+        catch (std::exception& e) {
+            err = true;
+            errMsg = e.what();
+        }
+    }
+
     if (err) {
-        // if we started from a terminal, print error to stderr, otherwise to GUI
         if (isatty(fileno(stderr))) {
             fprintf(stderr, "%s\n", errMsg.c_str());
         } else {
@@ -129,24 +163,5 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    // Set the OpenGL context parameters
-    QSurfaceFormat format;
-    format.setRedBufferSize(10);
-    format.setGreenBufferSize(10);
-    format.setBlueBufferSize(10);
-    format.setAlphaBufferSize(0);
-    format.setStencilBufferSize(0);
-    if (QOpenGLContext::openGLModuleType() == QOpenGLContext::LibGLES) {
-        format.setVersion(3, 0);
-    } else {
-        format.setProfile(QSurfaceFormat::CoreProfile);
-        format.setVersion(3, 3);
-    }
-    QSurfaceFormat::setDefaultFormat(format);
-
-    // Create and show GUI
-    Gui gui(set);
-    gui.show();
-
-    return app.exec();
+    return r;
 }

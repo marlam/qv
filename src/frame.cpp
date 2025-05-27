@@ -942,9 +942,10 @@ static void uploadArrayToTexture(const TGD::ArrayContainer& array,
 
 void Frame::quadSubtreeNeedsRecomputing(int level, int qx, int qy)
 {
-    if (qx < 0 || qy < 0 || qx >= quadTreeLevelWidth(level) || qy >= quadTreeLevelHeight(level))
+    int qi = quadIndex(level, qx, qy);
+    if (qi < 0 || size_t(qi) >= _quadNeedsRecomputing.size())
         return;
-    _quadNeedsRecomputing[quadIndex(level, qx, qy)] = true;
+    _quadNeedsRecomputing[qi] = true;
     if (level > 0) {
         quadSubtreeNeedsRecomputing(level - 1, 2 * qx + 0, 2 * qy + 0);
         quadSubtreeNeedsRecomputing(level - 1, 2 * qx + 1, 2 * qy + 0);
@@ -977,8 +978,8 @@ void Frame::uploadQuadToTexture(unsigned int tex, int level, int qx, int qy, int
             _quads.resize(1);
             _quads[0] = _originalArray;
             _quadNeedsRecomputing.resize(1);
-            _quadNeedsRecomputing[0] = false;
         }
+        _quadNeedsRecomputing[0] = false;
     }
 
     /* Create quads if not done yet */

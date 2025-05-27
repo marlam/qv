@@ -29,8 +29,7 @@
 
 #include <vector>
 #include <memory>
-
-#include <QOpenGLShaderProgram>
+#include <tuple>
 
 #include <tgd/array.hpp>
 
@@ -63,6 +62,8 @@ private:
     std::vector<int> _quadTreeWidths;
     std::vector<int> _quadTreeHeights;
     std::vector<TGD::ArrayContainer> _quads;
+    std::vector<bool> _quadNeedsRecomputing;
+    TGD::ArrayContainer _quadLevel0Tmp;
     /* textures: */
     unsigned int _texInternalFormat;
     unsigned int _texFormat;
@@ -71,9 +72,11 @@ private:
 
     const TGD::Array<float>& lightnessArray();
     int quadIndex(int level, int qx, int qy) const; // returns -1 if nonexistent
-    TGD::ArrayContainer quadFromLevel0(int qx, int qy) const;
-    TGD::ArrayContainer quadFromLevel(int l, int qx, int qy) const;
+    void computeQuadOnLevel0Worker(TGD::ArrayContainer& quad, int qx, int qy) const;
+    void computeQuadOnLevel0(TGD::ArrayContainer& quad, int qx, int qy);
+    void computeQuadOnLevel(TGD::ArrayContainer& quad, int l, int qx, int qy) const;
     bool textureChannelIsS(int index) const;
+    void quadSubtreeNeedsRecomputing(int level, int qx, int qy);
 
 public:
     // OpenGL is required to support at least the following as GL_MAX_TEXTURE_SIZE:
@@ -83,7 +86,6 @@ public:
 
     void init(const TGD::ArrayContainer& a);
     void reset();
-    void refreshData();
 
     const TGD::ArrayContainer& array() const { return _originalArray; }
     TGD::Type type() const { return _originalArray.componentType(); }
@@ -125,6 +127,7 @@ public:
     int quadTreeLevels() const { return _quadTreeWidths.size(); }
     int quadTreeLevelWidth(int level) const { return _quadTreeWidths[level]; }
     int quadTreeLevelHeight(int level) const { return _quadTreeHeights[level]; }
+    void prepareQuadsForRendering(const std::vector<std::tuple<int, int, int>>& relevantQuads, bool refreshQuads);
     void uploadQuadToTexture(unsigned int tex, int level, int qx, int qy, int channelIndex);
 
     // Query whether some information is already computed or not yet

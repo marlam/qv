@@ -220,11 +220,6 @@ void Frame::reset()
     *this = Frame();
 }
 
-void Frame::refreshData()
-{
-    _quads.clear();
-}
-
 std::string Frame::channelName(int channelIndex) const
 {
     std::string channelName;
@@ -674,22 +669,8 @@ int Frame::quadIndex(int level, int qx, int qy) const // returns -1 if nonexiste
     return i;
 }
 
-TGD::ArrayContainer Frame::quadFromLevel0(int qx, int qy) const
+void Frame::computeQuadOnLevel0Worker(TGD::ArrayContainer& q, int qx, int qy) const
 {
-    assert(qx >= 0 && qx < quadTreeLevelWidth(0));
-    assert(qy >= 0 && qy < quadTreeLevelHeight(0));
-
-    /* Optimization for the case of only a single quad */
-    if (_quadLevel0BorderSize == 0
-            && _quadLevel0Description.dimension(0) == _originalArray.dimension(0)
-            && _quadLevel0Description.dimension(1) == _originalArray.dimension(1)
-            && _quadLevel0Description.componentCount() == _originalArray.componentCount()) {
-        return convert(_originalArray, _quadLevel0Description.componentType(), defaultAllocator());
-    }
-
-    /* First create quad using original data type */
-    TGD::ArrayContainer q(_quadLevel0Description.dimensions(),
-            _quadLevel0Description.componentCount(), type(), defaultAllocator());
     const TGD::ArrayContainer& src = _originalArray;
     int srcX = qx * quadWidth() - quadBorderSize(0);
     int srcY = qy * quadHeight() - quadBorderSize(0);
@@ -785,9 +766,28 @@ TGD::ArrayContainer Frame::quadFromLevel0(int qx, int qy) const
         }
     }
 #endif
+}
 
-    /* Then convert if necessary */
-    return convert(q, _quadLevel0Description.componentType(), defaultAllocator());
+void Frame::computeQuadOnLevel0(TGD::ArrayContainer& quad, int qx, int qy)
+{
+    assert(qx >= 0 && qx < quadTreeLevelWidth(0));
+    assert(qy >= 0 && qy < quadTreeLevelHeight(0));
+
+    if (_quadLevel0Description.componentType() == type()) {
+        // write results directly into quad
+        computeQuadOnLevel0Worker(quad, qx, qy);
+    } else {
+        // compute in original data type first
+        if (_quadLevel0Tmp.dimensionCount() == 0) {
+            _quadLevel0Tmp = TGD::ArrayContainer(
+                    _quadLevel0Description.dimensions(),
+                    _quadLevel0Description.componentCount(),
+                    type(), defaultAllocator());
+        }
+        computeQuadOnLevel0Worker(_quadLevel0Tmp, qx, qy);
+        // convert
+        convert(quad, _quadLevel0Tmp);
+    }
 }
 
 bool Frame::textureChannelIsS(int texChannel) const
@@ -868,15 +868,10 @@ static void setInvalid(TGD::ArrayContainer& dst,
     }
 }
 
-TGD::ArrayContainer Frame::quadFromLevel(int level, int qx, int qy) const
+void Frame::computeQuadOnLevel(TGD::ArrayContainer& q, int level, int qx, int qy) const
 {
-    assert(level >= 1);
-
-    TGD::ArrayContainer q({ size_t(quadWidth()), size_t(quadHeight()) },
-            _quadLevel0Description.componentCount(),
-            _quadLevel0Description.componentType(),
-            defaultAllocator());
     assert(q.componentType() == TGD::uint8 || q.componentType() == TGD::float32);
+    assert(level >= 1);
 
     int q0Index = quadIndex(level - 1, 2 * qx + 0, 2 * qy + 0);
     int q1Index = quadIndex(level - 1, 2 * qx + 1, 2 * qy + 0);
@@ -919,8 +914,6 @@ TGD::ArrayContainer Frame::quadFromLevel(int level, int qx, int qy) const
     } else {
         setInvalid(q, dstXOffset, dstYOffset, w, h);
     }
-
-    return q;
 }
 
 static void uploadArrayToTexture(const TGD::ArrayContainer& array,
@@ -947,55 +940,116 @@ static void uploadArrayToTexture(const TGD::ArrayContainer& array,
     ASSERT_GLCHECK();
 }
 
+void Frame::quadSubtreeNeedsRecomputing(int level, int qx, int qy)
+{
+    if (qx < 0 || qy < 0 || qx >= quadTreeLevelWidth(level) || qy >= quadTreeLevelHeight(level))
+        return;
+    _quadNeedsRecomputing[quadIndex(level, qx, qy)] = true;
+    if (level > 0) {
+        quadSubtreeNeedsRecomputing(level - 1, 2 * qx + 0, 2 * qy + 0);
+        quadSubtreeNeedsRecomputing(level - 1, 2 * qx + 1, 2 * qy + 0);
+        quadSubtreeNeedsRecomputing(level - 1, 2 * qx + 0, 2 * qy + 1);
+        quadSubtreeNeedsRecomputing(level - 1, 2 * qx + 1, 2 * qy + 1);
+    }
+}
+
+void Frame::prepareQuadsForRendering(const std::vector<std::tuple<int, int, int>>& relevantQuads, bool refreshQuads)
+{
+    if (refreshQuads) {
+        for (size_t i = 0; i < relevantQuads.size(); i++) {
+            quadSubtreeNeedsRecomputing(
+                    std::get<0>(relevantQuads[i]),
+                    std::get<1>(relevantQuads[i]),
+                    std::get<2>(relevantQuads[i]));
+        }
+    }
+}
+
 void Frame::uploadQuadToTexture(unsigned int tex, int level, int qx, int qy, int channelIndex)
 {
-    /* Initialize quads if not done yet */
+    /* Optimization for the case of only a single quad */
+    if (_quadLevel0BorderSize == 0
+            && _quadLevel0Description.dimension(0) == _originalArray.dimension(0)
+            && _quadLevel0Description.dimension(1) == _originalArray.dimension(1)
+            && _quadLevel0Description.componentCount() == _originalArray.componentCount()
+            && _quadLevel0Description.componentType() == _originalArray.componentType()) {
+        if (_quads.size() == 0) {
+            _quads.resize(1);
+            _quads[0] = _originalArray;
+            _quadNeedsRecomputing.resize(1);
+            _quadNeedsRecomputing[0] = false;
+        }
+    }
+
+    /* Create quads if not done yet */
     if (_quads.size() == 0) {
         // Reserve space for all quads
-        int totalQuads = 0;
-        for (int l = 0; l < quadTreeLevels(); l++)
+        size_t level0Quads = quadTreeLevelWidth(0) * quadTreeLevelHeight(0);
+        size_t totalQuads = level0Quads;
+        for (int l = 1; l < quadTreeLevels(); l++) {
             totalQuads += quadTreeLevelWidth(l) * quadTreeLevelHeight(l);
+        }
         _quads.resize(totalQuads);
+        _quadNeedsRecomputing.resize(totalQuads);
+        // Allocate all quads
+        for (size_t i = 0; i < totalQuads; i++) {
+            if (i < level0Quads) {
+                _quads[i] = TGD::ArrayContainer(_quadLevel0Description, defaultAllocator());
+            } else {
+                _quads[i] = TGD::ArrayContainer(
+                        { size_t(quadWidth()), size_t(quadHeight()) },
+                        _quadLevel0Description.componentCount(),
+                        _quadLevel0Description.componentType(),
+                        defaultAllocator());
+            }
+            _quadNeedsRecomputing[i] = true;
+        }
+    }
+
+    /* Get index of the requested quad */
+    int qi = quadIndex(level, qx, qy);
+
+    /* Recompute quads as necessary */
+    if (_quadNeedsRecomputing[qi]) {
         // Compute level 0 quads in parallel
         #pragma omp parallel for schedule(dynamic)
         for (int q = 0; q < quadTreeLevelHeight(0) * quadTreeLevelWidth(0); q++) {
-            int qy = q / quadTreeLevelWidth(0);
-            int qx = q % quadTreeLevelWidth(0);
-            _quads[q] = quadFromLevel0(qx, qy);
+            if (_quadNeedsRecomputing[q]) {
+                int qy = q / quadTreeLevelWidth(0);
+                int qx = q % quadTreeLevelWidth(0);
+                computeQuadOnLevel0(_quads[q], qx, qy);
+                _quadNeedsRecomputing[q] = false;
+            }
         }
         int quadLevelBaseIndex = quadTreeLevelHeight(0) * quadTreeLevelWidth(0);
         // Compute higher level quads, in parallel per level
         for (int l = 1; l < quadTreeLevels(); l++) {
             #pragma omp parallel for schedule(dynamic)
             for (int q = 0; q < quadTreeLevelHeight(l) * quadTreeLevelWidth(l); q++) {
-                int qy = q / quadTreeLevelWidth(l);
-                int qx = q % quadTreeLevelWidth(l);
-                _quads[quadLevelBaseIndex + q] = quadFromLevel(l, qx, qy);
+                if (_quadNeedsRecomputing[quadLevelBaseIndex + q]) {
+                    int qy = q / quadTreeLevelWidth(l);
+                    int qx = q % quadTreeLevelWidth(l);
+                    computeQuadOnLevel(_quads[quadLevelBaseIndex + q], l, qx, qy);
+                    _quadNeedsRecomputing[quadLevelBaseIndex + q] = false;
+                }
             }
             quadLevelBaseIndex += quadTreeLevelHeight(l) * quadTreeLevelWidth(l);
         }
     }
-
-    /* Get index of the requested quad */
-    int quadIndex = 0;
-    for (int l = 0; l < level; l++) {
-        quadIndex += quadTreeLevelHeight(l) * quadTreeLevelWidth(l);
-    }
-    quadIndex += qy * quadTreeLevelWidth(level) + qx;
 
     /* Upload requested quad data to texture */
     auto gl = getGlFunctionsFromCurrentContext();
     ASSERT_GLCHECK();
     if (channelCount() <= 4) {
         // single texture
-        uploadArrayToTexture(_quads[quadIndex], tex,
+        uploadArrayToTexture(_quads[qi], tex,
                 _texInternalFormat, _texFormat, _texType);
     } else {
         // one texture per channel
         if (_textureTransferArray.dimensionCount() == 0)
             _textureTransferArray = TGD::Array<float>({ size_t(quadWidth()), size_t(quadHeight()) }, 1,
                     TGD::Allocator() /* we want in-memory storage here */);
-        const TGD::Array<float> origQuad = _quads[quadIndex];
+        const TGD::Array<float> origQuad = _quads[qi];
         for (size_t e = 0; e < _textureTransferArray.elementCount(); e++)
             _textureTransferArray.set<float>(e, 0, origQuad.get<float>(e, channelIndex));
         uploadArrayToTexture(_textureTransferArray, tex,

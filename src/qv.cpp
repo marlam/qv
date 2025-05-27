@@ -374,7 +374,7 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
         float xOffset, float yOffset)
 {
     prepareQuadRendering(frame, quadTreeLevel, xFactor, yFactor, xOffset, yOffset);
-    // Loop over the quads on the requested level
+    // Loop over the quads on the requested level to find relevant quads
     int maxQuadTreeLevelSize = 1;
     for (int l = frame->quadTreeLevels() - 1; l > quadTreeLevel; l--)
         maxQuadTreeLevelSize *= 2;
@@ -387,6 +387,8 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
     float quadCompensationFactorX = 1.0f / (float(frame->width()) / coveredWidth);
     float quadCompensationFactorY = 1.0f / (float(frame->height()) / coveredHeight);
     const QRectF frustum2D(-1.0f, -1.0f, 2.0f, 2.0f);
+    std::vector<std::tuple<int, int, int>> relevantQuads;
+    std::vector<std::tuple<float, float, float, float>> relevantQuadParameters;
     for (int qy = 0; qy < frame->quadTreeLevelHeight(quadTreeLevel); qy++) {
         for (int qx = 0; qx < frame->quadTreeLevelWidth(quadTreeLevel); qx++) {
             float quadFactorX = quadCompensationFactorX / maxQuadTreeLevelSize;
@@ -401,8 +403,22 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
             const QRectF quadRect(quadVertexMinX, quadVertexMinY, quadVertexMaxX - quadVertexMinX, quadVertexMaxY - quadVertexMinY);
             if (!quadRect.intersects(frustum2D))
                 continue;
-            renderQuad(frame, quadTreeLevel, qx, qy, quadFactorX, quadFactorY, quadOffsetX, quadOffsetY);
+            relevantQuads.push_back(std::tuple<int, int, int>(quadTreeLevel, qx, qy));
+            relevantQuadParameters.push_back(std::tuple<float, float, float, float>(quadFactorX, quadFactorY, quadOffsetX, quadOffsetY));
         }
+    }
+    // Give the frame an opportunity to prepare the quads
+    frame->prepareQuadsForRendering(relevantQuads, _set.currentParameters()->watchMode);
+    // Render the quads
+    for (size_t i = 0; i < relevantQuads.size(); i++) {
+        renderQuad(frame,
+                std::get<0>(relevantQuads[i]),
+                std::get<1>(relevantQuads[i]),
+                std::get<2>(relevantQuads[i]),
+                std::get<0>(relevantQuadParameters[i]),
+                std::get<1>(relevantQuadParameters[i]),
+                std::get<2>(relevantQuadParameters[i]),
+                std::get<3>(relevantQuadParameters[i]));
     }
 }
 
@@ -574,7 +590,6 @@ void QV::paintGL()
     ASSERT_GLCHECK();
 
     if (frame && _set.currentParameters()->watchMode) {
-        frame->refreshData();
         update();
     }
 }

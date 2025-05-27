@@ -28,11 +28,7 @@ static TGD::Allocator* alloc;
 
 Allocator::Allocator(const std::string& directory)
 {
-    if (TGD::MmapAllocator::isAvailableOnThisSystem()) {
-        alloc = new TGD::MmapAllocator(directory);
-    } else {
-        alloc = new TGD::Allocator();
-    }
+    alloc = new TGD::MmapAllocator(directory);
 }
 
 Allocator::~Allocator()

@@ -137,6 +137,7 @@ public:
     void toggleOverlayHistogram();
     void toggleOverlayColormap();
     void toggleApplyCurrentParametersToAllFiles();
+    void toggleWatchMode();
 
 signals:
     void toggleFullscreen();

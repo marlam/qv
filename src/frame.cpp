@@ -220,6 +220,11 @@ void Frame::reset()
     *this = Frame();
 }
 
+void Frame::refreshData()
+{
+    _quads.clear();
+}
+
 std::string Frame::channelName(int channelIndex) const
 {
     std::string channelName;

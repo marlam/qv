@@ -1,7 +1,9 @@
 /*
- * Copyright (C) 2019, 2020, 2021
+ * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,7 +33,7 @@
 Parameters::Parameters() :
     _colorVisMinVal(std::numeric_limits<float>::quiet_NaN()),
     _colorVisMaxVal(std::numeric_limits<float>::quiet_NaN()),
-    magInterpolation(true), magGrid(false),
+    watchMode(false), magInterpolation(true), magGrid(false),
     zoom(1.0f), xOffset(0), yOffset(0),
     dynamicRangeReduction(false), drrBrightness(32.0f)
 {

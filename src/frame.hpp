@@ -83,6 +83,7 @@ public:
 
     void init(const TGD::ArrayContainer& a);
     void reset();
+    void refreshData();
 
     const TGD::ArrayContainer& array() const { return _originalArray; }
     TGD::Type type() const { return _originalArray.componentType(); }

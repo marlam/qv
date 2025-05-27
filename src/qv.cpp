@@ -572,6 +572,11 @@ void QV::paintGL()
     gl->glDisable(GL_BLEND);
     QGuiApplication::restoreOverrideCursor();
     ASSERT_GLCHECK();
+
+    if (frame && _set.currentParameters()->watchMode) {
+        frame->refreshData();
+        update();
+    }
 }
 
 bool QV::haveCurrentFile() const
@@ -963,6 +968,16 @@ void QV::toggleApplyCurrentParametersToAllFiles()
         return;
 
     _set.toggleApplyCurrentParametersToAllFiles();
+}
+
+void QV::toggleWatchMode()
+{
+    if (!haveCurrentFile())
+        return;
+
+    _set.currentParameters()->watchMode = !_set.currentParameters()->watchMode;
+    if (_set.currentParameters()->watchMode)
+        update();
 }
 
 void QV::mouseMoveEvent(QMouseEvent* e)

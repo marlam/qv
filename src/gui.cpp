@@ -333,6 +333,18 @@ Gui::Gui(Set& set) : QMainWindow(),
     connect(_viewRecenterAction, SIGNAL(triggered()), this, SLOT(viewRecenter()));
     addQVAction(_viewRecenterAction, viewMenu);
     viewMenu->addSeparator();
+    _viewToggleApplyCurrentParametersToAllFilesAction = new QAction("Toggle &application of current parameters to all files", this);
+    _viewToggleApplyCurrentParametersToAllFilesAction->setCheckable(true);
+    _viewToggleApplyCurrentParametersToAllFilesAction->setShortcuts({ Qt::Key_A });
+    connect(_viewToggleApplyCurrentParametersToAllFilesAction, SIGNAL(triggered()), this, SLOT(viewToggleApplyCurrentParametersToAllFiles()));
+    addQVAction(_viewToggleApplyCurrentParametersToAllFilesAction, viewMenu);
+    viewMenu->addSeparator();
+    _viewToggleWatchModeAction = new QAction("Toggle &watching continuous updates", this);
+    _viewToggleWatchModeAction->setCheckable(true);
+    _viewToggleWatchModeAction->setShortcuts({ Qt::Key_W });
+    connect(_viewToggleWatchModeAction, SIGNAL(triggered()), this, SLOT(viewToggleWatchMode()));
+    addQVAction(_viewToggleWatchModeAction, viewMenu);
+    viewMenu->addSeparator();
     _viewToggleLinearInterpolationAction = new QAction("Toggle &linear interpolation for magnified views");
     _viewToggleLinearInterpolationAction->setCheckable(true);
     _viewToggleLinearInterpolationAction->setShortcuts({ Qt::Key_L });
@@ -343,11 +355,6 @@ Gui::Gui(Set& set) : QMainWindow(),
     _viewToggleGridAction->setShortcuts({ Qt::Key_G });
     connect(_viewToggleGridAction, SIGNAL(triggered()), this, SLOT(viewToggleGrid()));
     addQVAction(_viewToggleGridAction, viewMenu);
-    _viewToggleApplyCurrentParametersToAllFilesAction = new QAction("Toggle &application of current parameters to all files", this);
-    _viewToggleApplyCurrentParametersToAllFilesAction->setCheckable(true);
-    _viewToggleApplyCurrentParametersToAllFilesAction->setShortcuts({ Qt::Key_A });
-    connect(_viewToggleApplyCurrentParametersToAllFilesAction, SIGNAL(triggered()), this, SLOT(viewToggleApplyCurrentParametersToAllFiles()));
-    addQVAction(_viewToggleApplyCurrentParametersToAllFilesAction, viewMenu);
 
     QMenu* helpMenu = addQVMenu("&Help");
     _helpAboutAction = new QAction("&About");
@@ -657,6 +664,16 @@ void Gui::viewRecenter()
     _qv->recenter();
 }
 
+void Gui::viewToggleApplyCurrentParametersToAllFiles()
+{
+    _qv->toggleApplyCurrentParametersToAllFiles();
+}
+
+void Gui::viewToggleWatchMode()
+{
+    _qv->toggleWatchMode();
+}
+
 void Gui::viewToggleLinearInterpolation()
 {
     _qv->toggleLinearInterpolation();
@@ -665,11 +682,6 @@ void Gui::viewToggleLinearInterpolation()
 void Gui::viewToggleGrid()
 {
     _qv->toggleGrid();
-}
-
-void Gui::viewToggleApplyCurrentParametersToAllFiles()
-{
-    _qv->toggleApplyCurrentParametersToAllFiles();
 }
 
 void Gui::helpAbout()

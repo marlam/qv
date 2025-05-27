@@ -96,9 +96,10 @@ private:
     QAction* _viewZoomOutAction;
     QAction* _viewZoomResetAction;
     QAction* _viewRecenterAction;
+    QAction* _viewToggleApplyCurrentParametersToAllFilesAction;
+    QAction* _viewToggleWatchModeAction;
     QAction* _viewToggleLinearInterpolationAction;
     QAction* _viewToggleGridAction;
-    QAction* _viewToggleApplyCurrentParametersToAllFilesAction;
     QAction* _helpAboutAction;
 
     QMenu* addQVMenu(const QString& title);
@@ -162,9 +163,10 @@ private slots:
     void viewZoomOut();
     void viewZoomReset();
     void viewRecenter();
+    void viewToggleApplyCurrentParametersToAllFiles();
+    void viewToggleWatchMode();
     void viewToggleLinearInterpolation();
     void viewToggleGrid();
-    void viewToggleApplyCurrentParametersToAllFiles();
     void helpAbout();
 
     void updateFromParameters();

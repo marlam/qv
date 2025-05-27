@@ -139,6 +139,7 @@ void QV::initializeGL()
     gl->glGenTextures(1, &_t1);
     gl->glGenTextures(1, &_t2);
     gl->glGenTextures(1, &_t3);
+    gl->glGenTextures(1, &_colorMapTex);
     gl->glGenTextures(1, &_overlayColorMapTex);
     gl->glGenTextures(1, &_overlayFallbackTex);
     gl->glGenTextures(1, &_overlayHistogramTex);

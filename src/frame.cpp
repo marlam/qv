@@ -51,16 +51,8 @@ static int componentIndex(const TGD::ArrayContainer& a, const std::string& inter
     return ret;
 }
 
-void Frame::init(const TGD::ArrayContainer& a)
+void Frame::determineColorSpace()
 {
-    reset();
-    _originalArray = a;
-    // Make room for min/max etc
-    _minVals.resize(channelCount(), std::numeric_limits<float>::quiet_NaN());
-    _maxVals.resize(channelCount(), std::numeric_limits<float>::quiet_NaN());
-    _statistics.resize(channelCount());
-    _histograms.resize(channelCount());
-    // Determine color space, if any
     _colorSpace = ColorSpaceNone;
     _colorChannels[0] = -1;
     _colorChannels[1] = -1;
@@ -166,6 +158,19 @@ void Frame::init(const TGD::ArrayContainer& a)
         _colorVisMinVal = _colorMinVal;
         _colorVisMaxVal = _colorMaxVal;
     }
+}
+
+void Frame::init(const TGD::ArrayContainer& a)
+{
+    reset();
+    _originalArray = a;
+    // Make room for min/max etc
+    _minVals.resize(channelCount(), std::numeric_limits<float>::quiet_NaN());
+    _maxVals.resize(channelCount(), std::numeric_limits<float>::quiet_NaN());
+    _statistics.resize(channelCount());
+    _histograms.resize(channelCount());
+    // Determine color space, if any
+    determineColorSpace();
     // Set initial channel
     _channelIndex = (_colorSpace != ColorSpaceNone ? ColorChannelIndex : 0);
     // Initialize quadtree representation. Quads in level 0 are never explicitly
@@ -963,6 +968,18 @@ void Frame::prepareQuadsForRendering(const std::vector<std::tuple<int, int, int>
                     std::get<1>(relevantQuads[i]),
                     std::get<2>(relevantQuads[i]));
         }
+        _lightnessArray = TGD::Array<float>();
+        for (size_t i = 0; i < _minVals.size(); i++)
+            _minVals[i] = std::numeric_limits<float>::quiet_NaN();
+        for (size_t i = 0; i < _maxVals.size(); i++)
+            _maxVals[i] = std::numeric_limits<float>::quiet_NaN();
+        for (size_t i = 0; i < _statistics.size(); i++)
+            _statistics[i].invalidate();
+        _colorStatistic.invalidate();
+        for (size_t i = 0; i < _histograms.size(); i++)
+            _histograms[i].invalidate();
+        _colorHistogram.invalidate();
+        determineColorSpace();
     }
 }
 

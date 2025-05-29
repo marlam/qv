@@ -2,6 +2,8 @@
  * Copyright (C) 2019, 2020, 2021, 2022
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,6 +41,7 @@ private:
 public:
     Histogram();
     bool initialized() const { return _initialized; }
+    void invalidate() { _initialized = false; }
     void init(const TGD::ArrayContainer& array, size_t componentIndex, float minVal, float maxVal);
     float minVal() const { return _minVal; }
     float maxVal() const { return _maxVal; }

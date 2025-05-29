@@ -70,6 +70,8 @@ private:
     unsigned int _texType;
     TGD::Array<float> _textureTransferArray;
 
+    void determineColorSpace();
+
     const TGD::Array<float>& lightnessArray();
     int quadIndex(int level, int qx, int qy) const; // returns -1 if nonexistent
     void computeQuadOnLevel0Worker(TGD::ArrayContainer& quad, int qx, int qy) const;

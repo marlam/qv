@@ -813,19 +813,6 @@ bool Frame::textureChannelIsS(int texChannel) const
                      || colorChannelIndex(2) == texChannel))));
 }
 
-static float sToLinear(float x)
-{
-    const float c0 = 0.077399380805f; // 1.0 / 12.92
-    const float c1 = 0.947867298578f; // 1.0 / 1.055;
-    return (x <= 0.04045f ? (x * c0) : std::powf((x + 0.055f) * c1, 2.4f));
-}
-
-static float linearToS(float x)
-{
-    const float c0 = 0.416666666667f;
-    return (x <= 0.0031308f ? (x * 12.92f) : (1.055f * std::powf(x, c0) - 0.055f));
-}
-
 static void interpolate(TGD::ArrayContainer& dst,
         size_t dstXOffset, size_t dstYOffset, size_t w, size_t h,
         const TGD::ArrayContainer& src, size_t srcXOffset, size_t srcYOffset,
@@ -844,7 +831,7 @@ static void interpolate(TGD::ArrayContainer& dst,
                 for (size_t c = 0; c < dst.componentCount(); c++) {
                     float v;
                     if (isS[c]) {
-                        v = linearToS((sToLinear(s[srce0][c]) + sToLinear(s[srce1][c]) + sToLinear(s[srce2][c]) + sToLinear(s[srce3][c])) * 0.25f);
+                        v = toS((toLinear(s[srce0][c]) + toLinear(s[srce1][c]) + toLinear(s[srce2][c]) + toLinear(s[srce3][c])) * 0.25f);
                     } else {
                         v = (s[srce0][c] + s[srce1][c] + s[srce2][c] + s[srce3][c]) * 0.25f;
                     }

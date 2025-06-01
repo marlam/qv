@@ -2,6 +2,8 @@
  * Copyright (C) 2019, 2020, 2021
  * Computer Graphics Group, University of Siegen
  * Written by Martin Lambers <martin.lambers@uni-siegen.de>
+ * Copyright (C) 2023, 2024, 2025
+ * Martin Lambers <marlam@marlam.de>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -45,7 +47,13 @@ inline float toLinear(float x)
 {
     constexpr float c0 = 0.077399380805f; // 1.0f / 12.92f;
     constexpr float c1 = 0.947867298578f; // 1.0f / 1.055f;
-    return (x <= 0.04045f ? (x * c0) : std::pow((x + 0.055f) * c1, 2.4f));
+    return (x <= 0.04045f ? (x * c0) : std::powf((x + 0.055f) * c1, 2.4f));
+}
+
+inline float toS(float x)
+{
+    constexpr float c0 = 0.416666666667f;
+    return (x <= 0.0031308f ? (x * 12.92f) : (1.055f * std::powf(x, c0) - 0.055f));
 }
 
 inline float rgbToY(float r, float g, float b)

@@ -35,7 +35,8 @@
 ColorMap::ColorMap() :
     _count { 4, 4, 2, 1 },
     _type(ColorMapNone),
-    _index { 0, 0, 0, 0 }
+    _index { 0, 0, 0, 0 },
+    _changed(false)
 {
 }
 
@@ -116,6 +117,8 @@ void ColorMap::reload()
     if (!haveData) {
         _type = ColorMapNone;
     }
+
+    _changed = true;
 }
 
 void ColorMap::setType(ColorMapType type)
@@ -134,7 +137,7 @@ void ColorMap::cycle()
     reload();
 }
 
-void ColorMap::uploadTexture(unsigned int tex) const
+void ColorMap::uploadTexture(unsigned int tex)
 {
     ASSERT_GLCHECK();
     auto gl = getGlFunctionsFromCurrentContext();
@@ -145,4 +148,5 @@ void ColorMap::uploadTexture(unsigned int tex) const
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     ASSERT_GLCHECK();
+    _changed = false;
 }

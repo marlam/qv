@@ -135,10 +135,6 @@ void QV::initializeGL()
     fprintf(stderr, "%d %d %d\n", red_bits, green_bits, blue_bits);
 #endif
 
-    gl->glGenTextures(1, &_t0);
-    gl->glGenTextures(1, &_t1);
-    gl->glGenTextures(1, &_t2);
-    gl->glGenTextures(1, &_t3);
     gl->glGenTextures(1, &_colorMapTex);
     gl->glGenTextures(1, &_overlayColorMapTex);
     gl->glGenTextures(1, &_overlayFallbackTex);
@@ -323,6 +319,7 @@ void QV::prepareQuadRendering(Frame* frame, int quadTreeLevel,
 }
 
 void QV::renderQuad(Frame* frame, int quadTreeLevel, int qx, int qy,
+        int relevantChannelCount, int relevantChannelIndices[4],
         float quadFactorX, float quadFactorY,
         float quadOffsetX, float quadOffsetY)
 {
@@ -335,22 +332,36 @@ void QV::renderQuad(Frame* frame, int quadTreeLevel, int qx, int qy,
     bool showColor = (frame->channelIndex() == ColorChannelIndex);
     unsigned int t0, t1, t2, t3;
     if (showColor) {
-        t0 = _t0;
-        t1 = _t1;
-        t2 = _t2;
-        t3 = _t3;
-        frame->uploadQuadToTexture(t0, quadTreeLevel, qx, qy, frame->colorChannelIndex(0));
-        frame->uploadQuadToTexture(t1, quadTreeLevel, qx, qy, frame->colorChannelIndex(1));
-        frame->uploadQuadToTexture(t2, quadTreeLevel, qx, qy, frame->colorChannelIndex(2));
-        frame->uploadQuadToTexture(t3, quadTreeLevel, qx, qy, frame->alphaChannelIndex());
+        if (frame->channelCount() <= 4) {
+            t0 = getPreparedTexture(quadTreeLevel, qx, qy, relevantChannelIndices[0]);
+            assert(t0 != 0);
+            t1 = t0;
+            t2 = t0;
+            t3 = t0;
+        } else {
+            t0 = getPreparedTexture(quadTreeLevel, qx, qy, relevantChannelIndices[0]);
+            if (relevantChannelCount > 1)
+                t1 = getPreparedTexture(quadTreeLevel, qx, qy, relevantChannelIndices[1]);
+            else
+                t1 = t0;
+            if (relevantChannelCount > 2)
+                t2 = getPreparedTexture(quadTreeLevel, qx, qy, relevantChannelIndices[2]);
+            else
+                t2 = t0;
+            if (relevantChannelCount > 3)
+                t3 = getPreparedTexture(quadTreeLevel, qx, qy, relevantChannelIndices[3]);
+            else
+                t3 = t0;
+        }
     } else {
-        t0 = _t0;
-        t1 = 0;
-        t2 = 0;
-        t3 = 0;
-        frame->uploadQuadToTexture(t0, quadTreeLevel, qx, qy, frame->channelIndex());
+        t0 = getPreparedTexture(quadTreeLevel, qx, qy, relevantChannelIndices[0]);
+        t1 = t0;
+        t2 = t0;
+        t3 = t0;
     }
-    _set.currentParameters()->colorMap().uploadTexture(_colorMapTex);
+    if (_set.currentParameters()->colorMap().changed()) {
+        _set.currentParameters()->colorMap().uploadTexture(_colorMapTex);
+    }
     gl->glActiveTexture(GL_TEXTURE0);
     gl->glBindTexture(GL_TEXTURE_2D, t0);
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _set.currentParameters()->magInterpolation ? GL_LINEAR : GL_NEAREST);
@@ -367,6 +378,93 @@ void QV::renderQuad(Frame* frame, int quadTreeLevel, int qx, int qy,
     gl->glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, _set.currentParameters()->magInterpolation ? GL_LINEAR : GL_NEAREST);
     gl->glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, 0);
     ASSERT_GLCHECK();
+}
+
+void QV::getRelevantChannels(Frame* frame, int& relevantChannelCount, int relevantChannelIndices[4]) const
+{
+    bool showColor = (frame->channelIndex() == ColorChannelIndex);
+    if (showColor) {
+        if (frame->channelCount() <= 4) {
+            relevantChannelCount = 1;
+            relevantChannelIndices[0] = -1;
+        } else {
+            relevantChannelCount = 1;
+            relevantChannelIndices[0] = frame->colorChannelIndex(0);
+            if (frame->colorChannelIndex(1) != frame->colorChannelIndex(0)) {
+                relevantChannelIndices[relevantChannelCount++] = frame->colorChannelIndex(1);
+            }
+            if (frame->colorChannelIndex(2) != frame->colorChannelIndex(0)) {
+                relevantChannelIndices[relevantChannelCount++] = frame->colorChannelIndex(2);
+            }
+            if (frame->alphaChannelIndex() >= 0) {
+                relevantChannelIndices[relevantChannelCount++] = frame->alphaChannelIndex();
+            }
+        }
+    } else {
+        relevantChannelCount = 1;
+        relevantChannelIndices[0] = (frame->channelCount() <= 4 ? -1 : frame->channelIndex());
+    }
+}
+
+void QV::prepareTextures(Frame* frame,
+        const std::vector<std::tuple<int, int, int>>& relevantQuads,
+        int relevantChannelCount, const int relevantChannelIndices[4],
+        bool refreshQuads)
+{
+    ASSERT_GLCHECK();
+    auto gl = getGlFunctionsFromCurrentContext();
+
+    size_t textureCount = relevantQuads.size() * relevantChannelCount;
+    std::vector<unsigned int> textures(textureCount);
+    std::vector<std::tuple<int, int, int, int>> textureProperties(textureCount);
+
+    //fprintf(stderr, "qv.cpp preparing %zu textures\n", textureCount);
+    for (size_t i = 0; i < relevantQuads.size(); i++) {
+        for (int j = 0; j < relevantChannelCount; j++) {
+            size_t ti = i * relevantChannelCount + j;
+            unsigned int tex = 0;
+            int ql = std::get<0>(relevantQuads[i]);
+            int qx = std::get<1>(relevantQuads[i]);
+            int qy = std::get<2>(relevantQuads[i]);
+            int ci = relevantChannelIndices[j];
+            //fprintf(stderr, "qv.cpp preparing texture %zu for quads %d,%d,%d,%d\n", ti, ql, qx, qy, ci);
+            size_t k = 0;
+            if (!refreshQuads) {
+                tex = getPreparedTexture(ql, qx, qy, ci, &k);
+            }
+            if (tex != 0) {
+                //fprintf(stderr, "  found in cache: %u!\n", tex);
+                _cachedTextures[k] = 0;
+            } else {
+                gl->glGenTextures(1, &tex);
+                //fprintf(stderr, "  uploading to new tex: %u!\n", tex);
+                frame->uploadQuadToTexture(tex, ql, qx, qy, ci);
+            }
+            textures[ti] = tex;
+            textureProperties[ti] = std::tuple<int, int, int, int>(ql, qx, qy, ci);
+        }
+    }
+    gl->glDeleteTextures(_cachedTextures.size(), _cachedTextures.data());
+    _cachedTextures = textures;
+    _cachedTextureProperties = textureProperties;
+    ASSERT_GLCHECK();
+}
+
+unsigned int QV::getPreparedTexture(int ql, int qx, int qy, int ci, size_t* k) const
+{
+    for (size_t i = 0; i < _cachedTextures.size(); i++) {
+        int cachedQl = std::get<0>(_cachedTextureProperties[i]);
+        int cachedQx = std::get<1>(_cachedTextureProperties[i]);
+        int cachedQy = std::get<2>(_cachedTextureProperties[i]);
+        int cachedCi = std::get<3>(_cachedTextureProperties[i]);
+        if (ql == cachedQl && qx == cachedQx && qy == cachedQy && ci == cachedCi) {
+            if (k) {
+                *k = i;
+            }
+            return _cachedTextures[i];
+        }
+    }
+    return 0;
 }
 
 void QV::renderFrame(Frame* frame, int quadTreeLevel,
@@ -408,13 +506,36 @@ void QV::renderFrame(Frame* frame, int quadTreeLevel,
         }
     }
     // Give the frame an opportunity to prepare the quads
-    frame->prepareQuadsForRendering(relevantQuads, _set.currentParameters()->watchMode);
+    //fprintf(stderr, "qv.cpp wants %zu quads\n", relevantQuads.size());
+    bool cacheRemainsValid = frame->prepareQuadsForRendering(relevantQuads, _set.currentParameters()->watchMode);
+    if (!cacheRemainsValid) {
+        glDeleteTextures(_cachedTextures.size(), _cachedTextures.data());
+        _cachedTextures.clear();
+        _cachedTextureProperties.clear();
+    }
+    // Get the relevant quad parts into textures
+    int relevantChannelCount = 0;
+    int relevantChannelIndices[4] = { -1, -1, -1, -1 };
+    getRelevantChannels(frame, relevantChannelCount, relevantChannelIndices);
+    //fprintf(stderr, "qv.cpp wants %d channels: %d %d %d %d\n", relevantChannelCount,
+    //        relevantChannelIndices[0], relevantChannelIndices[1], relevantChannelIndices[2], relevantChannelIndices[3]);
+    prepareTextures(frame, relevantQuads, relevantChannelCount, relevantChannelIndices,
+            _set.currentParameters()->watchMode);
     // Render the quads
     for (size_t i = 0; i < relevantQuads.size(); i++) {
+        //fprintf(stderr, "qv.cpp renders quad %zu: %d,%d,%d [%g %g %g %g]\n", i,
+        //        std::get<0>(relevantQuads[i]),
+        //        std::get<1>(relevantQuads[i]),
+        //        std::get<2>(relevantQuads[i]),
+        //        std::get<0>(relevantQuadParameters[i]),
+        //        std::get<1>(relevantQuadParameters[i]),
+        //        std::get<2>(relevantQuadParameters[i]),
+        //        std::get<3>(relevantQuadParameters[i]));
         renderQuad(frame,
                 std::get<0>(relevantQuads[i]),
                 std::get<1>(relevantQuads[i]),
                 std::get<2>(relevantQuads[i]),
+                relevantChannelCount, relevantChannelIndices,
                 std::get<0>(relevantQuadParameters[i]),
                 std::get<1>(relevantQuadParameters[i]),
                 std::get<2>(relevantQuadParameters[i]),
@@ -447,9 +568,23 @@ QImage QV::renderFrameToImage(Frame* frame)
     else
         gl->glPixelStorei(GL_PACK_ALIGNMENT, 1);
     prepareQuadRendering(frame, 0, 1.0f, 1.0f, 0.0f, 0.0f);
+    int relevantChannelCount = 0;
+    int relevantChannelIndices[4] = { -1, -1, -1, -1 };
+    getRelevantChannels(frame, relevantChannelCount, relevantChannelIndices);
+    //fprintf(stderr, "renderFrameToImage: %d relevant channels: %d %d %d %d\n", relevantChannelCount,
+    //        relevantChannelIndices[0], relevantChannelIndices[1], relevantChannelIndices[2], relevantChannelIndices[3]);
+    //fprintf(stderr, "renderFrameToImage: %dx%d = %d relevant quads\n",
+    //        frame->quadTreeLevelHeight(0), frame->quadTreeLevelWidth(0),
+    //        frame->quadTreeLevelHeight(0) * frame->quadTreeLevelWidth(0));
+    // render one quad at a time so that the number of requires textures remains low
+    std::vector<std::tuple<int, int, int>> relevantQuad(1);
     for (int tileY = 0; tileY < frame->quadTreeLevelHeight(0); tileY++) {
         for (int tileX = 0; tileX < frame->quadTreeLevelWidth(0); tileX++) {
-            renderQuad(frame, 0, tileX, tileY, 1.0f, 1.0f, 0.0f, 0.0f);
+            relevantQuad[0] = std::tuple<int, int, int>(0, tileX, tileY);
+            prepareTextures(frame, relevantQuad, relevantChannelCount, relevantChannelIndices, false);
+            renderQuad(frame, 0, tileX, tileY,
+                    relevantChannelCount, relevantChannelIndices,
+                    1.0f, 1.0f, 0.0f, 0.0f);
             gl->glReadPixels(0, 0, frame->quadWidth(), frame->quadHeight(), GL_RGB, GL_UNSIGNED_BYTE, tmpArray.data());
             int copyableLines = frame->quadHeight();
             if (tileY * frame->quadHeight() + copyableLines > frame->height())

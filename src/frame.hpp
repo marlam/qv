@@ -41,6 +41,7 @@
 class Frame {
 private:
     /* data: */
+    bool _gotNewData;
     TGD::ArrayContainer _originalArray;
     TGD::Array<float> _lightnessArray; // perceptually linear lightness from CIELUV
     /* per channel: */
@@ -63,7 +64,6 @@ private:
     std::vector<int> _quadTreeHeights;
     std::vector<TGD::ArrayContainer> _quads;
     std::vector<bool> _quadNeedsRecomputing;
-    TGD::ArrayContainer _quadLevel0Tmp;
     /* textures: */
     unsigned int _texInternalFormat;
     unsigned int _texFormat;
@@ -129,7 +129,7 @@ public:
     int quadTreeLevels() const { return _quadTreeWidths.size(); }
     int quadTreeLevelWidth(int level) const { return _quadTreeWidths[level]; }
     int quadTreeLevelHeight(int level) const { return _quadTreeHeights[level]; }
-    void prepareQuadsForRendering(const std::vector<std::tuple<int, int, int>>& relevantQuads, bool refreshQuads);
+    bool prepareQuadsForRendering(const std::vector<std::tuple<int, int, int>>& relevantQuads, bool refreshQuads);
     void uploadQuadToTexture(unsigned int tex, int level, int qx, int qy, int channelIndex);
 
     // Query whether some information is already computed or not yet

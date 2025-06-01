@@ -34,6 +34,7 @@
 
 
 Frame::Frame() :
+    _gotNewData(true),
     _colorSpace(ColorSpaceNone), _colorChannels { -1, -1, -1 }, _alphaChannel(-1),
     _channelIndex(-1)
 {
@@ -53,6 +54,7 @@ static int componentIndex(const TGD::ArrayContainer& a, const std::string& inter
 
 void Frame::determineColorSpace()
 {
+    //fprintf(stderr, "determine color space\n");
     _colorSpace = ColorSpaceNone;
     _colorChannels[0] = -1;
     _colorChannels[1] = -1;
@@ -351,6 +353,7 @@ static void lightnessArrayHelperY(float* lightness, size_t n, const T* src, int 
 const TGD::Array<float>& Frame::lightnessArray()
 {
     if (_lightnessArray.elementCount() == 0) {
+        //fprintf(stderr, "computing lightness array\n");
         _lightnessArray = TGD::Array<float>(_originalArray.dimensions(), 1, defaultAllocator());
         float* lightness = static_cast<float*>(_lightnessArray.data());
         size_t n = _lightnessArray.elementCount();
@@ -584,6 +587,7 @@ float Frame::minVal(int channelIndex)
         return _colorMinVal;
     } else {
         if (!std::isfinite(_minVals[channelIndex])) {
+            //fprintf(stderr, "init channel %d min val\n", channelIndex);
             if (type() == TGD::uint8 && colorSpace() != ColorSpaceNone)
                 _minVals[channelIndex] = 0.0f;
             _originalArray.componentTagList(channelIndex).value("MINVAL", &(_minVals[channelIndex]));
@@ -600,6 +604,7 @@ float Frame::maxVal(int channelIndex)
         return _colorMaxVal;
     } else {
         if (!std::isfinite(_maxVals[channelIndex])) {
+            //fprintf(stderr, "init channel %d max val\n", channelIndex);
             if (type() == TGD::uint8 && colorSpace() != ColorSpaceNone)
                 _maxVals[channelIndex] = 255.0f;
             _originalArray.componentTagList(channelIndex).value("MAXVAL", &(_maxVals[channelIndex]));
@@ -624,11 +629,13 @@ const Statistic& Frame::statistic(int channelIndex)
 {
     if (channelIndex == ColorChannelIndex) {
         if (!_colorStatistic.initialized()) {
+            //fprintf(stderr, "init color statistic\n");
             _colorStatistic.init(lightnessArray(), 0);
         }
         return _colorStatistic;
     } else {
         if (!_statistics[channelIndex].initialized()) {
+            //fprintf(stderr, "init channel %d statistic \n", channelIndex);
             _statistics[channelIndex].init(_originalArray, channelIndex);
         }
         return _statistics[channelIndex];
@@ -639,11 +646,13 @@ const Histogram& Frame::histogram(int channelIndex)
 {
     if (channelIndex == ColorChannelIndex) {
         if (!_colorHistogram.initialized()) {
+            //fprintf(stderr, "init color histogram\n");
             _colorHistogram.init(lightnessArray(), 0, visMinVal(ColorChannelIndex), visMaxVal(ColorChannelIndex));
         }
         return _colorHistogram;
     } else {
         if (!_histograms[channelIndex].initialized()) {
+            //fprintf(stderr, "init channel %d histogram\n", channelIndex);
             _histograms[channelIndex].init(_originalArray, channelIndex,
                     type() == TGD::uint8 ?   0.0f : minVal(channelIndex),
                     type() == TGD::uint8 ? 255.0f : maxVal(channelIndex));
@@ -777,21 +786,20 @@ void Frame::computeQuadOnLevel0(TGD::ArrayContainer& quad, int qx, int qy)
 {
     assert(qx >= 0 && qx < quadTreeLevelWidth(0));
     assert(qy >= 0 && qy < quadTreeLevelHeight(0));
+    //fprintf(stderr, "computing quad %d,%d,%d\n", 0, qx, qy);
 
     if (_quadLevel0Description.componentType() == type()) {
         // write results directly into quad
         computeQuadOnLevel0Worker(quad, qx, qy);
     } else {
         // compute in original data type first
-        if (_quadLevel0Tmp.dimensionCount() == 0) {
-            _quadLevel0Tmp = TGD::ArrayContainer(
-                    _quadLevel0Description.dimensions(),
-                    _quadLevel0Description.componentCount(),
-                    type(), defaultAllocator());
-        }
-        computeQuadOnLevel0Worker(_quadLevel0Tmp, qx, qy);
+        TGD::ArrayContainer quadLevel0Tmp(
+                _quadLevel0Description.dimensions(),
+                _quadLevel0Description.componentCount(),
+                type(), defaultAllocator());
+        computeQuadOnLevel0Worker(quadLevel0Tmp, qx, qy);
         // convert
-        convert(quad, _quadLevel0Tmp);
+        convert(quad, quadLevel0Tmp);
     }
 }
 
@@ -877,6 +885,7 @@ void Frame::computeQuadOnLevel(TGD::ArrayContainer& q, int level, int qx, int qy
 {
     assert(q.componentType() == TGD::uint8 || q.componentType() == TGD::float32);
     assert(level >= 1);
+    //fprintf(stderr, "computing quad %d,%d,%d\n", level, qx, qy);
 
     int q0Index = quadIndex(level - 1, 2 * qx + 0, 2 * qy + 0);
     int q1Index = quadIndex(level - 1, 2 * qx + 1, 2 * qy + 0);
@@ -950,6 +959,7 @@ void Frame::quadSubtreeNeedsRecomputing(int level, int qx, int qy)
     int qi = quadIndex(level, qx, qy);
     if (qi < 0 || size_t(qi) >= _quadNeedsRecomputing.size())
         return;
+    //fprintf(stderr, "quad %d,%d,%d needs recomputing\n", level, qx, qy);
     _quadNeedsRecomputing[qi] = true;
     if (level > 0) {
         quadSubtreeNeedsRecomputing(level - 1, 2 * qx + 0, 2 * qy + 0);
@@ -959,8 +969,10 @@ void Frame::quadSubtreeNeedsRecomputing(int level, int qx, int qy)
     }
 }
 
-void Frame::prepareQuadsForRendering(const std::vector<std::tuple<int, int, int>>& relevantQuads, bool refreshQuads)
+bool Frame::prepareQuadsForRendering(const std::vector<std::tuple<int, int, int>>& relevantQuads, bool refreshQuads)
 {
+    bool cacheRemainsValid = !_gotNewData;
+    //fprintf(stderr, "%zu quads to render, with refresh = %d\n", relevantQuads.size(), refreshQuads ? 1 : 0);
     if (refreshQuads) {
         for (size_t i = 0; i < relevantQuads.size(); i++) {
             quadSubtreeNeedsRecomputing(
@@ -980,11 +992,16 @@ void Frame::prepareQuadsForRendering(const std::vector<std::tuple<int, int, int>
             _histograms[i].invalidate();
         _colorHistogram.invalidate();
         determineColorSpace();
+        cacheRemainsValid = false;
     }
+    _gotNewData = false;
+    return cacheRemainsValid;
 }
 
 void Frame::uploadQuadToTexture(unsigned int tex, int level, int qx, int qy, int channelIndex)
 {
+    //fprintf(stderr, "uploading quad %d,%d,%d to texture\n", level, qx, qy);
+
     /* Optimization for the case of only a single quad */
     if (_quadLevel0BorderSize == 0
             && _quadLevel0Description.dimension(0) == _originalArray.dimension(0)
@@ -997,6 +1014,7 @@ void Frame::uploadQuadToTexture(unsigned int tex, int level, int qx, int qy, int
             _quadNeedsRecomputing.resize(1);
         }
         _quadNeedsRecomputing[0] = false;
+        //fprintf(stderr, "single quad optimization\n");
     }
 
     /* Create quads if not done yet */
@@ -1007,6 +1025,7 @@ void Frame::uploadQuadToTexture(unsigned int tex, int level, int qx, int qy, int
         for (int l = 1; l < quadTreeLevels(); l++) {
             totalQuads += quadTreeLevelWidth(l) * quadTreeLevelHeight(l);
         }
+        //fprintf(stderr, "Allocating %zu quads\n", totalQuads);
         _quads.resize(totalQuads);
         _quadNeedsRecomputing.resize(totalQuads);
         // Allocate all quads
@@ -1029,6 +1048,7 @@ void Frame::uploadQuadToTexture(unsigned int tex, int level, int qx, int qy, int
 
     /* Recompute quads as necessary */
     if (_quadNeedsRecomputing[qi]) {
+        //fprintf(stderr, "quad %d,%d,%d triggers recomputation of quads\n", level, qx, qy);
         // Compute level 0 quads in parallel
         #pragma omp parallel for schedule(dynamic)
         for (int q = 0; q < quadTreeLevelHeight(0) * quadTreeLevelWidth(0); q++) {
@@ -1060,6 +1080,7 @@ void Frame::uploadQuadToTexture(unsigned int tex, int level, int qx, int qy, int
     ASSERT_GLCHECK();
     if (channelCount() <= 4) {
         // single texture
+        //fprintf(stderr, "single texture case: all channels\n");
         uploadArrayToTexture(_quads[qi], tex,
                 _texInternalFormat, _texFormat, _texType);
     } else {
@@ -1068,6 +1089,7 @@ void Frame::uploadQuadToTexture(unsigned int tex, int level, int qx, int qy, int
             _textureTransferArray = TGD::Array<float>({ size_t(quadWidth()), size_t(quadHeight()) }, 1,
                     TGD::Allocator() /* we want in-memory storage here */);
         const TGD::Array<float> origQuad = _quads[qi];
+        //fprintf(stderr, "multi texture case: channel %d\n", channelIndex);
         for (size_t e = 0; e < _textureTransferArray.elementCount(); e++)
             _textureTransferArray.set<float>(e, 0, origQuad.get<float>(e, channelIndex));
         uploadArrayToTexture(_textureTransferArray, tex,

@@ -27,6 +27,9 @@
 #ifndef QV_HPP
 #define QV_HPP
 
+#include <vector>
+#include <tuple>
+
 #include <QOpenGLWidget>
 #include <QOpenGLShaderProgram>
 
@@ -47,7 +50,8 @@ private:
     Set& _set;
     QSize _sizeHint;
     int _w, _h;
-    unsigned int _t0, _t1, _t2, _t3;
+    std::vector<unsigned int> _cachedTextures;
+    std::vector<std::tuple<int, int, int, int>> _cachedTextureProperties;
     unsigned int _colorMapTex;
     unsigned int _overlayColorMapTex;
     unsigned int _overlayFallbackTex;
@@ -84,7 +88,14 @@ private:
     void prepareQuadRendering(Frame* frame, int quadTreeLevel,
             float xFactor, float yFactor,
             float xOffset, float yOffset);
+    void getRelevantChannels(Frame* frame, int& relevantChannelCount, int relevantChannelIndices[4]) const;
+    void prepareTextures(Frame* frame,
+            const std::vector<std::tuple<int, int, int>>& relevantQuads,
+            int relevantChannelCount, const int relevantChannelIndices[4],
+            bool refreshQuads);
+    unsigned int getPreparedTexture(int ql, int qx, int qy, int ci, size_t* k = nullptr) const;
     void renderQuad(Frame* frame, int quadTreeLevel, int qx, int qy,
+            int relevantChannelCount, int relevantChannelIndices[4],
             float quadFactorX, float quadFactorY,
             float quadOffsetX, float quadOffsetY);
     void renderFrame(Frame* frame, int quadTreeLevel,

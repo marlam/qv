@@ -45,6 +45,7 @@ private:
     ColorMapType _type;
     int _index[5];
     std::vector<unsigned char> _sRgbData;
+    bool _changed;
 
     void reload();
 
@@ -56,7 +57,8 @@ public:
     void cycle();
 
     const std::vector<unsigned char> sRgbData() const { return _sRgbData; }
-    void uploadTexture(unsigned int tex) const;
+    void uploadTexture(unsigned int tex);
+    bool changed() const { return _changed; }
 };
 
 #endif

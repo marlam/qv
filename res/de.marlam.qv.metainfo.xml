@@ -46,6 +46,11 @@
   <url type="homepage">https://marlam.de/qv</url>
 
   <releases>
+    <release version="6.0" date="2025-06-02">
+      <description>
+        <p>Add support for out-of-core visualization and for watching data updates as they happen.</p>
+      </description>
+    </release>
     <release version="5.2" date="2024-06-03">
       <description>
         <p>Add support for HighDPI output.</p>
